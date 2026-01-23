@@ -1,0 +1,87 @@
+'use client'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { getUserProfile } from '@/app/actions/user-actions'
+
+export function PointsBalance() {
+    const [profile, setProfile] = useState<any>(null)
+
+    useEffect(() => {
+        getUserProfile()
+            .then(setProfile)
+            .catch(err => {
+                console.error(err)
+                setProfile({ error: true, message: err.message })
+            })
+    }, [])
+
+    if (profile?.error) {
+        return (
+            <Card className="bg-red-50 border-red-200">
+                <CardContent className="p-4 text-red-600 text-xs break-all">
+                    <strong>Error:</strong> {profile.message}
+                </CardContent>
+            </Card>
+        )
+    }
+
+    if (!profile) {
+        // Show a zero state mostly, but wait for loading to finish essentially
+        // If we are here and not loading, it means profile is null (failed to load)
+        // ideally we should have a loading state separate from data
+        return <PointsSkeleton />
+    }
+
+    const nextTierPoints = 1500 // Simplified for now (Silver threshold)
+    // const progress = (profile.points_balance / nextTierPoints) * 100
+    // Actually tier is based on visits/spent, but let's show visual progress roughly
+    const progress = Math.min((profile.total_spent / 1500) * 100, 100)
+
+    return (
+        <Card className="bg-gradient-to-br from-blue-700 to-blue-900 text-white border-none shadow-lg overflow-hidden relative">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                <CardHeader className="pb-2 relative z-10">
+                    <CardTitle className="text-lg font-medium opacity-90">Points Balance</CardTitle>
+                </CardHeader>
+                <CardContent className="relative z-10">
+                    <div className="text-5xl font-bold tracking-tight">
+                        {profile.points_balance.toLocaleString()}
+                    </div>
+                    <div className="mt-2 flex justify-between items-center text-sm opacity-80">
+                        <span className="capitalize">{profile.tier} Tier</span>
+                        <span>${profile.total_spent} spent</span>
+                    </div>
+                    <div className="mt-4">
+                        <Progress value={progress} className="h-2 bg-blue-950/30" indicatorClassName="bg-yellow-400" />
+                        <p className="text-xs mt-1 text-right opacity-70">
+                            {1500 - profile.total_spent > 0
+                                ? `$${1500 - profile.total_spent} to Silver`
+                                : 'Tier Maxed!'}
+                        </p>
+                    </div>
+                </CardContent>
+
+                {/* Decorative background circles */}
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-blue-400/10 rounded-full blur-2xl" />
+            </motion.div>
+        </Card>
+    )
+}
+
+function PointsSkeleton() {
+    return (
+        <Card className="bg-gradient-to-br from-blue-700 to-blue-900 border-none shadow-lg h-[200px] animate-pulse">
+            <CardContent className="h-full flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+            </CardContent>
+        </Card>
+    )
+}

@@ -1,0 +1,25 @@
+import { MetadataRoute } from 'next'
+
+export default function manifest(): MetadataRoute.Manifest {
+    return {
+        name: 'Nice Work Loyalty',
+        short_name: 'NiceWork',
+        description: 'Loyalty program for Nice Work restaurants',
+        start_url: '/',
+        display: 'standalone',
+        background_color: '#ffffff',
+        theme_color: '#000000',
+        icons: [
+            {
+                src: '/icon',
+                sizes: 'any',
+                type: 'image/png',
+            },
+            {
+                src: '/apple-icon',
+                sizes: 'any',
+                type: 'image/png',
+            }
+        ],
+    }
+}
