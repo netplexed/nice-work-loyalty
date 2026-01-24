@@ -1,16 +1,20 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { getReferralCode } from '@/app/actions/user-actions-extensions' // We will merge this later or import from new file
-import { Copy, Share2, Users } from 'lucide-react'
+import { getReferralCode } from '@/app/actions/user-actions-extensions'
+import { submitReferral } from '@/app/actions/referral-actions'
+import { Copy, Share2, Users, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
+import confetti from 'canvas-confetti'
 
 export function ReferralCard() {
     const [code, setCode] = useState<string | null>(null)
+    const [inputCode, setInputCode] = useState('')
     const [loading, setLoading] = useState(true)
+    const [submitting, setSubmitting] = useState(false)
 
     useEffect(() => {
         getReferralCode().then(setCode).finally(() => setLoading(false))
@@ -39,6 +43,25 @@ export function ReferralCard() {
         }
     }
 
+    const handleRedeem = async () => {
+        if (!inputCode || inputCode.length < 5) return
+        setSubmitting(true)
+        try {
+            const { points } = await submitReferral(inputCode)
+            toast.success(`Code redeemed! You earned ${points} points!`)
+            setInputCode('')
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            })
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to redeem code')
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
     if (loading) return null
 
     return (
@@ -50,21 +73,46 @@ export function ReferralCard() {
                 </div>
                 <CardDescription>Get <strong>500 points</strong> for every friend who joins!</CardDescription>
             </CardHeader>
-            <CardContent>
-                <div className="flex gap-2">
-                    <div className="relative flex-1">
-                        <Input
-                            readOnly
-                            value={code || 'Generating...'}
-                            className="bg-white font-mono text-center tracking-widest font-bold"
-                        />
+            <CardContent className="space-y-4">
+                {/* Your Code Section */}
+                <div className="space-y-2">
+                    <label className="text-xs font-semibold text-green-800 uppercase tracking-wider">Your Code</label>
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Input
+                                readOnly
+                                value={code || 'Generating...'}
+                                className="bg-white font-mono text-center tracking-widest font-bold border-green-200"
+                            />
+                        </div>
+                        <Button variant="outline" size="icon" onClick={handleCopy} className="shrink-0 bg-white border-green-200 hover:bg-green-50 text-green-700">
+                            <Copy className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" onClick={handleShare} className="shrink-0 bg-green-600 hover:bg-green-700 text-white shadow-sm">
+                            <Share2 className="w-4 h-4" />
+                        </Button>
                     </div>
-                    <Button variant="outline" size="icon" onClick={handleCopy} className="shrink-0 bg-white">
-                        <Copy className="w-4 h-4" />
-                    </Button>
-                    <Button size="icon" onClick={handleShare} className="shrink-0 bg-green-600 hover:bg-green-700">
-                        <Share2 className="w-4 h-4" />
-                    </Button>
+                </div>
+
+                {/* Enter Code Section */}
+                <div className="pt-2 border-t border-green-200/50">
+                    <label className="text-xs font-semibold text-green-800 uppercase tracking-wider mb-2 block">Have a code?</label>
+                    <div className="flex gap-2">
+                        <Input
+                            placeholder="Enter friend's code"
+                            value={inputCode}
+                            onChange={(e) => setInputCode(e.target.value)}
+                            className="bg-white/80 border-green-200 uppercase placeholder:normal-case"
+                            maxLength={10}
+                        />
+                        <Button
+                            onClick={handleRedeem}
+                            disabled={!inputCode || submitting}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                            {submitting ? '...' : <ArrowRight className="w-4 h-4" />}
+                        </Button>
+                    </div>
                 </div>
             </CardContent>
         </Card>

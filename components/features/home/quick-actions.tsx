@@ -3,16 +3,49 @@
 import React from 'react'
 import Link from 'next/link'
 import { Scan, Gift, User, MapPin } from 'lucide-react'
-import { submitCheckIn } from '@/app/actions/game-actions'
+import { simulateCheckIn } from '@/app/actions/visit-actions'
 import { toast } from 'sonner'
+import confetti from 'canvas-confetti'
 
-export function QuickActions() {
+interface QuickActionsProps {
+    onCheckInSuccess?: (visitCount: number, multiplier: number) => void
+}
+
+export function QuickActions({ onCheckInSuccess }: QuickActionsProps) {
     const handleCheckIn = async () => {
+        const loadingToast = toast.loading('Checking in against location...')
         try {
-            const result = await submitCheckIn('Tanuki Raw (Orchard)') // Hardcoded for demo
-            toast.success(`Checked in! Earned ${result.points} points.`)
+            const { success, multiplier, visitCount } = await simulateCheckIn('Tanuki Raw (Orchard)')
+
+            toast.dismiss(loadingToast)
+
+            let message = `Checked in! (Visit #${visitCount} this week)`
+            let description = `Nice generation is now ${multiplier}x!`
+
+            if (multiplier >= 3.0) {
+                message = "MAX STREAK! 🔥🔥🔥"
+                description = "You are earning 3.0x Nice!"
+            } else if (multiplier >= 2.0) {
+                message = "Double Up! 🔥"
+                description = "2nd visit this week! 2.0x Boost active."
+            }
+
+            toast.success(message, { description })
+
+            // Trigger confetti
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            })
+
+            // Notify parent component for instant UI update
+            if (onCheckInSuccess) {
+                onCheckInSuccess(visitCount || 1, multiplier)
+            }
         } catch (error: any) {
-            toast.error(error.message)
+            toast.dismiss(loadingToast)
+            toast.error('Check-in failed', { description: error.message })
         }
     }
 

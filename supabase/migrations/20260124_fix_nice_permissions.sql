@@ -108,3 +108,58 @@ $$;
 GRANT EXECUTE ON FUNCTION collect_nice_transaction TO authenticated;
 GRANT EXECUTE ON FUNCTION award_visit_bonus TO authenticated;
 GRANT EXECUTE ON FUNCTION award_visit_bonus TO service_role;
+
+-- 4. Update convert_nice_to_points
+CREATE OR REPLACE FUNCTION convert_nice_to_points(
+    p_user_id uuid,
+    p_nice_amount integer,
+    p_points_amount integer
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_new_nice_balance integer;
+    v_new_points_balance integer;
+BEGIN
+    if p_user_id != auth.uid() then
+        raise exception 'Unauthorized';
+    end if;
+
+    -- Update nice account
+    update public.nice_accounts
+    set nice_collected_balance = nice_collected_balance - p_nice_amount
+    where user_id = p_user_id
+    returning nice_collected_balance into v_new_nice_balance;
+    
+    -- Add points
+    update public.profiles
+    set points_balance = points_balance + p_points_amount
+    where id = p_user_id
+    returning points_balance into v_new_points_balance;
+
+    -- Record transaction
+    insert into public.nice_transactions (
+        user_id, transaction_type, nice_amount, metadata
+    ) values (
+        p_user_id, 'converted_to_points', -p_nice_amount,
+        jsonb_build_object('points_gained', p_points_amount)
+    );
+    
+     -- Record points transaction
+    insert into public.points_transactions (
+        user_id, transaction_type, points, description, created_at
+    ) values (
+        p_user_id, 'earned_bonus', p_points_amount, 'Converted from Nice', now()
+    );
+
+    return jsonb_build_object(
+        'new_nice_balance', v_new_nice_balance,
+        'new_points_balance', v_new_points_balance
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION convert_nice_to_points TO authenticated;

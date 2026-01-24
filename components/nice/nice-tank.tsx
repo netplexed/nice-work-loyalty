@@ -150,24 +150,24 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
                         </div>
                         <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
                             <span className="bg-slate-100 px-2 py-0.5 rounded-full font-mono">
-                                +{stateRef.current.nicePerSecond.toFixed(4)}/sec
+                                +{initialState.nicePerSecond.toFixed(4)}/sec
                             </span>
-                            {stateRef.current.currentMultiplier > 1 && (
-                                <span className="flex items-center gap-1 text-amber-600 font-bold">
-                                    <Flame size={12} className="fill-amber-600" />
-                                    {stateRef.current.currentMultiplier}x Boost Active
-                                </span>
+
+                            {/* Multiplier Badge - Inline with Rate */}
+                            {initialState.currentMultiplier > 1 && (
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-50 border border-orange-100 animate-pulse">
+                                    <Flame
+                                        size={14}
+                                        className={initialState.currentMultiplier >= 3 ? 'text-red-600 fill-red-600' : 'text-orange-500 fill-orange-500'}
+                                    />
+                                    <span className="font-bold text-orange-700 text-xs">
+                                        {initialState.currentMultiplier}x {initialState.currentMultiplier >= 3 ? 'SUPER' : 'Boost'}
+                                    </span>
+                                </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Multiplier Badge if active */}
-                    {stateRef.current.currentMultiplier > 1 && (
-                        <div className="animate-pulse bg-gradient-to-br from-amber-100 to-orange-100 border border-amber-200 rounded-lg p-2 flex flex-col items-center">
-                            <Flame className="text-orange-500 mb-1" size={20} />
-                            <span className="text-xs font-bold text-orange-700">{stateRef.current.currentMultiplier}x</span>
-                        </div>
-                    )}
                 </div>
 
                 {/* Tank Visualization */}

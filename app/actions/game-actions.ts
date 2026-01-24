@@ -125,3 +125,25 @@ export async function submitCheckIn(location: string) {
     revalidatePath('/')
     return { success: true, points }
 }
+
+export async function resetDailySpin() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) throw new Error('Not authenticated')
+
+    // Standard DELETE (Relies on RLS Policy being present)
+    const { error, count } = await supabase
+        .from('spins')
+        .delete({ count: 'exact' })
+        .eq('user_id', user.id)
+        .eq('spin_type', 'daily')
+
+    if (error) {
+        console.error('Reset spin error:', error)
+        throw new Error('Failed to reset spin: ' + error.message)
+    }
+
+    revalidatePath('/')
+    return { success: true, count }
+}

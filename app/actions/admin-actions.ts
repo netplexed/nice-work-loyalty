@@ -69,7 +69,7 @@ export async function getAllUsers(page = 1, limit = 20) {
 
     const { data, count, error } = await supabase
         .from('profiles')
-        .select('*', { count: 'exact' })
+        .select('*, nice_accounts(nice_collected_balance)', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(from, to)
 
@@ -101,6 +101,74 @@ export async function adjustPoints(userId: string, amount: number, reason: strin
     if (error) throw error
 
     // Trigger should auto-update profile balance
+    revalidatePath('/admin/users')
+    return { success: true }
+}
+
+export async function adjustNice(userId: string, amount: number, reason: string) {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+
+    // We update the account directly because RLS usually blocks insert on transactions for 'adjusted' 
+    // unless we made a specific policy or function. 
+    // Wait, let's check schema. nice_transactions has RLS. 
+    // And nice_accounts has RLS.
+    // Admin likely has bypass or we should use a function.
+    // But points_adjustment uses simple insert relies on trigger? 
+    // Points schema has 'update_points_balance' trigger.
+    // Nice schema does NOT have a trigger for 'adjusted'. It has functions for collection.
+    // So we must manually update both or create a function.
+    // Let's do manual update of both for now, safer since we are admin role here (service role if we needed, but we are just authenticated admin).
+    // Actually, admins CAN bypass RLS if we set it up, but let's assume we need to be explicit.
+
+    // Simplest: Update Account, then Insert Transaction
+
+    // 1. Update Account
+    // Wait, admin needs RLS permission to update nice_accounts.
+    // We haven't added specific Admin RLS policies for nice_accounts yet!
+    // The query 'Users can view own nice account' is the only one.
+    // We need to add an Admin policy or use SERVICE ROLE client for this action.
+    // Since this is a server action, verifyAdmin checks auth table.
+    // But createClient() uses the user's auth token.
+    // So normal admin user might NOT have permission to update nice_accounts table directly via Row Level Security.
+
+    // For Points it worked because we have "Admins can insert transactions" policy and a Trigger.
+    // Nice doesn't have that trigger yet.
+
+    // Let's use the SERVICE ROLE client to bypass RLS for this administrative action.
+    // We don't have it imported but `createClient` usually takes a cookie store.
+    // Actually, we can just use `supabase.rpc` if we create an admin function...
+    // OR, simpler: I'll try to add an RPC for "admin_adjust_nice" in a migration?
+    // User didn't ask for migration.
+    // Let's try to update via SQL directly? No.
+
+    // Let's assume we can add a quick SQL function or just use the existing setup if possible.
+    // Actually, I'll just use the `collect_nice_transaction` logic? No that's for collection.
+
+    // Screw it, I'll create a new migration for `admin_adjust_nice` function to be safe and clean.
+    // But first let's just write the server action assuming I'll simplify it.
+
+    // Actually, I can use the existing `collect_nice_transaction` if amount > 0? No, type is wrong.
+
+    // I will write the function to attempt update. If it fails, I'll fix permissions.
+    // But wait, `nice-actions.ts` uses `createClient`.
+
+    // Let's try just updating directly. If it fails I'll notify user.
+
+    const { error: accountError } = await supabase.rpc('admin_adjust_nice', {
+        p_user_id: userId,
+        p_amount: amount,
+        p_reason: reason
+    })
+
+    if (accountError) {
+        // If RPC doesn't exist, we might fall back or error.
+        console.error('Admin adjustment failed', accountError)
+        throw new Error('Failed to adjust nice. ' + accountError.message)
+    }
+
     revalidatePath('/admin/users')
     return { success: true }
 }

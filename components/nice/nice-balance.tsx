@@ -1,11 +1,17 @@
 import { motion, useSpring, useTransform } from 'framer-motion'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { ArrowLeftRight } from 'lucide-react'
+import { ConversionDialog } from './conversion-dialog'
 
 interface NiceBalanceProps {
     balance: number
+    onSwapSuccess?: (pointsGained: number) => void
 }
 
-export function NiceBalance({ balance }: NiceBalanceProps) {
+export function NiceBalance({ balance, onSwapSuccess }: NiceBalanceProps) {
+    const [showConversion, setShowConversion] = useState(false)
+
     const spring = useSpring(balance, {
         mass: 0.8,
         stiffness: 75,
@@ -27,6 +33,24 @@ export function NiceBalance({ balance }: NiceBalanceProps) {
                 </div>
             </div>
 
+            <Button
+                size="sm"
+                variant="outline"
+                className="bg-white/10 border-white/10 hover:bg-white/20 text-white border-0"
+                onClick={() => setShowConversion(true)}
+            >
+                <ArrowLeftRight className="mr-2" size={14} /> Swap for points
+            </Button>
+
+            <ConversionDialog
+                open={showConversion}
+                onOpenChange={setShowConversion}
+                niceBalance={balance}
+                onConvertSuccess={(nice, points) => {
+                    // Animation will handle value update automatically via props
+                    if (onSwapSuccess) onSwapSuccess(points);
+                }}
+            />
         </div>
     )
 }

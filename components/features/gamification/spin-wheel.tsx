@@ -9,7 +9,11 @@ import { Loader2, Gift } from 'lucide-react'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 
-export function SpinWheel() {
+interface SpinWheelProps {
+    onSpinSuccess?: (points: number) => void
+}
+
+export function SpinWheel({ onSpinSuccess }: SpinWheelProps) {
     const [canSpin, setCanSpin] = useState(false)
     const [spinning, setSpinning] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -75,6 +79,12 @@ export function SpinWheel() {
             }
 
             toast.success(`You won: ${prize.description}!`)
+
+            // Notify parent to refresh points
+            if (onSpinSuccess && prize.type === 'points') {
+                onSpinSuccess(prize.value)
+            }
+
             setCanSpin(false) // Update local state immediately
 
         } catch (error: any) {
@@ -93,6 +103,27 @@ export function SpinWheel() {
                 <CardContent className="flex flex-col items-center justify-center p-6 text-center space-y-2">
                     <Gift className="w-8 h-8 text-indigo-400 opacity-50" />
                     <p className="text-sm text-muted-foreground font-medium">Come back tomorrow for your next spin!</p>
+
+                    {/* Debug Reset Button */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-indigo-300 hover:text-indigo-500 hover:bg-indigo-50 mt-2"
+                        onClick={async () => {
+                            try {
+                                const { resetDailySpin } = await import('@/app/actions/game-actions')
+                                const result = await resetDailySpin() as any
+                                if (result.success) {
+                                    toast.success(`Reset complete! Deleted ${result.count} records.`)
+                                    checkEligibility()
+                                }
+                            } catch (e: any) {
+                                toast.error('Reset failed: ' + e.message)
+                            }
+                        }}
+                    >
+                        Reset Daily Spin (Dev)
+                    </Button>
                 </CardContent>
             </Card>
         )
@@ -143,6 +174,29 @@ export function SpinWheel() {
                         'SPIN NOW'
                     )}
                 </Button>
+
+                {/* Debug Reset Button */}
+                <div className="mt-4">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-indigo-300 hover:text-indigo-500 hover:bg-indigo-50"
+                        onClick={async () => {
+                            try {
+                                const { resetDailySpin } = await import('@/app/actions/game-actions')
+                                const result = await resetDailySpin() as any
+                                if (result.success) {
+                                    toast.success(`Reset complete! Deleted ${result.count} records.`)
+                                    checkEligibility()
+                                }
+                            } catch (e: any) {
+                                toast.error('Reset failed: ' + e.message)
+                            }
+                        }}
+                    >
+                        Reset Daily Spin (Dev)
+                    </Button>
+                </div>
             </CardContent>
         </Card>
     )

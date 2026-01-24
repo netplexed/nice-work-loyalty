@@ -217,3 +217,37 @@ export async function awardVisitBonus(
         previousMultiplier: data.previous_multiplier
     }
 }
+
+export async function convertNiceToPoints(
+    niceAmount: number
+): Promise<{ newNiceBalance: number, newPointsBalance: number, pointsGained: number }> {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) throw new Error('Not authenticated')
+
+    const pointsToGain = Math.floor(niceAmount / 20)
+
+    if (pointsToGain < 1) {
+        throw new Error('Amount too small to convert (min 20 Nice)')
+    }
+
+    const { data, error } = await supabase.rpc('convert_nice_to_points', {
+        p_user_id: user.id,
+        p_nice_amount: niceAmount,
+        p_points_amount: pointsToGain
+    })
+
+    if (error) {
+        console.error('Conversion error:', error)
+        throw error
+    }
+
+    revalidatePath('/')
+
+    return {
+        newNiceBalance: data.new_nice_balance,
+        newPointsBalance: data.new_points_balance,
+        pointsGained: pointsToGain
+    }
+}

@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PointsBalance } from '@/components/features/home/points-balance'
+import { PointsBalanceBranded as PointsBalance } from '@/components/features/home/points-balance-branded'
+// import { PointsBalance } from '@/components/features/home/points-balance' // Original
 import { QuickActions } from '@/components/features/home/quick-actions'
 import { RecentActivity } from '@/components/features/home/recent-activity'
 import { SpinWheel } from '@/components/features/gamification/spin-wheel'
@@ -11,11 +12,13 @@ import { NiceBalance } from '@/components/nice/nice-balance'
 import { getNiceState, NiceState } from '@/app/actions/nice-actions'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
+import confetti from 'canvas-confetti'
 
 export default function Dashboard() {
     const [niceState, setNiceState] = useState<NiceState | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [refreshTrigger, setRefreshTrigger] = useState(0)
 
     useEffect(() => {
         const loadNiceState = async () => {
@@ -30,7 +33,9 @@ export default function Dashboard() {
             }
         }
         loadNiceState()
-    }, [])
+    }, [refreshTrigger])
+
+
 
     const handleCollect = (amount: number) => {
         if (!niceState) return
@@ -41,10 +46,49 @@ export default function Dashboard() {
         })
     }
 
+    const handleCheckInSuccess = (visitCount: number, multiplier: number) => {
+        setRefreshTrigger(prev => prev + 1)
+
+        // Optimistic / Instant update of local state
+        if (niceState) {
+            setNiceState({
+                ...niceState,
+                currentMultiplier: multiplier
+            })
+        }
+
+        // Background refresh to ensure consistency
+        const loadNiceState = async () => {
+            const state = await getNiceState()
+            setNiceState(state)
+        }
+        loadNiceState()
+    }
+
+    const handleSwapSuccess = (pointsGained: number) => {
+        setRefreshTrigger(prev => prev + 1)
+
+        // Trigger confetti for the points
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.3 }, // Higher up, closer to where points card usually is
+            colors: ['#3b82f6', '#60a5fa', '#93c5fd', '#fbbf24']
+        })
+
+        // Also update local nice balance immediately
+        if (niceState) {
+            setNiceState(prev => prev ? ({
+                ...prev,
+                collectedBalance: prev.collectedBalance - (pointsGained * 20) // Assuming 20:1 rate
+            }) : null)
+        }
+    }
+
     return (
         <div className="flex flex-col gap-8 pb-24 p-6 bg-gray-50/50 min-h-screen">
             <div className="space-y-6">
-                <PointsBalance />
+                <PointsBalance refreshTrigger={refreshTrigger} />
 
                 {/* Nice Currency Section */}
                 <div className="space-y-4">
@@ -59,14 +103,17 @@ export default function Dashboard() {
                         </div>
                     ) : niceState ? (
                         <>
-                            <NiceBalance balance={niceState.collectedBalance} />
+                            <NiceBalance
+                                balance={niceState.collectedBalance}
+                                onSwapSuccess={handleSwapSuccess}
+                            />
                             <NiceTank initialState={niceState} onCollect={handleCollect} />
                         </>
                     ) : null}
                 </div>
 
-                <QuickActions />
-                <SpinWheel />
+                <QuickActions onCheckInSuccess={handleCheckInSuccess} />
+                <SpinWheel onSpinSuccess={() => setRefreshTrigger(prev => prev + 1)} />
                 <ReferralCard />
             </div>
             <RecentActivity />

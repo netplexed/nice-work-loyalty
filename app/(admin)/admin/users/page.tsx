@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { PointsAdjustmentDialog } from '@/components/admin/users/points-adjustment-dialog'
+import { NiceAdjustmentDialog } from '@/components/admin/users/nice-adjustment-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default async function UsersPage() {
@@ -32,6 +33,7 @@ export default async function UsersPage() {
                                 <TableHead>Email</TableHead>
                                 <TableHead>Tier</TableHead>
                                 <TableHead className="text-right">Points</TableHead>
+                                <TableHead className="text-right">Nice</TableHead>
                                 <TableHead className="text-right">Spent</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
@@ -54,14 +56,22 @@ export default async function UsersPage() {
                                     <TableCell className="text-right font-mono font-bold">
                                         {user.points_balance}
                                     </TableCell>
+                                    <TableCell className="text-right font-mono font-bold text-amber-600">
+                                        {user.nice_accounts?.nice_collected_balance || 0}
+                                    </TableCell>
                                     <TableCell className="text-right">
                                         ${user.total_spent}
                                     </TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="text-right flex justify-end gap-2">
                                         <PointsAdjustmentDialog
                                             userId={user.id}
                                             userName={user.full_name || user.email}
                                             currentBalance={user.points_balance}
+                                        />
+                                        <NiceAdjustmentDialog
+                                            userId={user.id}
+                                            userName={user.full_name || user.email}
+                                            currentBalance={user.nice_accounts?.nice_collected_balance || 0}
                                         />
                                     </TableCell>
                                 </TableRow>
