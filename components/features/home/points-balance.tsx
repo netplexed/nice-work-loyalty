@@ -41,12 +41,17 @@ export function PointsBalance() {
     const progress = Math.min((profile.total_spent / 1500) * 100, 100)
 
     return (
-        <Card className="bg-gradient-to-br from-blue-700 to-blue-900 text-white border-none shadow-lg overflow-hidden relative">
+        <Card className="bg-gradient-to-br from-blue-700 to-blue-900 text-white border-none shadow-lg overflow-hidden relative min-h-[220px]">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
+                {/* Nice Work Text - Watermark style top right */}
+                <div className="absolute top-6 right-6 opacity-30 pointer-events-none z-0">
+                    <span className="text-xl font-medium tracking-tight text-white font-sans">nice work</span>
+                </div>
+
                 <CardHeader className="pb-2 relative z-10">
                     <CardTitle className="text-lg font-medium opacity-90">Points Balance</CardTitle>
                 </CardHeader>
@@ -66,11 +71,32 @@ export function PointsBalance() {
                                 : 'Tier Maxed!'}
                         </p>
                     </div>
+
+                    {/* Restaurant Logos */}
+                    <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-4 opacity-100">
+                        <span className="text-[10px] text-blue-200 uppercase tracking-wider font-semibold">Participating Outlets</span>
+                        <div className="flex items-center gap-3">
+                            <div className="bg-white p-1 rounded-md shadow-sm">
+                                <img
+                                    src="/images/logos/tanuki-raw-logo.png"
+                                    alt="Tanuki Raw"
+                                    className="h-8 w-auto object-contain"
+                                />
+                            </div>
+                            <div className="bg-white p-1 rounded-md shadow-sm">
+                                <img
+                                    src="/images/logos/standing-sushi-bar-logo.png"
+                                    alt="Standing Sushi Bar"
+                                    className="h-8 w-auto object-contain"
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </CardContent>
 
                 {/* Decorative background circles */}
-                <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
-                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-blue-400/10 rounded-full blur-2xl" />
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/5 rounded-full blur-2xl z-0" />
+                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-blue-400/10 rounded-full blur-2xl z-0" />
             </motion.div>
         </Card>
     )

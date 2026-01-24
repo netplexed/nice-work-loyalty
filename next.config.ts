@@ -4,7 +4,7 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  disable: false, // Enable PWA in dev for testing Push capabilities
+  disable: process.env.NODE_ENV === "development",
   register: true,
   skipWaiting: true,
 });
