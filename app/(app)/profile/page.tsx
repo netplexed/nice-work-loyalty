@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator'
 import { useRouter } from 'next/navigation'
 import { LogOut, Mail, Phone, Cake } from 'lucide-react'
 import { NotificationsToggle } from '@/components/pwa/notifications-toggle'
+import { MarketingConsentToggle } from '@/components/features/profile/marketing-consent-toggle'
 import { VoucherQR } from '@/components/features/rewards/voucher-qr'
 import { EditProfileDialog } from '@/components/features/profile/edit-profile-dialog'
 
@@ -102,6 +103,11 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Push Notifications</span>
                         <NotificationsToggle />
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Marketing Emails</span>
+                        <MarketingConsentToggle initialConsent={profile.marketing_consent} />
                     </div>
                     <Separator />
                     <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50" onClick={handleSignOut}>

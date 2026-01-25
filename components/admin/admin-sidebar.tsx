@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, Gift, Settings, LogOut, Scan, QrCode, DollarSign, BarChart3, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, Users, Gift, Settings, LogOut, Scan, QrCode, DollarSign, BarChart3, MessageSquare, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -22,6 +22,7 @@ export function AdminSidebar() {
         { href: '/admin/settings', icon: Settings, label: 'Settings' },
         { href: '/admin/reports', icon: BarChart3, label: 'Reports' },
         { href: '/admin/messaging', icon: MessageSquare, label: 'Messaging' },
+        { href: '/admin/emails', icon: Mail, label: 'Campaigns' },
     ]
 
     const handleLogout = async () => {

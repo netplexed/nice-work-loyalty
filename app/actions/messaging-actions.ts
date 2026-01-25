@@ -8,6 +8,7 @@ export interface BroadcastParams {
     title: string
     body: string
     targetTier?: number // If null/undefined, send to all
+    sendEmail?: boolean
 }
 
 export async function broadcastMessage(params: BroadcastParams) {
@@ -32,70 +33,109 @@ export async function broadcastMessage(params: BroadcastParams) {
         throw new Error(`Failed to create broadcast: ${broadcastError.message}`)
     }
 
-    // 2. Select Target Users
-    let query = supabase.from('profiles').select('id')
+    // 2. Select Target Query
+    let query = supabase.from('profiles').select('id, email, marketing_consent')
 
-    // If targeting by tier (nice level), we need to join/check nice_accounts
-    // Note: This assumes 1:1 profile:nice_account
+    // Filter by tier if needed
+    let userIds: string[] = []
+    let emailRecipients: string[] = []
+
     if (params.targetTier) {
-        // This is a bit complex RLS-wise if profiles don't directly have tier.
-        // Let's do a subquery or join approach logic in application code for now
-        // For MVP, if we want to target by tier, we fetch nice_accounts first
-
         const { data: accounts } = await supabase
             .from('nice_accounts')
             .select('user_id')
             .gte('tier_bonus', params.targetTier)
 
-        if (!accounts || accounts.length === 0) return { success: true, sent: 0 }
+        const accountUserIds = accounts?.map(a => a.user_id) || []
+        if (accountUserIds.length === 0) return { success: true, sent: 0 }
 
-        const userIds = accounts.map(a => a.user_id)
+        // Fetch profiles for these users
+        const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, email, marketing_consent')
+            .in('id', accountUserIds)
 
-        // Prepare Notifications
-        const notifications = userIds.map(uid => ({
-            user_id: uid,
-            title: params.title,
-            body: params.body,
-            type: 'broadcast',
-            broadcast_id: broadcast.id
-        }))
-
-        // Bulk Insert (batching if needed, but 10k is usually limit)
-        // For larger sets, we'd queue this or use a postgres function.
-        if (notifications.length > 0) {
-            const { error: notifError } = await supabase.from('notifications').insert(notifications)
-            if (notifError) throw notifError
+        if (profiles) {
+            userIds = profiles.map(p => p.id)
+            if (params.sendEmail) {
+                // Filter for consent and valid email
+                emailRecipients = profiles
+                    .filter(p => p.marketing_consent && p.email)
+                    .map(p => p.email!)
+            }
         }
-
-        // Update sent count
-        await supabase.from('admin_broadcasts').update({ sent_count: notifications.length }).eq('id', broadcast.id)
-
-        return { success: true, sent: notifications.length }
 
     } else {
-        // Send to ALL users
-        const { data: allUsers } = await supabase.from('profiles').select('id')
-
-        if (!allUsers || allUsers.length === 0) return { success: true, sent: 0 }
-
-        const notifications = allUsers.map(u => ({
-            user_id: u.id,
-            title: params.title,
-            body: params.body,
-            type: 'broadcast',
-            broadcast_id: broadcast.id
-        }))
-
-        if (notifications.length > 0) {
-            const { error: notifError } = await supabase.from('notifications').insert(notifications)
-            if (notifError) throw notifError
+        // All users
+        const { data: profiles } = await query
+        if (profiles) {
+            userIds = profiles.map(p => p.id)
+            if (params.sendEmail) {
+                emailRecipients = profiles
+                    .filter(p => p.marketing_consent && p.email)
+                    .map(p => p.email!)
+            }
         }
-
-        await supabase.from('admin_broadcasts').update({ sent_count: notifications.length }).eq('id', broadcast.id)
-
-        return { success: true, sent: notifications.length }
     }
+
+    if (userIds.length === 0) return { success: true, sent: 0 }
+
+    // 3. Create In-App Notifications
+    const notifications = userIds.map(uid => ({
+        user_id: uid,
+        title: params.title,
+        body: params.body,
+        type: 'broadcast',
+        broadcast_id: broadcast.id
+    }))
+
+    if (notifications.length > 0) {
+        const { error: notifError } = await supabase.from('notifications').insert(notifications)
+        if (notifError) throw notifError
+    }
+
+    await supabase.from('admin_broadcasts').update({ sent_count: notifications.length }).eq('id', broadcast.id)
+
+    // 4. Send Push Notifications (Background)
+    try {
+        const { sendPushBatch } = await import('@/lib/push/send-push')
+        await sendPushBatch(userIds, params.title, params.body)
+    } catch (e) {
+        console.error('Failed to send push batch:', e)
+    }
+
+    // 5. Send Emails (Background)
+    if (params.sendEmail && emailRecipients.length > 0) {
+        try {
+            const { sendEmail } = await import('@/lib/email/send-email')
+            // Send in batches or loop. For Resend "Batch" API or loop. 
+            // Resend allows 'to' array for single email to multiple, but that exposes CC. 
+            // We want individual emails or BCC.
+            // Best practice: Loop or Batch API. Let's loop for now (rate limit beware).
+            // Actually, 'to' field in Resend sends distinct emails if using Batch API? No.
+            // 'to' array sends one email to multiple people (visible).
+            // We must send individually or use 'bcc' if we don't care about personalization.
+            // Let's send individually to test.
+
+            // IMPORTANT: For production with thousands, use a queue.
+            // For MVP, limit to first 50 or loop safely.
+
+            await Promise.allSettled(emailRecipients.map(email =>
+                sendEmail({
+                    to: email,
+                    subject: params.title,
+                    html: `<p>${params.body}</p><br/><hr/><p style="font-size:12px; color: #666;">You received this email because you opted in to marketing updates from Nice Work. <a href="${process.env.NEXT_PUBLIC_APP_URL}/profile">Unsubscribe</a></p>`
+                })
+            ))
+
+        } catch (e) {
+            console.error('Failed to send emails:', e)
+        }
+    }
+
+    return { success: true, sent: notifications.length, emailCount: emailRecipients.length }
 }
+
 
 export async function getBroadcasts() {
     const isAdmin = await verifyAdmin()

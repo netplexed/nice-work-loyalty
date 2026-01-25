@@ -18,6 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 
 export default function NewMessagePage() {
     const router = useRouter()
@@ -25,6 +26,7 @@ export default function NewMessagePage() {
     const [title, setTitle] = useState('')
     const [body, setBody] = useState('')
     const [target, setTarget] = useState('all') // 'all' or 'vip'
+    const [sendEmail, setSendEmail] = useState(false)
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -35,7 +37,8 @@ export default function NewMessagePage() {
             const res = await broadcastMessage({
                 title,
                 body,
-                targetTier: target === 'vip' ? 1.2 : undefined // Example logic: VIP is 1.2x multiplier
+                targetTier: target === 'vip' ? 1.2 : undefined, // Example logic: VIP is 1.2x multiplier
+                sendEmail
             })
 
             if (res.success) {
@@ -92,16 +95,37 @@ export default function NewMessagePage() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="body">Message Body</Label>
-                            <Textarea
-                                id="body"
-                                placeholder="Write your message here..."
-                                className="h-32"
-                                value={body}
-                                onChange={e => setBody(e.target.value)}
-                                required
-                            />
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="body">Message Body</Label>
+                                <Textarea
+                                    id="body"
+                                    placeholder="Write your message here..."
+                                    className="h-32"
+                                    value={body}
+                                    onChange={e => setBody(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div className="flex items-center space-x-2 border p-4 rounded-lg bg-slate-50">
+                                <Checkbox
+                                    id="email"
+                                    checked={sendEmail}
+                                    onCheckedChange={(checked) => setSendEmail(!!checked)}
+                                />
+                                <div className="grid gap-1.5 leading-none">
+                                    <Label
+                                        htmlFor="email"
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                        Send via Email
+                                    </Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Also send this message to users' email addresses (if opted in).
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="flex justify-end gap-2 pt-4">
