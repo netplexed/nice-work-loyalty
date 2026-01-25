@@ -14,15 +14,14 @@ export default function AdminRedeemPage() {
     const [loading, setLoading] = useState(false)
     const [result, setResult] = useState<any>(null)
 
-    const handleRedeem = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!code) return
+    const executeRedeem = async (voucherCode: string) => {
+        if (!voucherCode) return
 
         setLoading(true)
         setResult(null)
 
         try {
-            const res = await verifyAndRedeemVoucher(code)
+            const res = await verifyAndRedeemVoucher(voucherCode)
             setResult(res)
             toast.success('Voucher redeemed successfully')
             setCode('') // Clear input on success
@@ -32,6 +31,16 @@ export default function AdminRedeemPage() {
         } finally {
             setLoading(false)
         }
+    }
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        executeRedeem(code)
+    }
+
+    const handleScan = (scannedCode: string) => {
+        setCode(scannedCode)
+        executeRedeem(scannedCode)
     }
 
     return (
@@ -51,7 +60,7 @@ export default function AdminRedeemPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleRedeem} className="flex gap-4">
+                    <form onSubmit={handleFormSubmit} className="flex gap-4">
                         <div className="flex-1 flex gap-2">
                             <Input
                                 placeholder="Enter voucher code"
@@ -59,7 +68,7 @@ export default function AdminRedeemPage() {
                                 onChange={(e) => setCode(e.target.value)}
                                 className="font-mono text-lg uppercase"
                             />
-                            <VoucherScanner onScan={(scanned) => setCode(scanned)} />
+                            <VoucherScanner onScan={handleScan} />
                         </div>
                         <Button type="submit" disabled={loading || !code}>
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Redeem'}

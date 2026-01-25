@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Home, Gift, Scan, User } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { NotificationNav } from '@/components/layout/notification-nav'
 
 export default function AppLayout({
     children,
@@ -28,7 +29,7 @@ export default function AppLayout({
                                 <Scan className="w-7 h-7" />
                             </Link>
                         </div>
-                        <NavItem href="/spin" icon={Gift} label="Spin" />
+                        <NotificationNav />
                         <NavItem href="/profile" icon={User} label="Profile" />
                     </div>
                 </nav>

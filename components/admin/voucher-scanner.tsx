@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { QrReader } from 'react-qr-reader'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Camera, X } from 'lucide-react'
+import { Html5QrcodeScanner } from 'html5-qrcode'
 import {
     Dialog,
     DialogContent,
@@ -19,15 +19,44 @@ interface VoucherScannerProps {
 export function VoucherScanner({ onScan }: VoucherScannerProps) {
     const [open, setOpen] = useState(false)
 
-    const handleResult = (result: any, error: any) => {
-        if (!!result) {
-            onScan(result?.text)
-            setOpen(false) // Close on success
+    useEffect(() => {
+        let scanner: Html5QrcodeScanner | null = null
+
+        if (open) {
+            // Small timeout to ensure DOM is ready
+            const timer = setTimeout(() => {
+                scanner = new Html5QrcodeScanner(
+                    "reader",
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                        aspectRatio: 1.0,
+                        showTorchButtonIfSupported: true
+                    },
+                    false
+                )
+
+                scanner.render((decodedText) => {
+                    onScan(decodedText)
+                    setOpen(false)
+                    scanner?.clear()
+                }, (error) => {
+                    // console.warn(error)
+                })
+            }, 100)
+
+            return () => {
+                clearTimeout(timer)
+                if (scanner) {
+                    try {
+                        scanner.clear().catch(console.error)
+                    } catch (e) {
+                        console.error('Failed to clear scanner', e)
+                    }
+                }
+            }
         }
-        if (!!error) {
-            // console.info(error)
-        }
-    }
+    }, [open, onScan])
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -52,30 +81,13 @@ export function VoucherScanner({ onScan }: VoucherScannerProps) {
                     </div>
                 </DialogHeader>
 
-                <div className="relative aspect-square bg-black">
-                    {open && (
-                        <QrReader
-                            onResult={handleResult}
-                            constraints={{ facingMode: 'environment' }}
-                            containerStyle={{ width: '100%', paddingTop: '100%' }}
-                            videoStyle={{ objectFit: 'cover' }}
-                            scanDelay={500}
-                        />
-                    )}
-
-                    {/* Overlay Guidelines */}
-                    <div className="absolute inset-0 border-[40px] border-black/50 pointer-events-none flex items-center justify-center">
-                        <div className="w-full h-full border-2 border-white/50 rounded-lg relative">
-                            <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-primary -mt-1 -ml-1"></div>
-                            <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-primary -mt-1 -mr-1"></div>
-                            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-primary -mb-1 -ml-1"></div>
-                            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-primary -mb-1 -mr-1"></div>
-                        </div>
-                    </div>
+                <div className="relative aspect-square bg-black flex items-center justify-center">
+                    {/* The Html5QrcodeScanner renders here */}
+                    <div id="reader" className="w-full h-full" />
                 </div>
 
                 <div className="p-4 text-center text-sm text-zinc-400 bg-black">
-                    Point camera at the customer's QR code called "Voucher"
+                    Point camera at the customer's QR code
                 </div>
             </DialogContent>
         </Dialog>

@@ -1,10 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { getAdminStats } from '@/app/actions/admin-actions'
-import { Users, Gift, RotateCcw, ShoppingBag, CreditCard, Activity } from 'lucide-react'
+import { getDashboardStats } from '@/app/actions/reporting-actions'
+import { Users, DollarSign, Activity, AlertCircle, ShoppingBag, UserPlus } from 'lucide-react'
+import { DashboardCharts } from '@/components/admin/dashboard-charts'
 
 export default async function AdminDashboard() {
-    const stats = await getAdminStats()
+    const stats = await getDashboardStats()
 
     return (
         <div className="space-y-8">
@@ -16,55 +17,62 @@ export default async function AdminDashboard() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">Lifetime recorded spend</p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Members</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                        <div className="text-2xl font-bold">{stats.totalMembers}</div>
                         <p className="text-xs text-muted-foreground">Registered accounts</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Points Issued</CardTitle>
-                        <Gift className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Active Members</CardTitle>
+                        <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-green-600">+{stats.totalPointsIssued.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Lifetime points earned</p>
+                        <div className="text-2xl font-bold">{stats.activeMembers30d}</div>
+                        <p className="text-xs text-muted-foreground">Active in last 30 days</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Points Redeemed</CardTitle>
-                        <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Points Liability</CardTitle>
+                        <AlertCircle className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-orange-600">-{stats.totalPointsRedeemed.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Lifetime points spent</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Redemptions</CardTitle>
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalRedemptions}</div>
-                        <p className="text-xs text-muted-foreground">Rewards claimed</p>
+                        <div className="text-2xl font-bold text-orange-600">{stats.pointsLiability.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">Outstanding points balance</p>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
+            {/* Charts Section */}
+            <DashboardCharts
+                revenueTrend={stats.revenueTrend}
+                revenueByLocation={stats.revenueByLocation}
+            />
+
+            {/* Recent Activity Section */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+                <Card>
                     <CardHeader>
                         <CardTitle>Recent Activity</CardTitle>
                         <CardDescription>
-                            Latest points transactions across the platform.
+                            Latest actions across the platform.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -72,56 +80,35 @@ export default async function AdminDashboard() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>User</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Points</TableHead>
-                                    <TableHead className="text-right">Date</TableHead>
+                                    <TableHead>Action</TableHead>
+                                    <TableHead>Details</TableHead>
+                                    <TableHead className="text-right">Time</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {/* @ts-ignore - DB types might need ignoring for complex joins */}
                                 {stats.recentActivity.map((activity) => (
-                                    <TableRow key={activity.id}>
+                                    <TableRow key={`${activity.type}-${activity.id}`}>
                                         <TableCell>
-                                            <div className="font-medium">{activity.profiles?.full_name || 'Unknown'}</div>
-                                            <div className="text-xs text-muted-foreground">{activity.profiles?.email}</div>
-                                        </TableCell>
-                                        <TableCell className="capitalize">
-                                            {activity.transaction_type.replace('_', ' ')}
+                                            <div className="font-medium">{activity.user || 'Unknown'}</div>
                                         </TableCell>
                                         <TableCell>
-                                            <span className={activity.points > 0 ? "text-green-600 font-medium" : "text-orange-600 font-medium"}>
-                                                {activity.points > 0 ? '+' : ''}{activity.points}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                {activity.type === 'purchase' && <DollarSign className="h-4 w-4 text-green-500" />}
+                                                {activity.type === 'redemption' && <ShoppingBag className="h-4 w-4 text-blue-500" />}
+                                                {activity.type === 'signup' && <UserPlus className="h-4 w-4 text-purple-500" />}
+                                                <span className="capitalize">{activity.type}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="text-muted-foreground">{activity.description}</span>
                                         </TableCell>
                                         <TableCell className="text-right text-muted-foreground">
-                                            {new Date(activity.created_at).toLocaleDateString()}
+                                            {new Date(activity.timestamp).toLocaleDateString()} {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
-                    </CardContent>
-                </Card>
-
-                <Card className="col-span-3">
-                    <CardHeader>
-                        <CardTitle>Platform Health</CardTitle>
-                        <CardDescription>
-                            Quick snapshot of system metrics.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center">
-                            <RotateCcw className="mr-2 h-4 w-4 text-muted-foreground" />
-                            <div className="flex-1 space-y-1">
-                                <p className="text-sm font-medium leading-none">Total Spins</p>
-                                <p className="text-sm text-muted-foreground">
-                                    Number of times users spun the wheel.
-                                </p>
-                            </div>
-                            <div className="font-bold">{stats.totalSpins}</div>
-                        </div>
-                        {/* Placeholder for more health metrics later */}
                     </CardContent>
                 </Card>
             </div>

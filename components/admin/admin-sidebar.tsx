@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, Gift, Settings, LogOut, Scan, QrCode, DollarSign } from 'lucide-react'
+import { LayoutDashboard, Users, Gift, Settings, LogOut, Scan, QrCode, DollarSign, BarChart3, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -20,6 +20,8 @@ export function AdminSidebar() {
         { href: '/admin/redeem', icon: Scan, label: 'Redeem' },
         { href: '/admin/pos', icon: DollarSign, label: 'POS / Record' },
         { href: '/admin/settings', icon: Settings, label: 'Settings' },
+        { href: '/admin/reports', icon: BarChart3, label: 'Reports' },
+        { href: '/admin/messaging', icon: MessageSquare, label: 'Messaging' },
     ]
 
     const handleLogout = async () => {
@@ -28,7 +30,7 @@ export function AdminSidebar() {
     }
 
     return (
-        <div className="w-64 bg-slate-900 h-screen flex flex-col text-slate-300">
+        <div className="h-full flex flex-col text-slate-300 bg-slate-900">
             <div className="p-6 border-b border-slate-800">
                 <h2 className="text-xl font-bold text-white tracking-tight">Nice Work Admin</h2>
             </div>
