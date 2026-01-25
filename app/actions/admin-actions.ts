@@ -181,7 +181,7 @@ export async function getAdminRewards() {
 
     const { data: rewards, error } = await supabase
         .from('rewards')
-        .select('*')
+        .select('*, redemptions(count)')
         .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -302,4 +302,107 @@ export async function verifyAndRedeemVoucher(code: string) {
         rewardName: redemption.rewards?.name,
         customerName: redemption.profiles?.full_name || 'Unknown User'
     }
+}
+
+export async function recordUserSpend(userId: string, amount: number, location: string = 'tanuki_raw') {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser() // Admin ID
+
+    // 1. Calculate points
+    const POINTS_PER_DOLLAR = 5
+    const pointsToEarn = Math.floor(amount * POINTS_PER_DOLLAR)
+
+    // 2. Record Purchase
+    const { data: purchase, error: purchaseError } = await supabase
+        .from('purchases')
+        .insert({
+            user_id: userId,
+            location: location,
+            amount: amount,
+            points_earned: pointsToEarn,
+            staff_id: user?.id,
+            multiplier_applied: 1.0
+        })
+        .select()
+        .single()
+
+    if (purchaseError) {
+        console.error('Purchase error:', purchaseError)
+        throw new Error('Failed to record purchase: ' + purchaseError.message)
+    }
+
+    // 3. Award Points
+    // We insert a 'earned' transaction
+    const { error: pointsError } = await supabase
+        .from('points_transactions')
+        .insert({
+            user_id: userId,
+            staff_id: user?.id,
+            transaction_type: 'earned_purchase',
+            points: pointsToEarn,
+            location: location,
+            description: `Purchase of $${amount}`,
+            metadata: { purchase_id: purchase.id }
+        })
+
+    if (pointsError) {
+        console.error('Points error:', pointsError)
+        throw new Error('Failed to award points: ' + JSON.stringify(pointsError))
+    }
+
+    // 4. Record Check-in (Visit)
+    await supabase
+        .from('check_ins')
+        .insert({
+            user_id: userId,
+            location: location,
+            points_awarded: 0
+        })
+
+    revalidatePath('/admin')
+    revalidatePath(`/admin/users/${userId}`)
+
+    return {
+        success: true,
+        pointsEarned: pointsToEarn,
+        purchaseId: purchase.id
+    }
+}
+
+export async function searchCustomer(query: string) {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    const cleanQuery = query.toLowerCase().trim()
+
+    // 1. Try ID search (if it looks like UUID)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanQuery)
+    if (isUuid) {
+        const { data } = await supabase.from('profiles').select('*').eq('id', cleanQuery).single()
+        if (data) return data
+    }
+
+    // 2. Try Email
+    if (cleanQuery.includes('@')) {
+        const { data } = await supabase.from('profiles').select('*').ilike('email', cleanQuery).single()
+        if (data) return data
+    }
+
+    // 3. Try Phone (partial match or exact)
+    // Remove non-digits for cleaner search if stored clean? 
+    // Assuming stored as string. user input might have dashes.
+    // For now, simple ilike.
+    const { data } = await supabase.from('profiles').select('*').ilike('phone', `%${cleanQuery}%`).limit(1).maybeSingle()
+
+    // 4. Try Name (Bonus)
+    if (!data) {
+        const { data: nameData } = await supabase.from('profiles').select('*').ilike('full_name', `%${cleanQuery}%`).limit(1).maybeSingle()
+        return nameData
+    }
+
+    return data
 }

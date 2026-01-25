@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { verifyAndRedeemVoucher } from '@/app/actions/admin-actions'
 import { toast } from "sonner"
 import { Loader2, CheckCircle, XCircle, Search } from "lucide-react"
+import { VoucherScanner } from "@/components/admin/voucher-scanner"
 
 export default function AdminRedeemPage() {
     const [code, setCode] = useState('')
@@ -51,12 +52,15 @@ export default function AdminRedeemPage() {
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleRedeem} className="flex gap-4">
-                        <Input
-                            placeholder="Enter voucher code"
-                            value={code}
-                            onChange={(e) => setCode(e.target.value)}
-                            className="font-mono text-lg uppercase"
-                        />
+                        <div className="flex-1 flex gap-2">
+                            <Input
+                                placeholder="Enter voucher code"
+                                value={code}
+                                onChange={(e) => setCode(e.target.value)}
+                                className="font-mono text-lg uppercase"
+                            />
+                            <VoucherScanner onScan={(scanned) => setCode(scanned)} />
+                        </div>
                         <Button type="submit" disabled={loading || !code}>
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Redeem'}
                         </Button>

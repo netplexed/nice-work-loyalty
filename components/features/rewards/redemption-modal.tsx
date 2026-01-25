@@ -13,6 +13,7 @@ import { useState } from 'react'
 import { redeemReward } from '@/app/actions/rewards-actions'
 import { Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { VoucherQR } from './voucher-qr'
 
 interface RedemptionModalProps {
     reward: any
@@ -115,6 +116,7 @@ export function RedemptionModal({ reward, open, onOpenChange, onSuccess }: Redem
                             </div>
                         </DialogHeader>
                         <div className="flex flex-col items-center gap-2 p-6 bg-gray-50 rounded-lg border border-dashed border-gray-200 my-2">
+                            <VoucherQR code={voucher} className="mb-4" />
                             <span className="text-xs uppercase text-muted-foreground tracking-wider">Voucher Code</span>
                             <span className="text-3xl font-mono font-bold tracking-widest text-primary">{voucher}</span>
                         </div>

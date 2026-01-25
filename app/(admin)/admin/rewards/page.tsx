@@ -35,6 +35,7 @@ export default async function AdminRewardsPage() {
                                 <TableHead>Category</TableHead>
                                 <TableHead className="text-right">Cost</TableHead>
                                 <TableHead className="text-center">Inventory</TableHead>
+                                <TableHead className="text-center">Redemptions</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
@@ -64,6 +65,9 @@ export default async function AdminRewardsPage() {
                                         ) : (
                                             <span className="text-muted-foreground text-lg">∞</span>
                                         )}
+                                    </TableCell>
+                                    <TableCell className="text-center font-mono">
+                                        {reward.redemptions?.[0]?.count || 0}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant={reward.active ? 'default' : 'secondary'}>

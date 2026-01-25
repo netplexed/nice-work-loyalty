@@ -102,7 +102,50 @@ export function NotificationsToggle() {
         }
     }
 
-    if (!isSupported) return null
+    if (!isSupported) {
+        // If on iOS/Mobile
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
+
+        if (isIOS) {
+            if (isStandalone) {
+                // Check for Secure Context (HTTPS)
+                if (typeof window !== 'undefined' && !window.isSecureContext) {
+                    return (
+                        <Button
+                            variant="outline"
+                            disabled
+                            className="opacity-50"
+                        >
+                            <BellOff className="mr-2 h-4 w-4" /> HTTPS Required
+                        </Button>
+                    )
+                }
+
+                // In PWA but still no PushManager? Likely old iOS.
+                return (
+                    <Button
+                        variant="outline"
+                        disabled
+                        className="opacity-50"
+                    >
+                        <BellOff className="mr-2 h-4 w-4" /> iOS 16.4+ Required
+                    </Button>
+                )
+            }
+
+            // Not in PWA yet
+            return (
+                <Button
+                    variant="outline"
+                    onClick={() => toast.info("To enable notifications on iPhone, tap 'Share' -> 'Add to Home Screen', then open the app from your home screen.")}
+                >
+                    <BellOff className="mr-2 h-4 w-4" /> Enable Notifications
+                </Button>
+            )
+        }
+        return null // Hide on desktop/other if truly unsupported
+    }
 
     if (loading) return <Button variant="outline" disabled size="icon"><Loader2 className="h-4 w-4 animate-spin" /></Button>
 

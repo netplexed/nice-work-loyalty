@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator'
 import { useRouter } from 'next/navigation'
 import { LogOut, Mail, Phone, Cake } from 'lucide-react'
 import { NotificationsToggle } from '@/components/pwa/notifications-toggle'
+import { VoucherQR } from '@/components/features/rewards/voucher-qr'
 import { EditProfileDialog } from '@/components/features/profile/edit-profile-dialog'
 
 export default function ProfilePage() {
@@ -41,9 +42,17 @@ export default function ProfilePage() {
                 </div>
             </div>
 
-            import {EditProfileDialog} from '@/components/features/profile/edit-profile-dialog'
 
-            // ...
+
+
+            <Card>
+                <CardContent className="flex flex-col items-center">
+                    <div className="w-48 mx-auto mb-4">
+                        <VoucherQR code={`user:${profile.id}`} size={180} className="w-full" />
+                    </div>
+                    <p className="text-sm text-center text-muted-foreground">Scan at counter to earn points</p>
+                </CardContent>
+            </Card>
 
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
@@ -106,6 +115,6 @@ export default function ProfilePage() {
             <div className="text-center text-xs text-muted-foreground pt-8">
                 v1.0.0
             </div>
-        </div>
+        </div >
     )
 }

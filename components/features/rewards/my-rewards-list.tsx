@@ -3,9 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Copy, CheckCircle } from "lucide-react"
+import { Copy, CheckCircle, QrCode } from "lucide-react"
 import type { Database } from '@/lib/supabase/database.types'
 import { toast } from "sonner"
+import { VoucherQR } from "./voucher-qr"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 // Type definition for the joined data
 type RedemptionWithReward = Database['public']['Tables']['redemptions']['Row'] & {
@@ -69,17 +71,42 @@ function RewardItem({ redemption }: { redemption: RedemptionWithReward }) {
                     {/* Voucher Code Section */}
                     {status === 'pending' || status === 'approved' ? (
                         <div className="bg-muted/50 p-2 rounded-md border flex items-center justify-between gap-2">
-                            <div className="font-mono font-medium text-sm tracking-widest">
+                            <div className="font-mono font-medium text-sm tracking-widest pl-2">
                                 {voucher_code}
                             </div>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={copyToClipboard}
-                            >
-                                <Copy className="h-4 w-4" />
-                            </Button>
+                            <div className="flex gap-1">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={copyToClipboard}
+                                >
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                                {/* QR Code Dialog Trigger */}
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" size="sm" className="h-8 gap-1">
+                                            <QrCode className="w-4 h-4" />
+                                            <span className="hidden sm:inline">QR</span>
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-xs">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-center">Show to Staff</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="flex flex-col items-center gap-4 py-4">
+                                            <VoucherQR code={voucher_code!} size={200} />
+                                            <div className="font-mono font-bold text-2xl tracking-widest bg-muted px-4 py-2 rounded">
+                                                {voucher_code}
+                                            </div>
+                                            <p className="text-center text-sm text-muted-foreground">
+                                                Ask staff to scan this code to redeem your reward.
+                                            </p>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
                         </div>
                     ) : (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground p-2 bg-muted/30 rounded-md">
