@@ -258,7 +258,11 @@ export async function verifyAndRedeemVoucher(code: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
+    // Normalize code
+    const normalizedCode = code.trim().toUpperCase()
+
     // Find the redemption
+    // We use ilike to be safe, but normalizedCode should match if stored as uppercase.
     const { data: redemption, error: findError } = await supabase
         .from('redemptions')
         .select(`
@@ -266,8 +270,8 @@ export async function verifyAndRedeemVoucher(code: string) {
             rewards (name, description),
             profiles:user_id (full_name, email)
         `)
-        .eq('voucher_code', code)
-        .single()
+        .ilike('voucher_code', normalizedCode)
+        .maybeSingle()
 
     if (findError || !redemption) {
         throw new Error('Invalid voucher code')

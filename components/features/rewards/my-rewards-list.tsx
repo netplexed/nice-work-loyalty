@@ -58,7 +58,7 @@ function RewardItem({ redemption }: { redemption: RedemptionWithReward }) {
                                 <p className="text-sm text-muted-foreground line-clamp-1">{rewards.description}</p>
                             </div>
                             <Badge variant={status === 'redeemed' ? 'secondary' : 'default'} className="capitalize">
-                                {status}
+                                {status === 'pending' ? 'Available' : status}
                             </Badge>
                         </div>
                         <div className="text-xs text-muted-foreground">
@@ -103,11 +103,36 @@ export function MyRewardsList({ redemptions }: MyRewardsListProps) {
         )
     }
 
+    const available = redemptions.filter(r => r.status === 'pending' || r.status === 'approved')
+    const history = redemptions.filter(r => r.status !== 'pending' && r.status !== 'approved')
+
     return (
-        <div className="space-y-4">
-            {redemptions.map(redemption => (
-                <RewardItem key={redemption.id} redemption={redemption} />
-            ))}
+        <div className="space-y-8">
+            {/* Available Section */}
+            <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Available to Use</h3>
+                {available.length > 0 ? (
+                    available.map(redemption => (
+                        <RewardItem key={redemption.id} redemption={redemption} />
+                    ))
+                ) : (
+                    <div className="p-4 border border-dashed rounded-lg text-center text-sm text-muted-foreground">
+                        No available rewards. Check the catalog!
+                    </div>
+                )}
+            </div>
+
+            {/* History Section */}
+            {history.length > 0 && (
+                <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider pt-4 border-t">Past Redemptions</h3>
+                    <div className="opacity-80">
+                        {history.map(redemption => (
+                            <RewardItem key={redemption.id} redemption={redemption} />
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

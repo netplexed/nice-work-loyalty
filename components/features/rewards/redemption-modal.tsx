@@ -18,9 +18,10 @@ interface RedemptionModalProps {
     reward: any
     open: boolean
     onOpenChange: (open: boolean) => void
+    onSuccess?: (redemption: any) => void
 }
 
-export function RedemptionModal({ reward, open, onOpenChange }: RedemptionModalProps) {
+export function RedemptionModal({ reward, open, onOpenChange, onSuccess }: RedemptionModalProps) {
     const [loading, setLoading] = useState(false)
     const [voucher, setVoucher] = useState<string | null>(null)
 
@@ -32,6 +33,32 @@ export function RedemptionModal({ reward, open, onOpenChange }: RedemptionModalP
             const result = await redeemReward(reward.id)
             setVoucher(result.voucherCode)
             toast.success('Reward redeemed successfully!')
+
+            // Notify parent to update My Rewards list instantly
+            if (onSuccess) {
+                onSuccess({
+                    id: 'temp-' + Date.now(), // Temporary ID for optimistic UI
+                    voucher_code: result.voucherCode,
+                    status: 'pending',
+                    redeemed_at: null,
+                    created_at: new Date().toISOString(),
+                    rewards: {
+                        name: reward.name,
+                        description: reward.description,
+                        image_url: reward.image_url,
+                        category: reward.category
+                    }
+                })
+            }
+
+            // Trigger confetti
+            const { default: confetti } = await import('canvas-confetti')
+            confetti({
+                particleCount: 150,
+                spread: 60,
+                colors: ['#FFD700', '#FFA500']
+            })
+
         } catch (error: any) {
             toast.error(error.message || 'Failed to redeem reward')
         } finally {

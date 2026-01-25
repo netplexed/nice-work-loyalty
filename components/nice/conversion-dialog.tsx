@@ -25,7 +25,7 @@ interface ConversionDialogProps {
     onConvertSuccess: (niceAmount: number, pointsGained: number) => void
 }
 
-const CONVERSION_RATE = 20 // 20 Nice = 1 Point
+const CONVERSION_RATE = 4 // 4 Nice = 1 Point
 
 export function ConversionDialog({ open, onOpenChange, niceBalance, onConvertSuccess }: ConversionDialogProps) {
     const [amountToConvert, setAmountToConvert] = useState<number>(0)

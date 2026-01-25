@@ -91,6 +91,9 @@ export default function RewardsPage() {
                 reward={selectedReward}
                 open={modalOpen}
                 onOpenChange={setModalOpen}
+                onSuccess={(newRedemption) => {
+                    setRedemptions(prev => [newRedemption, ...prev])
+                }}
             />
         </div>
     )

@@ -226,10 +226,10 @@ export async function convertNiceToPoints(
 
     if (!user) throw new Error('Not authenticated')
 
-    const pointsToGain = Math.floor(niceAmount / 20)
+    const pointsToGain = Math.floor(niceAmount / 4)
 
     if (pointsToGain < 1) {
-        throw new Error('Amount too small to convert (min 20 Nice)')
+        throw new Error('Amount too small to convert (min 4 Nice)')
     }
 
     const { data, error } = await supabase.rpc('convert_nice_to_points', {
