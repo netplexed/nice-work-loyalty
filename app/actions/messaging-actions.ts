@@ -3,11 +3,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { verifyAdmin } from './admin-actions'
 import { revalidatePath } from 'next/cache'
+import { resolveTargetAudience, TargetCriteria } from './segmentation-actions'
 
-export interface BroadcastParams {
+interface BroadcastParams {
     title: string
     body: string
-    targetTier?: number // If null/undefined, send to all
+    targetCriteria?: TargetCriteria
     sendEmail?: boolean
 }
 
@@ -18,67 +19,25 @@ export async function broadcastMessage(params: BroadcastParams) {
     const supabase = await createClient()
 
     // 1. Create Broadcast Record
-    const { data: broadcast, error: broadcastError } = await supabase
+    const { data: broadcast, error: insertError } = await supabase
         .from('admin_broadcasts')
         .insert({
             title: params.title,
             body: params.body,
-            target_criteria: params.targetTier ? { tier: params.targetTier } : {},
+            target_criteria: params.targetCriteria || {},
             created_by: (await supabase.auth.getUser()).data.user?.id
         })
         .select()
         .single()
 
-    if (broadcastError) {
-        throw new Error(`Failed to create broadcast: ${broadcastError.message}`)
+    if (insertError) throw new Error('Failed to create broadcast: ' + insertError.message)
+
+    // 2. Resolve Audience
+    const { userIds } = await resolveTargetAudience(params.targetCriteria || {})
+
+    if (userIds.length === 0) {
+        return { success: true, sent: 0, emailCount: 0 }
     }
-
-    // 2. Select Target Query
-    let query = supabase.from('profiles').select('id, email, marketing_consent')
-
-    // Filter by tier if needed
-    let userIds: string[] = []
-    let emailRecipients: string[] = []
-
-    if (params.targetTier) {
-        const { data: accounts } = await supabase
-            .from('nice_accounts')
-            .select('user_id')
-            .gte('tier_bonus', params.targetTier)
-
-        const accountUserIds = accounts?.map(a => a.user_id) || []
-        if (accountUserIds.length === 0) return { success: true, sent: 0 }
-
-        // Fetch profiles for these users
-        const { data: profiles } = await supabase
-            .from('profiles')
-            .select('id, email, marketing_consent')
-            .in('id', accountUserIds)
-
-        if (profiles) {
-            userIds = profiles.map(p => p.id)
-            if (params.sendEmail) {
-                // Filter for consent and valid email
-                emailRecipients = profiles
-                    .filter(p => p.marketing_consent && p.email)
-                    .map(p => p.email!)
-            }
-        }
-
-    } else {
-        // All users
-        const { data: profiles } = await query
-        if (profiles) {
-            userIds = profiles.map(p => p.id)
-            if (params.sendEmail) {
-                emailRecipients = profiles
-                    .filter(p => p.marketing_consent && p.email)
-                    .map(p => p.email!)
-            }
-        }
-    }
-
-    if (userIds.length === 0) return { success: true, sent: 0 }
 
     // 3. Create In-App Notifications
     const notifications = userIds.map(uid => ({
@@ -86,17 +45,18 @@ export async function broadcastMessage(params: BroadcastParams) {
         title: params.title,
         body: params.body,
         type: 'broadcast',
-        broadcast_id: broadcast.id
+        broadcast_id: broadcast.id,
+        is_read: false
     }))
 
-    if (notifications.length > 0) {
-        const { error: notifError } = await supabase.from('notifications').insert(notifications)
-        if (notifError) throw notifError
-    }
+    const { error: notifError } = await supabase.from('notifications').insert(notifications)
 
+    if (notifError) throw new Error('Failed to send notifications')
+
+    // 4. Update sent count
     await supabase.from('admin_broadcasts').update({ sent_count: notifications.length }).eq('id', broadcast.id)
 
-    // 4. Send Push Notifications (Background)
+    // 5. Send Push (Background attempt)
     try {
         const { sendPushBatch } = await import('@/lib/push/send-push')
         await sendPushBatch(userIds, params.title, params.body)
@@ -104,36 +64,41 @@ export async function broadcastMessage(params: BroadcastParams) {
         console.error('Failed to send push batch:', e)
     }
 
-    // 5. Send Emails (Background)
-    if (params.sendEmail && emailRecipients.length > 0) {
+    // 6. Send Email if requested
+    let emailCount = 0
+    if (params.sendEmail) {
         try {
-            const { sendEmail } = await import('@/lib/email/send-email')
-            // Send in batches or loop. For Resend "Batch" API or loop. 
-            // Resend allows 'to' array for single email to multiple, but that exposes CC. 
-            // We want individual emails or BCC.
-            // Best practice: Loop or Batch API. Let's loop for now (rate limit beware).
-            // Actually, 'to' field in Resend sends distinct emails if using Batch API? No.
-            // 'to' array sends one email to multiple people (visible).
-            // We must send individually or use 'bcc' if we don't care about personalization.
-            // Let's send individually to test.
+            const { data: profiles } = await supabase
+                .from('profiles')
+                .select('email')
+                .in('id', userIds)
+                .eq('marketing_consent', true)
+                .not('email', 'is', null)
 
-            // IMPORTANT: For production with thousands, use a queue.
-            // For MVP, limit to first 50 or loop safely.
+            const emails = profiles?.map(p => p.email).filter(Boolean) as string[] || []
+            emailCount = emails.length
 
-            await Promise.allSettled(emailRecipients.map(email =>
-                sendEmail({
+            if (emails.length > 0) {
+                const { sendEmail } = await import('@/lib/email/send-email')
+                const items = emails.map(email => ({
                     to: email,
                     subject: params.title,
-                    html: `<p>${params.body}</p><br/><hr/><p style="font-size:12px; color: #666;">You received this email because you opted in to marketing updates from Nice Work. <a href="${process.env.NEXT_PUBLIC_APP_URL}/profile">Unsubscribe</a></p>`
-                })
-            ))
+                    html: `<p>${params.body}</p><br/><hr/><p style="font-size:12px; color: #666;">Nice Work Loyalty Broadcast. <a href="${process.env.NEXT_PUBLIC_APP_URL}/profile">Unsubscribe</a></p>`
+                }))
 
+                // Limit concurrency
+                const batchSize = 10
+                for (let i = 0; i < items.length; i += batchSize) {
+                    const batch = items.slice(i, i + batchSize)
+                    await Promise.allSettled(batch.map(item => sendEmail(item)))
+                }
+            }
         } catch (e) {
             console.error('Failed to send emails:', e)
         }
     }
 
-    return { success: true, sent: notifications.length, emailCount: emailRecipients.length }
+    return { success: true, sent: notifications.length, emailCount }
 }
 
 

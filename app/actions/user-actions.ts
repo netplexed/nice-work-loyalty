@@ -50,6 +50,7 @@ export async function updateUserProfile(data: {
     phone?: string
     birthday?: string
     avatar_url?: string
+    marketing_consent?: boolean
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

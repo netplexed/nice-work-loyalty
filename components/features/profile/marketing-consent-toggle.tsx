@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Switch } from '@/components/ui/switch'
-import { updateProfile } from '@/app/actions/user-actions'
+import { updateUserProfile } from '@/app/actions/user-actions'
 import { toast } from 'sonner'
 
 export function MarketingConsentToggle({ initialConsent }: { initialConsent: boolean }) {
@@ -13,7 +13,7 @@ export function MarketingConsentToggle({ initialConsent }: { initialConsent: boo
         setConsent(checked) // Optimistic
         setLoading(true)
         try {
-            await updateProfile({ marketing_consent: checked })
+            await updateUserProfile({ marketing_consent: checked })
             toast.success(checked ? 'Subscribed to emails' : 'Unsubscribed from emails')
         } catch (error) {
             setConsent(!checked) // Revert

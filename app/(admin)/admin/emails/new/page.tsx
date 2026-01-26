@@ -10,13 +10,8 @@ import { ArrowLeft, Save } from "lucide-react"
 import { createCampaign } from '@/app/actions/email-campaign-actions'
 import { toast } from 'sonner'
 import dynamic from 'next/dynamic'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+import { SegmentBuilder } from '@/components/admin/segmentation/segment-builder'
+import { TargetCriteria } from '@/app/actions/segmentation-actions'
 
 const EmailEditor = dynamic(() => import('@/components/admin/email/email-editor').then(mod => mod.EmailEditor), {
     ssr: false,
@@ -28,7 +23,7 @@ export default function NewCampaignPage() {
     const [loading, setLoading] = useState(false)
     const [title, setTitle] = useState('')
     const [subject, setSubject] = useState('')
-    const [targetAudience, setTargetAudience] = useState('all')
+    const [targetSettings, setTargetSettings] = useState<TargetCriteria>({})
     const [htmlContent, setHtmlContent] = useState('')
 
     // Default initial content
@@ -49,7 +44,8 @@ export default function NewCampaignPage() {
             await createCampaign({
                 title,
                 subject,
-                target_audience: targetAudience,
+                target_audience: 'segment',
+                target_settings: targetSettings,
                 html_content: htmlContent || initialContent
             })
             toast.success('Campaign created successfully')
@@ -105,17 +101,8 @@ export default function NewCampaignPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="target">Target Audience</Label>
-                        <Select value={targetAudience} onValueChange={setTargetAudience}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Members</SelectItem>
-                                <SelectItem value="vip">VIP Members Only (1.2x+)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground">Who receives this campaign?</p>
+                        <Label>Target Audience</Label>
+                        <SegmentBuilder value={targetSettings} onChange={setTargetSettings} />
                     </div>
 
                     <div className="space-y-2">

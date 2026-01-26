@@ -13,6 +13,7 @@ import { NotificationsToggle } from '@/components/pwa/notifications-toggle'
 import { MarketingConsentToggle } from '@/components/features/profile/marketing-consent-toggle'
 import { VoucherQR } from '@/components/features/rewards/voucher-qr'
 import { EditProfileDialog } from '@/components/features/profile/edit-profile-dialog'
+import { DeleteAccountDialog } from '@/components/features/profile/delete-account-dialog'
 
 export default function ProfilePage() {
     const [profile, setProfile] = useState<any>(null)
@@ -110,11 +111,17 @@ export default function ProfilePage() {
                         <MarketingConsentToggle initialConsent={profile.marketing_consent} />
                     </div>
                     <Separator />
+                    <Separator />
                     <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50" onClick={handleSignOut}>
                         <LogOut className="w-4 h-4 mr-2" />
                         Sign Out
                     </Button>
+                    <Separator />
+                    <div className="pt-2">
+                        <DeleteAccountDialog />
+                    </div>
                 </CardContent>
+
             </Card>
 
 

@@ -11,21 +11,16 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Send } from "lucide-react"
 import { broadcastMessage } from '@/app/actions/messaging-actions'
 import { toast } from 'sonner'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { SegmentBuilder } from '@/components/admin/segmentation/segment-builder'
+import { TargetCriteria } from '@/app/actions/segmentation-actions'
 
 export default function NewMessagePage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [title, setTitle] = useState('')
     const [body, setBody] = useState('')
-    const [target, setTarget] = useState('all') // 'all' or 'vip'
+    const [targetSettings, setTargetSettings] = useState<TargetCriteria>({})
     const [sendEmail, setSendEmail] = useState(false)
 
     const handleSend = async (e: React.FormEvent) => {
@@ -37,7 +32,7 @@ export default function NewMessagePage() {
             const res = await broadcastMessage({
                 title,
                 body,
-                targetTier: target === 'vip' ? 1.2 : undefined, // Example logic: VIP is 1.2x multiplier
+                targetCriteria: targetSettings,
                 sendEmail
             })
 
@@ -72,16 +67,8 @@ export default function NewMessagePage() {
                 <CardContent className="pt-6">
                     <form onSubmit={handleSend} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="target">Target Audience</Label>
-                            <Select value={target} onValueChange={setTarget}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Members</SelectItem>
-                                    <SelectItem value="vip">VIP Members Only (1.2x+)</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <Label>Target Audience</Label>
+                            <SegmentBuilder value={targetSettings} onChange={setTargetSettings} />
                         </div>
 
                         <div className="space-y-2">

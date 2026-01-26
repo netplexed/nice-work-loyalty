@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Save } from "lucide-react"
 import { updateCampaign, getCampaign } from '@/app/actions/email-campaign-actions'
 import { toast } from 'sonner'
+import { SegmentBuilder } from '@/components/admin/segmentation/segment-builder'
+import { TargetCriteria } from '@/app/actions/segmentation-actions'
 import dynamic from 'next/dynamic'
 
 const EmailEditor = dynamic(() => import('@/components/admin/email/email-editor').then(mod => mod.EmailEditor), {
@@ -23,6 +25,7 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
     const [saving, setSaving] = useState(false)
     const [title, setTitle] = useState('')
     const [subject, setSubject] = useState('')
+    const [targetSettings, setTargetSettings] = useState<TargetCriteria>({})
     const [htmlContent, setHtmlContent] = useState('')
 
     useEffect(() => {
@@ -30,6 +33,7 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
             if (campaign) {
                 setTitle(campaign.title)
                 setSubject(campaign.subject)
+                setTargetSettings(campaign.target_settings || {})
                 setHtmlContent(campaign.html_content)
                 setLoading(false)
             } else {
@@ -50,6 +54,7 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
             await updateCampaign(id, {
                 title,
                 subject,
+                target_settings: targetSettings,
                 html_content: htmlContent
             })
             toast.success('Campaign updated successfully')
@@ -104,6 +109,11 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                             onChange={e => setTitle(e.target.value)}
                         />
                         <p className="text-xs text-muted-foreground">Only visible to admins.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Target Audience</Label>
+                        <SegmentBuilder value={targetSettings} onChange={setTargetSettings} />
                     </div>
 
                     <div className="space-y-2">
