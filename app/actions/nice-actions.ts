@@ -161,8 +161,7 @@ export async function collectNice(): Promise<CollectionResult> {
     console.log('Nice to collect:', niceToCollect)
 
     const { data, error } = await supabase.rpc('collect_nice_transaction', {
-        p_user_id: user.id,
-        p_nice_amount: niceToCollect
+        p_user_id: user.id
     })
 
     if (error) {
@@ -234,8 +233,7 @@ export async function convertNiceToPoints(
 
     const { data, error } = await supabase.rpc('convert_nice_to_points', {
         p_user_id: user.id,
-        p_nice_amount: niceAmount,
-        p_points_amount: pointsToGain
+        p_nice_amount: niceAmount
     })
 
     if (error) {

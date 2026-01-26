@@ -6,10 +6,10 @@ import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
-import TextStyle from '@tiptap/extension-text-style'
+import { TextStyle } from '@tiptap/extension-text-style'
 import FontFamily from '@tiptap/extension-font-family'
 import { Button } from '@/components/ui/button'
-import { Bold, Italic, List, ListOrdered, Image as ImageIcon, Heading1, Heading2, Quote, Undo, Redo, Type } from 'lucide-react'
+import { Bold, Italic, List, ListOrdered, Image as ImageIcon, Heading1, Heading2, Quote, Undo, Redo, Type, Hash } from 'lucide-react'
 import { uploadCampaignImage } from '@/lib/storage/upload'
 import { toast } from 'sonner'
 import {
@@ -18,6 +18,66 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+
+import { Extension } from '@tiptap/core'
+
+const FontSize = Extension.create({
+    name: 'fontSize',
+
+    addOptions() {
+        return {
+            types: ['textStyle'],
+        }
+    },
+
+    addGlobalAttributes() {
+        return [
+            {
+                types: this.options.types,
+                attributes: {
+                    fontSize: {
+                        default: null,
+                        parseHTML: element => element.style.fontSize.replace(/['"]+/g, ''),
+                        renderHTML: attributes => {
+                            if (!attributes.fontSize) {
+                                return {}
+                            }
+
+                            return {
+                                style: `font-size: ${attributes.fontSize}`,
+                            }
+                        },
+                    },
+                },
+            },
+        ]
+    },
+
+    addCommands() {
+        return {
+            setFontSize: (fontSize) => ({ chain }) => {
+                return chain()
+                    .setMark('textStyle', { fontSize })
+                    .run()
+            },
+            unsetFontSize: () => ({ chain }) => {
+                return chain()
+                    .setMark('textStyle', { fontSize: null })
+                    .removeEmptyTextStyle()
+                    .run()
+            },
+        }
+    },
+})
+
+declare module '@tiptap/core' {
+    interface Commands<ReturnType> {
+        fontSize: {
+            setFontSize: (size: string) => ReturnType
+            unsetFontSize: () => ReturnType
+        }
+    }
+}
 
 interface EmailEditorProps {
     content: string
@@ -39,6 +99,10 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
 
     const setFont = (font: string) => {
         editor.chain().focus().setFontFamily(font).run()
+    }
+
+    const setSize = (size: string) => {
+        editor.chain().focus().setFontSize(size).run()
     }
 
     return (
@@ -68,6 +132,42 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
                     <DropdownMenuItem onClick={() => setFont('cursive')} className="italic">
                         Cursive
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFont('Arial, sans-serif')} className="font-sans">
+                        Arial
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFont('Georgia, serif')} className="font-serif">
+                        Georgia
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFont('Times New Roman, serif')} className="font-serif">
+                        Times New Roman
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFont('Verdana, sans-serif')} className="font-sans">
+                        Verdana
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFont('Helvetica, sans-serif')} className="font-sans">
+                        Helvetica
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-2 w-16 justify-between">
+                        <Hash className="h-4 w-4" />
+                        <span className="text-xs truncate">
+                            {editor.getAttributes('textStyle').fontSize?.replace('px', '') || 'Size'}
+                        </span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => editor.chain().focus().unsetFontSize().run()}>
+                        Default
+                    </DropdownMenuItem>
+                    {[12, 14, 16, 18, 20, 24, 30, 36, 48, 60, 72].map(size => (
+                        <DropdownMenuItem key={size} onClick={() => setSize(`${size}px`)}>
+                            {size}px
+                        </DropdownMenuItem>
+                    ))}
                 </DropdownMenuContent>
             </DropdownMenu>
 
@@ -155,9 +255,10 @@ export function EmailEditor({ content, onChange }: EmailEditorProps) {
     const editor = useEditor({
         immediatelyRender: false,
         extensions: [
-            StarterKit,
             TextStyle,
+            FontSize,
             FontFamily,
+            StarterKit,
             Image.configure({
                 inline: true,
                 allowBase64: true,
