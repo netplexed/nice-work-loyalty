@@ -16,34 +16,47 @@ export async function resolveTargetAudience(criteria: TargetCriteria): Promise<{
 
     const supabase = await createClient()
 
-    // Base query: All Profiles
-    // Supabase defaults to 1000 rows. We need to fetch all.
-    // Examples: .range(0, 9999) covers 10k users. For larger, we'd need recursion.
-    // For this MVP, we'll set a safe high limit.
-    let query = supabase.from('profiles').select('id, tier, birthday').range(0, 9999)
+    // Base query
+    let query = supabase.from('profiles').select('id, tier, birthday')
 
-    // 1. Filter by Tier (Simple Where)
+    // 1. Filter by Tier
     if (criteria.tiers && criteria.tiers.length > 0 && !criteria.tiers.includes('all')) {
         query = query.in('tier', criteria.tiers)
     }
 
-    // 2. Filter by Birthday Month (Simple Where if formatted correctly)
-    // Birthday is stored as 'YYYY-MM-DD' or similar date string/timestamp.
-    // Supabase/Postgres doesn't allow easy "month(birthday) = X" in standard query builder without RPC or raw SQl filters usually.
-    // But we can fetch and filter in JS if dataset is small, or use a complex filter.
-    // Let's try to do as much in JS for MVP if dataset is manageable, OR use chained queries for IDs.
+    // Fetch all profiles in batches of 1000 to bypass Supabase limits
+    let profiles: any[] = []
+    const BATCH_SIZE = 1000
+    let batchIndex = 0
+    let hasMore = true
 
-    // Let's execute the base profile filter first
-    const { data: profiles, error } = await query
+    console.log(`[resolveTargetAudience] Starting batch fetch...`)
 
-    if (error) {
-        console.error('Error fetching profiles for audience:', error)
-        throw new Error(error.message)
+    while (hasMore) {
+        const from = batchIndex * BATCH_SIZE
+        const to = from + BATCH_SIZE - 1
+
+        const { data, error } = await query.range(from, to)
+
+        if (error) {
+            console.error('Error fetching profiles batch:', error)
+            throw new Error(error.message)
+        }
+
+        if (data && data.length > 0) {
+            profiles = profiles.concat(data)
+            if (data.length < BATCH_SIZE) {
+                hasMore = false
+            }
+        } else {
+            hasMore = false
+        }
+        batchIndex++
     }
 
-    console.log(`[resolveTargetAudience] Fetched ${profiles?.length || 0} profiles`)
+    console.log(`[resolveTargetAudience] Fetched total ${profiles.length} profiles`)
 
-    if (!profiles) return { userIds: [], count: 0 }
+    if (profiles.length === 0) return { userIds: [], count: 0 }
 
     let candidates = profiles
 
