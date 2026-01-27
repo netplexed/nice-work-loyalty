@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendBroadcastToAll } from '@/lib/push/send-push'
 
 export type Announcement = {
     id: string
@@ -87,6 +88,22 @@ export async function createAnnouncement(data: Partial<Announcement>) {
     })
 
     if (error) throw new Error(error.message)
+
+    // Trigger Push Notification if Active
+    const isStartingNow = new Date(data.start_date || new Date()).getTime() <= new Date().getTime() + 60000 // Within 1 min margin or past
+
+    if (data.active && isStartingNow) {
+        // Strip HTML from content
+        const plainBody = data.content?.replace(/<[^>]*>?/gm, '') || 'New Announcement!'
+
+        // Fire and forget (don't await to block UI)
+        sendBroadcastToAll(
+            data.title || 'Announcement',
+            plainBody,
+            data.action_url || '/'
+        ).catch(err => console.error('Failed to send broadcast push:', err))
+    }
+
     revalidatePath('/')
     revalidatePath('/admin/announcements')
 }

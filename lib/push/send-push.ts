@@ -122,5 +122,61 @@ export async function sendPushBatch(userIds: string[], title: string, body: stri
 
     console.log(`[sendPushBatch] Complete. Success: ${succeeded}, Failed: ${failed}`)
 
+
     // Optional: Return stats if needed by caller
+}
+
+export async function sendBroadcastToAll(title: string, body: string, url = '/') {
+    const supabase = createAdminClient()
+
+    // 1. Fetch ALL subscriptions (No user filter)
+    const { data, error } = await supabase
+        .from('push_subscriptions')
+        .select('*')
+
+    if (error) {
+        console.error('[sendBroadcastToAll] Error fetching subscriptions:', error)
+        return
+    }
+
+    const subscriptions = data as unknown as PushSubscription[]
+
+    if (!subscriptions || subscriptions.length === 0) {
+        console.log('[sendBroadcastToAll] No subscriptions found.')
+        return
+    }
+
+    console.log(`[sendBroadcastToAll] Sending to ${subscriptions.length} endpoints.`)
+
+    // 2. Prepare Payload
+    const payload = JSON.stringify({
+        title,
+        body,
+        url,
+        icon: '/icon.png'
+    })
+
+    // 3. Send in parallel
+    const results = await Promise.allSettled(subscriptions.map(async (sub) => {
+        try {
+            await webPush.sendNotification({
+                endpoint: sub.endpoint,
+                keys: sub.keys
+            }, payload)
+
+            return { status: 'fulfilled', subId: sub.id, userId: sub.user_id }
+        } catch (error: any) {
+            console.error(`[Push Failed] Sub ID: ${sub.id} (User: ${sub.user_id}), Status: ${error.statusCode}`, error)
+
+            if (error.statusCode === 410 || error.statusCode === 404) {
+                await supabase.from('push_subscriptions').delete().eq('id', sub.id)
+            }
+            throw error
+        }
+    }))
+
+    const succeeded = results.filter(r => r.status === 'fulfilled').length
+    const failed = results.filter(r => r.status === 'rejected').length
+
+    console.log(`[sendBroadcastToAll] Complete. Success: ${succeeded}, Failed: ${failed}`)
 }
