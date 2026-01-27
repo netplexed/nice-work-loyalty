@@ -26,6 +26,13 @@ export async function updateSession(request: NextRequest) {
                     )
                 },
             },
+            cookieOptions: {
+                maxAge: 60 * 60 * 24 * 365,
+                name: 'sb-auth-token',
+                path: '/',
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production',
+            }
         }
     )
 
