@@ -17,7 +17,10 @@ export async function resolveTargetAudience(criteria: TargetCriteria): Promise<{
     const supabase = await createClient()
 
     // Base query: All Profiles
-    let query = supabase.from('profiles').select('id, tier, birthday')
+    // Supabase defaults to 1000 rows. We need to fetch all.
+    // Examples: .range(0, 9999) covers 10k users. For larger, we'd need recursion.
+    // For this MVP, we'll set a safe high limit.
+    let query = supabase.from('profiles').select('id, tier, birthday').range(0, 9999)
 
     // 1. Filter by Tier (Simple Where)
     if (criteria.tiers && criteria.tiers.length > 0 && !criteria.tiers.includes('all')) {
