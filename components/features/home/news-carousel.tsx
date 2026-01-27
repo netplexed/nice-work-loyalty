@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2, Megaphone, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -62,6 +63,8 @@ export function NewsCarousel() {
         return null // Don't show if empty
     }
 
+    const isSupabaseImage = (url: string) => url.includes('supabase.co')
+
     return (
         <div className="space-y-4">
             <div className="overflow-hidden" ref={emblaRef}>
@@ -74,10 +77,13 @@ export function NewsCarousel() {
                                         <Card className="overflow-hidden h-full border-0 shadow-sm bg-white hover:shadow-md transition-shadow">
                                             <div className="relative h-32 bg-gray-100">
                                                 {item.image_url ? (
-                                                    <img
+                                                    <Image
                                                         src={item.image_url}
                                                         alt={item.title}
-                                                        className="w-full h-full object-cover"
+                                                        fill
+                                                        className="object-cover"
+                                                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                                        unoptimized={!isSupabaseImage(item.image_url)}
                                                     />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-200">
@@ -98,11 +104,16 @@ export function NewsCarousel() {
                                 <DialogContent className="max-w-md w-[90%] rounded-xl overflow-hidden p-0 gap-0">
                                     <div className="relative w-full bg-black flex items-center justify-center">
                                         {item.image_url ? (
-                                            <img
-                                                src={item.image_url}
-                                                alt={item.title}
-                                                className="w-full h-auto max-h-[50vh] object-contain"
-                                            />
+                                            <div className="relative w-full h-[300px]">
+                                                <Image
+                                                    src={item.image_url}
+                                                    alt={item.title}
+                                                    fill
+                                                    className="object-contain"
+                                                    sizes="100vw"
+                                                    unoptimized={!isSupabaseImage(item.image_url)}
+                                                />
+                                            </div>
                                         ) : (
                                             <div className="w-full h-48 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-200">
                                                 <Megaphone className="w-16 h-16" />

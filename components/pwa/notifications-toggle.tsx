@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Bell, BellOff, Loader2 } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { BellOff } from 'lucide-react'
 import { saveSubscription } from '@/app/actions/push-actions'
 import { toast } from 'sonner'
 
@@ -102,68 +103,48 @@ export function NotificationsToggle() {
         }
     }
 
+    const handleToggle = async (checked: boolean) => {
+        if (checked) {
+            await subscribe()
+        } else {
+            await unsubscribe()
+        }
+    }
+
     if (!isSupported) {
         // If on iOS/Mobile
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
 
-        if (isIOS) {
-            if (isStandalone) {
-                // Check for Secure Context (HTTPS)
-                if (typeof window !== 'undefined' && !window.isSecureContext) {
-                    return (
-                        <Button
-                            variant="outline"
-                            disabled
-                            className="opacity-50"
-                        >
-                            <BellOff className="mr-2 h-4 w-4" /> HTTPS Required
-                        </Button>
-                    )
-                }
-
-                // In PWA but still no PushManager? Likely old iOS.
-                return (
-                    <Button
-                        variant="outline"
-                        disabled
-                        className="opacity-50"
-                    >
-                        <BellOff className="mr-2 h-4 w-4" /> iOS 16.4+ Required
-                    </Button>
-                )
-            }
-
+        if (isIOS && !isStandalone) {
             // Not in PWA yet
             return (
                 <Button
-                    variant="outline"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs text-muted-foreground hover:bg-transparent px-2"
                     onClick={() => toast.info("To enable notifications on iPhone, tap 'Share' -> 'Add to Home Screen', then open the app from your home screen.")}
                 >
-                    <BellOff className="mr-2 h-4 w-4" /> Enable Notifications
+                    <BellOff className="mr-1.5 h-3 w-3" /> Enable
                 </Button>
             )
         }
-        return null // Hide on desktop/other if truly unsupported
+
+        // Unsupported or HTTP
+        return (
+            <Switch disabled checked={false} aria-label="Notifications not supported" />
+        )
     }
 
-    if (loading) return <Button variant="outline" disabled size="icon"><Loader2 className="h-4 w-4 animate-spin" /></Button>
+    if (loading) {
+        return <Switch disabled checked={isSubscribed} />
+    }
 
     return (
-        <Button
-            variant={isSubscribed ? "default" : "outline"}
-            onClick={isSubscribed ? unsubscribe : subscribe}
-            className="w-full sm:w-auto"
-        >
-            {isSubscribed ? (
-                <>
-                    <Bell className="mr-2 h-4 w-4" /> Notifications On
-                </>
-            ) : (
-                <>
-                    <BellOff className="mr-2 h-4 w-4" /> Enable Notifications
-                </>
-            )}
-        </Button>
+        <Switch
+            checked={isSubscribed}
+            onCheckedChange={handleToggle}
+            aria-label="Toggle notifications"
+        />
     )
 }
