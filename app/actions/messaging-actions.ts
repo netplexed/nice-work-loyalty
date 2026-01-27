@@ -33,9 +33,12 @@ export async function broadcastMessage(params: BroadcastParams) {
     if (insertError) throw new Error('Failed to create broadcast: ' + insertError.message)
 
     // 2. Resolve Audience
+    console.log(`[broadcastMessage] Resolving audience...`)
     const { userIds } = await resolveTargetAudience(params.targetCriteria || {})
+    console.log(`[broadcastMessage] Resolved ${userIds.length} users`)
 
     if (userIds.length === 0) {
+        console.warn('[broadcastMessage] No users found for criteria. Aborting send.')
         return { success: true, sent: 0, emailCount: 0 }
     }
 

@@ -33,7 +33,13 @@ export async function resolveTargetAudience(criteria: TargetCriteria): Promise<{
     // Let's execute the base profile filter first
     const { data: profiles, error } = await query
 
-    if (error) throw new Error(error.message)
+    if (error) {
+        console.error('Error fetching profiles for audience:', error)
+        throw new Error(error.message)
+    }
+
+    console.log(`[resolveTargetAudience] Fetched ${profiles?.length || 0} profiles`)
+
     if (!profiles) return { userIds: [], count: 0 }
 
     let candidates = profiles
