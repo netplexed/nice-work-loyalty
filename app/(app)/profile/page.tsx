@@ -117,6 +117,10 @@ export default function ProfilePage() {
                         Sign Out
                     </Button>
                     <Separator />
+                    <Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={() => router.push('/debug')}>
+                        <span className="text-xs">System Debugger</span>
+                    </Button>
+                    <Separator />
                     <div className="pt-2">
                         <DeleteAccountDialog />
                     </div>
