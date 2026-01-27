@@ -1,5 +1,6 @@
 import webPush from 'web-push'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // Initialize VAPID
 webPush.setVapidDetails(
@@ -8,14 +9,26 @@ webPush.setVapidDetails(
     process.env.VAPID_PRIVATE_KEY!
 )
 
+interface PushSubscription {
+    id: string
+    user_id: string
+    endpoint: string
+    keys: {
+        p256dh: string
+        auth: string
+    }
+}
+
 export async function sendPushNotification(userId: string, title: string, body: string, url = '/') {
     const supabase = await createClient()
 
     // 1. Fetch subscriptions
-    const { data: subscriptions } = await supabase
+    const { data } = await supabase
         .from('push_subscriptions')
         .select('*')
         .eq('user_id', userId)
+
+    const subscriptions = data as unknown as PushSubscription[]
 
     if (!subscriptions || subscriptions.length === 0) return
 
@@ -32,7 +45,7 @@ export async function sendPushNotification(userId: string, title: string, body: 
         try {
             await webPush.sendNotification({
                 endpoint: sub.endpoint,
-                keys: sub.keys as any
+                keys: sub.keys
             }, payload)
             return { status: 'fulfilled', subId: sub.id }
         } catch (error: any) {
@@ -51,15 +64,12 @@ export async function sendPushNotification(userId: string, title: string, body: 
     console.log(`[sendPushNotification] User ${userId}: ${succeeded} sent, ${failed} failed.`)
 }
 
-import { createAdminClient } from '@/lib/supabase/admin'
-
 export async function sendPushBatch(userIds: string[], title: string, body: string) {
     if (!userIds.length) return
-
     const supabase = createAdminClient()
 
     // 1. Fetch ALL subscriptions for these users (Using Admin Client = No RLS)
-    const { data: subscriptions, error } = await supabase
+    const { data, error } = await supabase
         .from('push_subscriptions')
         .select('*')
         .in('user_id', userIds)
@@ -68,6 +78,9 @@ export async function sendPushBatch(userIds: string[], title: string, body: stri
         console.error('[sendPushBatch] Error fetching subscriptions:', error)
         return
     }
+
+    // Cast data to our expected type since it's missing from generated types
+    const subscriptions = data as unknown as PushSubscription[]
 
     if (!subscriptions || subscriptions.length === 0) {
         console.log('[sendPushBatch] No subscriptions found for any of the target users.')
@@ -84,12 +97,12 @@ export async function sendPushBatch(userIds: string[], title: string, body: stri
         icon: '/icon.png'
     })
 
-    // 3. Send in parallel (limit concurrency if needed, but for 1000 users Promise.allSettled is usually fine on Vercel)
+    // 3. Send in parallel
     const results = await Promise.allSettled(subscriptions.map(async (sub) => {
         try {
             await webPush.sendNotification({
                 endpoint: sub.endpoint,
-                keys: sub.keys as any
+                keys: sub.keys
             }, payload)
 
             return { status: 'fulfilled', subId: sub.id, userId: sub.user_id }
