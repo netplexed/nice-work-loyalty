@@ -1,6 +1,8 @@
 'use client'
 
 import { createAnnouncement } from '@/app/actions/announcement-actions'
+import { ImageUpload } from '@/components/admin/image-upload'
+import { RichTextEditor } from '@/components/admin/rich-text-editor'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,19 +17,22 @@ import { Loader2 } from 'lucide-react'
 export default function NewAnnouncementPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
+    const [imageUrl, setImageUrl] = useState('')
+    const [content, setContent] = useState('')
 
     async function handleSubmit(formData: FormData) {
         setLoading(true)
         try {
             const data = {
                 title: formData.get('title') as string,
-                content: formData.get('content') as string,
-                image_url: formData.get('image_url') as string,
+                content: content, // Use state
+                image_url: imageUrl, // Use state
                 action_url: formData.get('action_url') as string,
                 action_label: formData.get('action_label') as string,
                 active: formData.get('active') === 'on',
                 priority: parseInt(formData.get('priority') as string) || 0,
-                start_date: formData.get('start_date') ? new Date(formData.get('start_date') as string).toISOString() : new Date().toISOString()
+                start_date: formData.get('start_date') ? new Date(formData.get('start_date') as string).toISOString() : new Date().toISOString(),
+                end_date: formData.get('end_date') ? new Date(formData.get('end_date') as string).toISOString() : undefined
             }
 
             if (!data.title || !data.content) {
@@ -64,19 +69,27 @@ export default function NewAnnouncementPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="content">Content</Label>
-                            <Textarea id="content" name="content" placeholder="Short description..." required />
+                            <Label>Image</Label>
+                            <ImageUpload value={imageUrl} onChange={setImageUrl} />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Content</Label>
+                            <RichTextEditor value={content} onChange={setContent} />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="image_url">Image URL (Optional)</Label>
-                                <Input id="image_url" name="image_url" placeholder="https://..." />
-                            </div>
-                            <div className="space-y-2">
                                 <Label htmlFor="priority">Priority</Label>
                                 <Input id="priority" name="priority" type="number" defaultValue="0" min="0" />
                                 <p className="text-[10px] text-muted-foreground">Higher number = shows first</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="active">Status</Label>
+                                <div className="flex items-center gap-2 h-10 border rounded-md px-3">
+                                    <Switch id="active" name="active" defaultChecked />
+                                    <Label htmlFor="active" className="cursor-pointer">Active immediately</Label>
+                                </div>
                             </div>
                         </div>
 
@@ -96,11 +109,10 @@ export default function NewAnnouncementPage() {
                                 <Label htmlFor="start_date">Start Date</Label>
                                 <Input id="start_date" name="start_date" type="datetime-local" />
                             </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 pt-2">
-                            <Switch id="active" name="active" defaultChecked />
-                            <Label htmlFor="active">Active immediately</Label>
+                            <div className="space-y-2">
+                                <Label htmlFor="end_date">End Date (Optional)</Label>
+                                <Input id="end_date" name="end_date" type="datetime-local" />
+                            </div>
                         </div>
 
                         <div className="pt-4 flex justify-end gap-2">

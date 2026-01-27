@@ -9,6 +9,9 @@ import { Loader2, Megaphone, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+// import { ScrollArea } from '@/components/ui/scroll-area'
+
 export function NewsCarousel() {
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'start' })
     const [announcements, setAnnouncements] = useState<Announcement[]>([])
@@ -65,42 +68,79 @@ export function NewsCarousel() {
                 <div className="flex touch-pan-y touch-pinch-zoom -ml-4">
                     {announcements.map((item) => (
                         <div className="flex-[0_0_85%] min-w-0 pl-4 sm:flex-[0_0_50%]" key={item.id}>
-                            <Card className="overflow-hidden h-full border-0 shadow-sm bg-white hover:shadow-md transition-shadow">
-                                <div className="relative h-32 bg-gray-100">
-                                    {item.image_url ? (
-                                        <img
-                                            src={item.image_url}
-                                            alt={item.title}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-200">
-                                            <Megaphone className="w-12 h-12" />
-                                        </div>
-                                    )}
-                                </div>
-                                <CardContent className="p-4 space-y-2">
-                                    <h3 className="font-bold text-gray-900 line-clamp-1">{item.title}</h3>
-                                    <p className="text-sm text-gray-500 line-clamp-2 min-h-[2.5rem]">
-                                        {item.content}
-                                    </p>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <div className="cursor-pointer h-full">
+                                        <Card className="overflow-hidden h-full border-0 shadow-sm bg-white hover:shadow-md transition-shadow">
+                                            <div className="relative h-32 bg-gray-100">
+                                                {item.image_url ? (
+                                                    <img
+                                                        src={item.image_url}
+                                                        alt={item.title}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-200">
+                                                        <Megaphone className="w-12 h-12" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <CardContent className="p-4 space-y-2">
+                                                <h3 className="font-bold text-gray-900 line-clamp-1">{item.title}</h3>
+                                                <div
+                                                    className="text-sm text-gray-500 line-clamp-2 min-h-[2.5rem] prose prose-sm max-w-none prose-p:m-0 prose-p:leading-tight"
+                                                    dangerouslySetInnerHTML={{ __html: item.content }}
+                                                />
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-md w-[90%] rounded-xl overflow-hidden p-0 gap-0">
+                                    <div className="relative w-full bg-black flex items-center justify-center">
+                                        {item.image_url ? (
+                                            <img
+                                                src={item.image_url}
+                                                alt={item.title}
+                                                className="w-full h-auto max-h-[50vh] object-contain"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-48 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-200">
+                                                <Megaphone className="w-16 h-16" />
+                                            </div>
+                                        )}
+                                    </div>
 
-                                    {item.action_url && (
-                                        <div className="pt-2">
-                                            <Button asChild size="sm" variant="outline" className="w-full text-xs h-8 group">
-                                                <Link
-                                                    href={item.action_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                >
-                                                    {item.action_label || 'Learn More'}
-                                                    <ChevronRight className="w-3 h-3 ml-1 group-hover:translate-x-0.5 transition-transform" />
-                                                </Link>
-                                            </Button>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
+                                    <div className="p-6 pb-2">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-xl font-bold leading-tight text-gray-900">
+                                                {item.title}
+                                            </DialogTitle>
+                                        </DialogHeader>
+                                    </div>
+
+                                    <div className="overflow-y-auto max-h-[40vh] px-6 pb-6">
+                                        <div
+                                            className="prose prose-sm max-w-none text-gray-600"
+                                            dangerouslySetInnerHTML={{ __html: item.content }}
+                                        />
+
+                                        {item.action_url && (
+                                            <div className="pt-6">
+                                                <Button asChild className="w-full group">
+                                                    <Link
+                                                        href={item.action_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        {item.action_label || 'Learn More'}
+                                                        <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                                                    </Link>
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
                         </div>
                     ))}
                 </div>
