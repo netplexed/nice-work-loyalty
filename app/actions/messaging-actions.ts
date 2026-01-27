@@ -37,6 +37,14 @@ export async function broadcastMessage(params: BroadcastParams) {
     const { userIds } = await resolveTargetAudience(params.targetCriteria || {})
     console.log(`[broadcastMessage] Resolved ${userIds.length} users`)
 
+    // Debug: Check if current admin is in the list
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user && userIds.includes(user.id)) {
+        console.log(`[broadcastMessage] ✅ Current admin (${user.id}) IS in the target audience.`)
+    } else {
+        console.warn(`[broadcastMessage] ❌ Current admin (${user?.id}) is NOT in the target audience.`)
+    }
+
     if (userIds.length === 0) {
         console.warn('[broadcastMessage] No users found for criteria. Aborting send.')
         return { success: true, sent: 0, emailCount: 0 }
