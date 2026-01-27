@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-// @ts-expect-error - no types available for this specific package version yet or resolution issue
 import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
