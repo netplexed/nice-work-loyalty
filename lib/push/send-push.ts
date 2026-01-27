@@ -28,23 +28,27 @@ export async function sendPushNotification(userId: string, title: string, body: 
     })
 
     // 3. Send to all user devices
-    const promises = subscriptions.map(async (sub) => {
+    const results = await Promise.allSettled(subscriptions.map(async (sub) => {
         try {
             await webPush.sendNotification({
                 endpoint: sub.endpoint,
                 keys: sub.keys as any
             }, payload)
+            return { status: 'fulfilled', subId: sub.id }
         } catch (error: any) {
+            console.error(`[Push Failed] Sub ID: ${sub.id}, Status: ${error.statusCode}`, error)
             if (error.statusCode === 410 || error.statusCode === 404) {
                 // Subscription expired/gone, remove it
                 await supabase.from('push_subscriptions').delete().eq('id', sub.id)
-            } else {
-                console.error('Push error:', error)
             }
+            throw error
         }
-    })
+    }))
 
-    await Promise.allSettled(promises)
+    const succeeded = results.filter(r => r.status === 'fulfilled').length
+    const failed = results.filter(r => r.status === 'rejected').length
+
+    console.log(`[sendPushNotification] User ${userId}: ${succeeded} sent, ${failed} failed.`)
 }
 
 export async function sendPushBatch(userIds: string[], title: string, body: string) {

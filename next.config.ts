@@ -6,6 +6,10 @@ const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
+  workboxOptions: {
+    importScripts: ['/custom-sw.js'],
+    skipWaiting: true,
+  },
 });
 
 const nextConfig: NextConfig = {
