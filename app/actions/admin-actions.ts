@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { trackEvent } from '@/app/actions/marketing-event-actions'
 
 export async function verifyAdmin() {
     const supabase = await createClient()
@@ -364,6 +365,13 @@ export async function recordUserSpend(userId: string, amount: number, location: 
 
     revalidatePath('/admin')
     revalidatePath(`/admin/users/${userId}`)
+
+    // Trigger Marketing Workflow (Order Completed)
+    await trackEvent(userId, 'order.completed', {
+        value: amount,
+        points_earned: pointsToEarn,
+        location
+    })
 
     return {
         success: true,

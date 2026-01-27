@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, Gift, Settings, LogOut, Scan, QrCode, DollarSign, BarChart3, MessageSquare, Mail } from 'lucide-react'
+import { LayoutDashboard, Users, Gift, Settings, LogOut, Scan, QrCode, DollarSign, BarChart3, MessageSquare, Mail, Workflow, LayoutTemplate, GitBranch, Megaphone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -15,6 +15,7 @@ export function AdminSidebar() {
 
     const links = [
         { href: '/admin', icon: LayoutDashboard, label: 'Overview' },
+        { href: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
         { href: '/admin/users', icon: Users, label: 'Users' },
         { href: '/admin/rewards', icon: Gift, label: 'Rewards' },
         { href: '/admin/redeem', icon: Scan, label: 'Redeem' },
@@ -23,6 +24,9 @@ export function AdminSidebar() {
         { href: '/admin/reports', icon: BarChart3, label: 'Reports' },
         { href: '/admin/messaging', icon: MessageSquare, label: 'Messaging' },
         { href: '/admin/emails', icon: Mail, label: 'Campaigns' },
+        { href: '/admin/automations', icon: Workflow, label: 'Automations' },
+        { href: '/admin/marketing/templates', icon: LayoutTemplate, label: 'Templates' },
+        { href: '/admin/marketing/workflows', icon: GitBranch, label: 'Workflows' },
     ]
 
     const handleLogout = async () => {

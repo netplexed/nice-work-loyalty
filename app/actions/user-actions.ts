@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { trackEvent } from '@/app/actions/marketing-event-actions'
 
 export async function getUserProfile() {
     const supabase = await createClient()
@@ -37,6 +38,9 @@ export async function getUserProfile() {
             console.error('Error creating profile:', insertError)
             throw new Error(`Profile creation failed: ${insertError.message} (Code: ${insertError.code})`)
         }
+
+        // Trigger Marketing Workflow (Signup)
+        await trackEvent(user.id, 'user.signup', { email: user.email })
 
         return newProfile
     }

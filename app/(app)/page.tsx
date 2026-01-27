@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { PointsBalanceBranded as PointsBalance } from '@/components/features/home/points-balance-branded'
-// import { PointsBalance } from '@/components/features/home/points-balance' // Original
+import { NewsCarousel } from '@/components/features/home/news-carousel'
 import { QuickActions } from '@/components/features/home/quick-actions'
 import { RecentActivity } from '@/components/features/home/recent-activity'
 import { SpinWheel } from '@/components/features/gamification/spin-wheel'
@@ -10,7 +10,6 @@ import { ReferralCard } from '@/components/features/gamification/referral-card'
 import { NiceTank } from '@/components/nice/nice-tank'
 import { NiceBalance } from '@/components/nice/nice-balance'
 import { getNiceState, NiceState } from '@/app/actions/nice-actions'
-import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import confetti from 'canvas-confetti'
 
@@ -34,8 +33,6 @@ export default function Dashboard() {
         }
         loadNiceState()
     }, [refreshTrigger])
-
-
 
     const handleCollect = (amount: number) => {
         if (!niceState) return
@@ -111,6 +108,8 @@ export default function Dashboard() {
                         </>
                     ) : null}
                 </div>
+
+                <NewsCarousel />
 
                 <QuickActions onCheckInSuccess={handleCheckInSuccess} />
                 <SpinWheel onSpinSuccess={() => setRefreshTrigger(prev => prev + 1)} />
