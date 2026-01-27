@@ -13,40 +13,40 @@ export function NotificationNav() {
     const pathname = usePathname()
     const isActive = pathname === '/notifications'
 
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser() // Helper might fail in render, better to use hook or effect.
-    // Actually createClient() is sync.
-
     useEffect(() => {
-        getUnreadCount().then(setCount)
+        const supabase = createClient()
+        let channel: any
 
-        // Realtime Subscription
-        const channel = createClient()
-            .channel('notification-badge')
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'notifications',
-                    filter: `user_id=eq.${(async () => {
-                        // User ID filtering is tricky in client generic channel without auth context handy.
-                        // But RLS prevents receiving others. So we can just listen to all "INSERT" that receive.
-                        // Actually RLS filters realtime too! So we just need to listen to the table.
-                        return undefined // handled by RLS if enabled for realtime.
-                    })()}`
-                    // Wait, filter string must be static. 
-                    // We'll trust RLS. Or ideally we get the user ID first.
-                },
-                () => {
-                    // On any new notification, re-fetch count
-                    getUnreadCount().then(setCount)
-                }
-            )
-            .subscribe()
+        const setupRealtime = async () => {
+            // Initial fetch
+            getUnreadCount().then(setCount)
+
+            // Get user for filter
+            const { data: { user } } = await supabase.auth.getUser()
+
+            // Realtime Subscription
+            channel = supabase
+                .channel('notification-badge')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'notifications',
+                        filter: user ? `user_id=eq.${user.id}` : undefined
+                    },
+                    () => {
+                        // On any new notification, re-fetch count
+                        getUnreadCount().then(setCount)
+                    }
+                )
+                .subscribe()
+        }
+
+        setupRealtime()
 
         return () => {
-            channel.unsubscribe()
+            if (channel) supabase.removeChannel(channel)
         }
     }, [pathname])
 
