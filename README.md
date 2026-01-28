@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nice Work Loyalty App - Project Overview
 
-## Getting Started
+## 1. Introduction
+Nice Work Loyalty is a comprehensive customer loyalty and engagement platform built for "Nice Work". It provides a seamless experience for customers to earn points, redeem rewards, and engage with the brand, while offering a powerful admin panel for staff to manage operations and marketing.
 
-First, run the development server:
+## 2. Tech Stack
+- **Framework**: Next.js 14 (App Router)
+- **Database & Auth**: Supabase (PostgreSQL)
+- **Styling**: Tailwind CSS + Shadcn UI
+- **Deployment**: Vercel (Recommended)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 3. Key Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### For Customers (User Portal)
+- **Dashboard**: View current points, "Nice" balance, and Tier status (Bronze/Silver/Gold).
+- **Points System**: automatic point earning based on spending.
+- **Rewards Store**: Browse available rewards and redeem points for vouchers.
+- **My Vouchers**: View active vouchers to show to staff.
+- **Mining**: A gamified feature to "mine" NICE tokens daily.
+- **Profile**: Manage personal details.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### For Staff & Admins (Admin Portal)
+Access: `/admin` (Requires Admin Role)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+#### Operations
+- **POS / Record**: Manually record a customer's spend (calculates points automatically).
+- **Redeem**: Scan or enter voucher codes to invalidate them.
+- **User Management**: View user profiles, history, and manually adjust points.
 
-## Learn More
+#### Marketing & Engagement
+- **Rewards Management**: Create and edit rewards, manage inventory.
+- **Messaging**: Send In-App notifications or Push notifications.
+- **Email Campaigns**: Send rich HTML emails to segments of users.
+- **Marketing Automations (2.0)**:
+    - **Workflows**: Create triggers (e.g., "After Checkout") to send emails or grant rewards automatically.
+    - **Templates**: Design reusable email layouts.
+    - **Triggers**: Supports `user.signup` and `order.completed` events.
 
-To learn more about Next.js, take a look at the following resources:
+## 4. Architecture Highlights
+- **Role-Based Access**: Strict separation between User and Admin routes protected by Middleware and RLS (Row Level Security).
+- **Event Bus**: Important actions (Signup, Order) trigger the internal `trackEvent` system to power automations.
+- **Cron Jobs**: Background jobs handle scheduled tasks like Automation Delays (via `/api/cron/...`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 5. Important Directories
+- `/app`: Main application routes.
+    - `(admin)`: Admin-only pages.
+    - `(auth)`: Login/Signup pages.
+    - `(user)`: Customer-facing pages.
+- `/components`: Reusable UI components.
+- `/lib/supabase`: Database client and type definitions.
+- `/supabase/migrations`: SQL scripts for database schema changes.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 6. Links
+- **Admin**: [admin/dashboard](http://localhost:3000/admin)
+- **Automations**: [admin/marketing/workflows](http://localhost:3000/admin/marketing/workflows)
