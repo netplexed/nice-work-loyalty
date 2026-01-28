@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Edit, Zap, Calendar, UserPlus, Timer, Trophy } from 'lucide-react'
 import { toast } from 'sonner'
+import { CreateAutomationDialog } from '@/components/admin/automations/create-automation-dialog'
 
 export default function AutomationsPage() {
     const [automations, setAutomations] = useState<any[]>([])
@@ -50,9 +51,12 @@ export default function AutomationsPage() {
 
     return (
         <div className="p-8 max-w-5xl mx-auto space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Automations</h1>
-                <p className="text-muted-foreground">Manage automated lifecycle emails and rewards.</p>
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Automations</h1>
+                    <p className="text-muted-foreground">Manage automated lifecycle emails and rewards.</p>
+                </div>
+                <CreateAutomationDialog />
             </div>
 
             <div className="grid gap-6">

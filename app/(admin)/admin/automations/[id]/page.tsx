@@ -99,13 +99,25 @@ export default function EditAutomationPage({ params }: { params: Promise<{ id: s
                     {/* Trigger Settings */}
                     {automation.type === 'win_back' && (
                         <div className="space-y-2 border p-4 rounded-lg bg-orange-50/50">
-                            <Label>Incactivity Threshold (Days)</Label>
+                            <Label>Inactivity Threshold (Days)</Label>
                             <Input
                                 type="number"
                                 value={triggerSettings.days_inactive || 30}
                                 onChange={e => setTriggerSettings({ ...triggerSettings, days_inactive: parseInt(e.target.value) })}
                             />
                             <p className="text-xs text-muted-foreground">Send if user hasn't visited in this many days.</p>
+                        </div>
+                    )}
+
+                    {automation.type === 'milestone' && (
+                        <div className="space-y-2 border p-4 rounded-lg bg-yellow-50/50">
+                            <Label>Visits Required</Label>
+                            <Input
+                                type="number"
+                                value={triggerSettings.visits_required || 5}
+                                onChange={e => setTriggerSettings({ ...triggerSettings, visits_required: parseInt(e.target.value) })}
+                            />
+                            <p className="text-xs text-muted-foreground">Triggers when user reaches this many total visits.</p>
                         </div>
                     )}
 
