@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, useAnimation } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { SpinPrize, spin } from '@/app/actions/spin-actions'
@@ -23,6 +23,7 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
     const [result, setResult] = useState<SpinPrize | null>(null)
     const [showResult, setShowResult] = useState(false)
     const controls = useAnimation()
+    const currentRotation = useRef(0)
 
     // Check if locked
     const isLocked = nextSpinTime && new Date(nextSpinTime) > new Date()
@@ -72,15 +73,53 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
             // We need: Rotation + (i * segmentAngle + segmentAngle/2) = -90 (mod 360)
             // So: Rotation = -90 - (i * segmentAngle + segmentAngle/2)
 
-            // Add 5 full rotations (1800 deg) for effect
-            const baseRotation = 1800
-            const targetRotation = baseRotation - 90 - (prizeIndex * segmentAngle + segmentAngle / 2) + jitter
+            // Additive Rotation Logic
+            const baseSpins = 5 // 5 full rotations minimum
+
+            // Current position in 0-360 range (normalized)
+            const currentAngle = currentRotation.current % 360
+
+            // Target angle (where we want to end up, 0-360)
+            // Original logic: -90 - (index * segment + segment/2)
+            // We need to match this coordinate system.
+            // Let's simplify:
+            // We want pointer (-90deg relative to wheel 0) to point to center of segment.
+            // Segment center is at (index * segmentAngle + segmentAngle/2).
+            // So we need to rotate wheel by R such that:
+            // (-90 - R) % 360 = SegmentCenter
+            // => -R = SegmentCenter + 90
+            // => R = - (SegmentCenter + 90)
+
+            const segmentCenter = (prizeIndex * segmentAngle) + (segmentAngle / 2)
+            const desiredRotationDisplay = - (segmentCenter + 90) + jitter
+
+            // Calculate how much we need to add to currentRotation.current
+            // We want (currentRotation.current + delta) % 360 ~= desiredRotationDisplay % 360
+
+            // Let's work with raw deltas to ensure forward spin
+            // We want to land on 'desiredRotationDisplay'. 
+            // It might be negative, let's make it positive mod 360 for calculation:
+            let targetMod = desiredRotationDisplay % 360
+            if (targetMod < 0) targetMod += 360
+
+            let currentMod = currentRotation.current % 360
+            if (currentMod < 0) currentMod += 360
+
+            // Calculate forward distance to target
+            let distance = targetMod - currentMod
+            if (distance <= 0) distance += 360 // Ensure we go forward
+
+            // Add base full spins
+            const totalRotationDelta = (baseSpins * 360) + distance
+
+            const newRotation = currentRotation.current + totalRotationDelta
+            currentRotation.current = newRotation
 
             await controls.start({
-                rotate: targetRotation,
+                rotate: newRotation,
                 transition: {
-                    duration: 5,
-                    ease: [0.2, 0.8, 0.2, 1], // Cubic bezier for ease-out
+                    duration: 4, // Slightly faster feel
+                    ease: [0.25, 0.1, 0.25, 1], // Custom Bezier for nicer spin up/down
                 }
             })
 
@@ -109,7 +148,7 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
     const resetWheel = () => {
         setShowResult(false)
         setResult(null)
-        controls.set({ rotate: 0 })
+        // DONT reset rotation to 0, keep it cumulative
     }
 
     if (prizes.length === 0) {
@@ -249,7 +288,7 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="sm:justify-center">
-                        <Button onClick={() => setShowResult(false)}>
+                        <Button onClick={resetWheel}>
                             Okay, got it!
                         </Button>
                     </DialogFooter>
