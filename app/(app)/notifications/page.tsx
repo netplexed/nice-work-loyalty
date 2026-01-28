@@ -7,30 +7,22 @@ import { getUserNotifications, markNotificationRead, markAllRead } from '@/app/a
 import { Bell, Check, MailOpen } from "lucide-react"
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { useNotifications } from '@/hooks/use-notifications'
 
 export default function NotificationsPage() {
-    const [notifications, setNotifications] = useState<any[]>([])
-    const [loading, setLoading] = useState(true)
-
-    const fetchNotifications = async () => {
-        const data = await getUserNotifications()
-        setNotifications(data)
-        setLoading(false)
-    }
-
-    useEffect(() => {
-        fetchNotifications()
-    }, [])
+    const { notifications, loading, mutate } = useNotifications()
 
     const handleMarkRead = async (id: string) => {
         // Optimistic update
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
+        mutate(notifications.map(n => n.id === id ? { ...n, is_read: true } : n), false)
         await markNotificationRead(id)
+        mutate() // Revalidate
     }
 
     const handleMarkAllRead = async () => {
-        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+        mutate(notifications.map(n => ({ ...n, is_read: true })), false)
         await markAllRead()
+        mutate()
     }
 
     return (

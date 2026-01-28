@@ -4,35 +4,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { getUserProfile } from '@/app/actions/user-actions'
+import { useUserProfile } from '@/hooks/use-user-profile'
 
 interface PointsBalanceProps {
     refreshTrigger?: number
 }
 
 export function PointsBalanceBranded({ refreshTrigger = 0 }: PointsBalanceProps) {
-    const [profile, setProfile] = useState<any>(null)
+    const { profile, loading, mutate } = useUserProfile()
 
+    // Trigger re-fetch when parent asks
     useEffect(() => {
-        getUserProfile()
-            .then(setProfile)
-            .catch(err => {
-                console.error(err)
-                setProfile({ error: true, message: err.message })
-            })
-    }, [refreshTrigger])
+        if (refreshTrigger > 0) mutate()
+    }, [refreshTrigger, mutate])
 
-    if (profile?.error) {
-        return (
-            <Card className="bg-red-50 border-red-200">
-                <CardContent className="p-4 text-red-600 text-xs break-all">
-                    <strong>Error:</strong> {profile.message}
-                </CardContent>
-            </Card>
-        )
+    if (loading && !profile) {
+        return <PointsSkeleton />
     }
 
-    if (!profile) {
+    if (!profile || profile?.error) {
+        // Show skeleton or error state
         return <PointsSkeleton />
     }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getUserProfile } from '@/app/actions/user-actions'
+import { useUserProfile } from '@/hooks/use-user-profile'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,13 +16,11 @@ import { EditProfileDialog } from '@/components/features/profile/edit-profile-di
 import { DeleteAccountDialog } from '@/components/features/profile/delete-account-dialog'
 
 export default function ProfilePage() {
-    const [profile, setProfile] = useState<any>(null)
+    const { profile, loading } = useUserProfile()
     const router = useRouter()
     const supabase = createClient()
 
-    useEffect(() => {
-        getUserProfile().then(setProfile)
-    }, [])
+    // No manual fetching needed
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()

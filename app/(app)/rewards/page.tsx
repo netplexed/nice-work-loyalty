@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getAvailableRewards, getUserRedemptions } from '@/app/actions/rewards-actions'
+import { useRewards, useRedemptions } from '@/hooks/use-rewards'
 import { RewardCard } from '@/components/features/rewards/reward-card'
 import { MyRewardsList } from '@/components/features/rewards/my-rewards-list'
 import { RedemptionModal } from '@/components/features/rewards/redemption-modal'
@@ -9,21 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Loader2 } from 'lucide-react'
 
 export default function RewardsPage() {
-    const [rewards, setRewards] = useState<any[]>([])
-    const [redemptions, setRedemptions] = useState<any[]>([])
-    const [loading, setLoading] = useState(true)
+    const { rewards, loading: loadingRewards } = useRewards()
+    const { redemptions, loading: loadingRedimptions, mutate: mutateRedemptions } = useRedemptions()
+
     const [selectedReward, setSelectedReward] = useState<any>(null)
     const [modalOpen, setModalOpen] = useState(false)
 
-    useEffect(() => {
-        Promise.all([
-            getAvailableRewards(),
-            getUserRedemptions()
-        ]).then(([rewardsData, redemptionsData]) => {
-            setRewards(rewardsData)
-            setRedemptions(redemptionsData)
-        }).finally(() => setLoading(false))
-    }, [])
+    // No Effect needed
 
     const categories = ['all', 'food', 'drink', 'voucher']
 
@@ -32,7 +24,7 @@ export default function RewardsPage() {
         setModalOpen(true)
     }
 
-    if (loading) {
+    if (loadingRewards && loadingRedimptions) {
         return (
             <div className="flex justify-center items-center h-[50vh]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -92,7 +84,8 @@ export default function RewardsPage() {
                 open={modalOpen}
                 onOpenChange={setModalOpen}
                 onSuccess={(newRedemption) => {
-                    setRedemptions(prev => [newRedemption, ...prev])
+                    mutateRedemptions([newRedemption, ...redemptions], false) // Optimistic
+                    mutateRedemptions() // Revalidate
                 }}
             />
         </div>
