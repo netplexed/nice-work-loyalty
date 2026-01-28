@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.spin_prizes (
   reward_id uuid REFERENCES public.rewards(id), -- For 'reward' type
   probability float NOT NULL DEFAULT 0, -- 0 to 1, sets relative weight
   color text NOT NULL, -- Background color of the segment
+  expiry_hours integer DEFAULT 36, -- Expiry time in hours for 'reward' type
   active boolean DEFAULT true,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
@@ -120,25 +121,9 @@ BEGIN
             v_spin_id
         );
         
-    ELSIF v_prize.type = 'reward' AND v_prize.reward_id IS NOT NULL THEN
-        -- Generate simplistic voucher code
-        v_voucher_code := upper(substring(md5(random()::text) from 1 for 8));
-        
-        -- Create redemption with 36 HOUR EXPIRY
-        INSERT INTO public.redemptions (
-            user_id,
-            reward_id,
-            points_spent, -- 0 cost for won rewards
-            status,
-            voucher_code,
-            expires_at
-        ) VALUES (
-            v_user_id,
-            v_prize.reward_id,
-            0,
             'approved', -- Automatically usable
             v_voucher_code,
-            now() + interval '36 hours'
+            now() + (COALESCE(v_prize.expiry_hours, 36) || ' hours')::interval
         );
     END IF;
 
@@ -161,12 +146,12 @@ BEGIN
     SELECT count(*) INTO v_count FROM public.spin_prizes;
     
     IF v_count = 0 THEN
-        INSERT INTO public.spin_prizes (label, type, points_value, probability, color)
+        INSERT INTO public.spin_prizes (label, type, points_value, probability, color, expiry_hours)
         VALUES 
-        ('50 Points', 'points', 50, 0.3, '#E2E8F0'), 
-        ('100 Points', 'points', 100, 0.2, '#CBD5E1'),
-        ('Try Again', 'loss', 0, 0.4, '#F1F5F9'),
-        ('Jackpot!', 'points', 500, 0.05, '#FDBA74');
+        ('50 Points', 'points', 50, 0.3, '#E2E8F0', null), 
+        ('100 Points', 'points', 100, 0.2, '#CBD5E1', null),
+        ('Try Again', 'loss', 0, 0.4, '#F1F5F9', null),
+        ('Jackpot!', 'points', 500, 0.05, '#FDBA74', null);
         -- Rewards would need actual UUIDs so skipping them in seed or doing a lookup
     END IF;
 END $$;

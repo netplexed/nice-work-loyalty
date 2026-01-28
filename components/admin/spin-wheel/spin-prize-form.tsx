@@ -20,6 +20,7 @@ interface SpinPrize {
     probability: number
     color: string
     active: boolean
+    expiry_hours?: number
 }
 
 interface SpinPrizeFormProps {
@@ -42,6 +43,7 @@ export function SpinPrizeForm({ open, onOpenChange, initialData, onSuccess }: Sp
         probability: 0.1,
         color: '#3B82F6',
         active: true,
+        expiry_hours: 36
     })
 
     useEffect(() => {
@@ -64,6 +66,7 @@ export function SpinPrizeForm({ open, onOpenChange, initialData, onSuccess }: Sp
                     probability: 0.1,
                     color: '#3B82F6',
                     active: true,
+                    expiry_hours: 36
                 })
             }
         }
@@ -78,6 +81,7 @@ export function SpinPrizeForm({ open, onOpenChange, initialData, onSuccess }: Sp
                 ...formData,
                 reward_id: formData.type === 'reward' ? formData.reward_id : null,
                 points_value: formData.type === 'points' ? formData.points_value : 0,
+                expiry_hours: formData.type === 'reward' ? formData.expiry_hours : null,
             }
 
             let error;
@@ -184,6 +188,20 @@ export function SpinPrizeForm({ open, onOpenChange, initialData, onSuccess }: Sp
                                     ))}
                                 </SelectContent>
                             </Select>
+                        </div>
+                    )}
+
+                    {formData.type === 'reward' && (
+                        <div className="grid gap-2">
+                            <Label>Expiry (Hours)</Label>
+                            <Input
+                                type="number"
+                                value={formData.expiry_hours}
+                                onChange={e => setFormData({ ...formData, expiry_hours: parseInt(e.target.value) || 36 })}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                How long users have to redeem this reward.
+                            </p>
                         </div>
                     )}
 
