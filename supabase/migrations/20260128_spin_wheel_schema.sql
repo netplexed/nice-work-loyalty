@@ -17,13 +17,18 @@ CREATE TABLE IF NOT EXISTS public.spin_prizes (
   updated_at timestamptz DEFAULT now()
 );
 
+-- Ensure expiry_hours exists if table was already created
+ALTER TABLE public.spin_prizes ADD COLUMN IF NOT EXISTS expiry_hours integer DEFAULT 36;
+
 -- RLS for spin_prizes
 ALTER TABLE public.spin_prizes ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can view active spin prizes" ON public.spin_prizes;
 CREATE POLICY "Anyone can view active spin prizes"
   ON public.spin_prizes FOR SELECT
   USING (active = true);
 
+DROP POLICY IF EXISTS "Admins can manage spin prizes" ON public.spin_prizes;
 CREATE POLICY "Admins can manage spin prizes"
   ON public.spin_prizes FOR ALL
   USING (
@@ -121,6 +126,22 @@ BEGIN
             v_spin_id
         );
         
+    ELSIF v_prize.type = 'reward' AND v_prize.reward_id IS NOT NULL THEN
+        -- Generate simplistic voucher code
+        v_voucher_code := upper(substring(md5(random()::text) from 1 for 8));
+        
+        -- Create redemption with VARIABLE HOUR EXPIRY
+        INSERT INTO public.redemptions (
+            user_id,
+            reward_id,
+            points_spent, -- 0 cost for won rewards
+            status,
+            voucher_code,
+            expires_at
+        ) VALUES (
+            v_user_id,
+            v_prize.reward_id,
+            0,
             'approved', -- Automatically usable
             v_voucher_code,
             now() + (COALESCE(v_prize.expiry_hours, 36) || ' hours')::interval
