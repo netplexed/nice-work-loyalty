@@ -69,25 +69,33 @@ export async function sendPushBatch(userIds: string[], title: string, body: stri
     const supabase = createAdminClient()
 
     // 1. Fetch ALL subscriptions for these users (Using Admin Client = No RLS)
-    const { data, error } = await supabase
-        .from('push_subscriptions')
-        .select('*')
-        .in('user_id', userIds)
+    // Chunk requests to avoid URL length limits with .in()
+    const CHUNK_SIZE = 100
+    let allSubscriptions: PushSubscription[] = []
 
-    if (error) {
-        console.error('[sendPushBatch] Error fetching subscriptions:', error)
-        return
+    for (let i = 0; i < userIds.length; i += CHUNK_SIZE) {
+        const chunk = userIds.slice(i, i + CHUNK_SIZE)
+        const { data, error } = await supabase
+            .from('push_subscriptions')
+            .select('*')
+            .in('user_id', chunk)
+
+        if (error) {
+            console.error(`[sendPushBatch] Error fetching subscriptions for chunk ${i}:`, error)
+            continue
+        }
+
+        if (data) {
+            allSubscriptions = [...allSubscriptions, ...data as unknown as PushSubscription[]]
+        }
     }
 
-    // Cast data to our expected type since it's missing from generated types
-    const subscriptions = data as unknown as PushSubscription[]
-
-    if (!subscriptions || subscriptions.length === 0) {
+    if (allSubscriptions.length === 0) {
         console.log('[sendPushBatch] No subscriptions found for any of the target users.')
         return
     }
 
-    console.log(`[sendPushBatch] Sending to ${subscriptions.length} endpoints for ${userIds.length} users.`)
+    console.log(`[sendPushBatch] Sending to ${allSubscriptions.length} endpoints for ${userIds.length} target users.`)
 
     // 2. Prepare Payload
     const payload = JSON.stringify({
@@ -98,7 +106,7 @@ export async function sendPushBatch(userIds: string[], title: string, body: stri
     })
 
     // 3. Send in parallel
-    const results = await Promise.allSettled(subscriptions.map(async (sub) => {
+    const results = await Promise.allSettled(allSubscriptions.map(async (sub) => {
         try {
             await webPush.sendNotification({
                 endpoint: sub.endpoint,
@@ -121,7 +129,6 @@ export async function sendPushBatch(userIds: string[], title: string, body: stri
     const failed = results.filter(r => r.status === 'rejected').length
 
     console.log(`[sendPushBatch] Complete. Success: ${succeeded}, Failed: ${failed}`)
-
 
     // Optional: Return stats if needed by caller
 }
