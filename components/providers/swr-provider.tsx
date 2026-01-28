@@ -4,42 +4,64 @@ import { SWRConfig } from 'swr'
 import { useEffect, useState } from 'react'
 
 export function SwrProvider({ children }: { children: React.ReactNode }) {
-    // Only persist in browser
-    const [provider, setProvider] = useState<any>()
+    const [provider] = useState(() => {
+        // Initialize Map
+        const map = new Map()
 
-    useEffect(() => {
-        // Initialize from localStorage
-        const map = new Map(JSON.parse(localStorage.getItem('app-cache') || '[]'))
+        // If on client, try to hydrate from storage immediately
+        if (typeof window !== 'undefined') {
+            try {
+                const json = localStorage.getItem('app-cache')
+                if (json) {
+                    const parsed = JSON.parse(json)
+                    parsed.forEach(([key, value]: [string, any]) => {
+                        map.set(key, value)
+                    })
+                }
+            } catch (e) {
+                console.error('Failed to load cache', e)
+            }
 
-        // Save to localStorage before unloading or hiding (better for mobile)
-        const saveCache = () => {
-            const appCache = JSON.stringify(Array.from(map.entries()))
-            localStorage.setItem('app-cache', appCache)
+            // Setup persistence on cache updates
+            // We hook into the map's set/delete methods
+            const originalSet = map.set.bind(map)
+            const originalDelete = map.delete.bind(map)
+            const originalClear = map.clear.bind(map)
+
+            let saveTimeout: NodeJS.Timeout
+
+            const debouncedSave = () => {
+                clearTimeout(saveTimeout)
+                saveTimeout = setTimeout(() => {
+                    try {
+                        const appCache = JSON.stringify(Array.from(map.entries()))
+                        localStorage.setItem('app-cache', appCache)
+                    } catch (e) {
+                        console.warn('Cache save failed (quota?)', e)
+                    }
+                }, 1000) // Save 1s after last write
+            }
+
+            map.set = (key: any, value: any) => {
+                const res = originalSet(key, value)
+                debouncedSave()
+                return res
+            }
+
+            map.delete = (key: any) => {
+                const res = originalDelete(key)
+                debouncedSave()
+                return res
+            }
+
+            map.clear = () => {
+                originalClear()
+                debouncedSave()
+            }
         }
 
-        window.addEventListener('beforeunload', saveCache)
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) saveCache()
-        })
-
-        // Also save periodically or on visibility change could be good, but unload is simple for now.
-        // Better: We can optimize by saving specific keys? No, let's keep it simple.
-
-        // Wrap the map to sync on set
-        // Actually, SWR expects a specific provider signature.
-        setProvider(() => map)
-    }, [])
-
-    if (!provider) {
-        // Render without hydration first or wait? 
-        // If we wait, we block painting. 
-        // If we render immediately with empty cache, then hydration kicks in.
-        // Let's return children directly for SSR, but client side we wait for restore?
-        // Actually for optimal UX:
-        // 1. Initial render (empty cache)
-        // 2. useEffect restores cache -> Re-render with data (Instant)
-        return <SWRConfig value={{ provider: () => new Map() }}>{children}</SWRConfig>
-    }
+        return map
+    })
 
     return (
         <SWRConfig value={{
