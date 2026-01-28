@@ -2,37 +2,24 @@
 
 import React, { useEffect, useState } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
-import { Announcement, getActiveAnnouncements } from '@/app/actions/announcement-actions'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2, Megaphone, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { useAnnouncements } from '@/hooks/use-announcements'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 // import { ScrollArea } from '@/components/ui/scroll-area'
 
 export function NewsCarousel() {
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'start' })
-    const [announcements, setAnnouncements] = useState<Announcement[]>([])
-    const [loading, setLoading] = useState(true)
+    const { announcements, loading } = useAnnouncements()
     const [selectedIndex, setSelectedIndex] = useState(0)
     const [scrollSnaps, setScrollSnaps] = useState<number[]>([])
 
-    useEffect(() => {
-        const load = async () => {
-            try {
-                const data = await getActiveAnnouncements()
-                setAnnouncements(data)
-            } catch (e) {
-                console.error(e)
-            } finally {
-                setLoading(false)
-            }
-        }
-        load()
-    }, [])
+    // Removed manual useEffect fetching - handled by SWR
 
     useEffect(() => {
         if (!emblaApi) return

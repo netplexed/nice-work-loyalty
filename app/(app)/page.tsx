@@ -9,76 +9,54 @@ import { SpinWheel } from '@/components/features/gamification/spin-wheel'
 import { ReferralCard } from '@/components/features/gamification/referral-card'
 import { NiceTank } from '@/components/nice/nice-tank'
 import { NiceBalance } from '@/components/nice/nice-balance'
-import { getNiceState, NiceState } from '@/app/actions/nice-actions'
 import { Skeleton } from '@/components/ui/skeleton'
 import confetti from 'canvas-confetti'
+import { useNiceTank } from '@/hooks/use-nice-tank'
 
 export default function Dashboard() {
-    const [niceState, setNiceState] = useState<NiceState | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const { niceState, loading, error, mutate } = useNiceTank()
     const [refreshTrigger, setRefreshTrigger] = useState(0)
-
-    useEffect(() => {
-        const loadNiceState = async () => {
-            try {
-                const state = await getNiceState()
-                setNiceState(state)
-            } catch (error) {
-                console.error('Failed to load nice state:', error)
-                setError('Could not load Nice info. Database migration may be missing.')
-            } finally {
-                setLoading(false)
-            }
-        }
-        loadNiceState()
-    }, [refreshTrigger])
 
     const handleCollect = (amount: number) => {
         if (!niceState) return
-        setNiceState({
+
+        // Optimistic update of the Global SWR Cache
+        mutate({
             ...niceState,
             collectedBalance: niceState.collectedBalance + amount,
             tankNice: 0
-        })
+        }, false) // false = update local data immediately, don't re-fetch from server yet
     }
 
     const handleCheckInSuccess = (visitCount: number, multiplier: number) => {
         setRefreshTrigger(prev => prev + 1)
 
-        // Optimistic / Instant update of local state
         if (niceState) {
-            setNiceState({
+            mutate({
                 ...niceState,
                 currentMultiplier: multiplier
-            })
+            }, false)
         }
 
-        // Background refresh to ensure consistency
-        const loadNiceState = async () => {
-            const state = await getNiceState()
-            setNiceState(state)
-        }
-        loadNiceState()
+        // Re-validate in background
+        mutate()
     }
 
     const handleSwapSuccess = (pointsGained: number) => {
         setRefreshTrigger(prev => prev + 1)
 
-        // Trigger confetti for the points
         confetti({
             particleCount: 100,
             spread: 70,
-            origin: { y: 0.3 }, // Higher up, closer to where points card usually is
+            origin: { y: 0.3 },
             colors: ['#3b82f6', '#60a5fa', '#93c5fd', '#fbbf24']
         })
 
-        // Also update local nice balance immediately
         if (niceState) {
-            setNiceState(prev => prev ? ({
-                ...prev,
-                collectedBalance: prev.collectedBalance - (pointsGained * 20) // Assuming 20:1 rate
-            }) : null)
+            mutate({
+                ...niceState,
+                collectedBalance: niceState.collectedBalance - (pointsGained * 20), // Approx
+            }) // Validate with server immediately to get exact new balance
         }
     }
 
@@ -96,7 +74,7 @@ export default function Dashboard() {
                         </div>
                     ) : error ? (
                         <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm text-center border border-red-100">
-                            {error}
+                            Could not load Nice info.
                         </div>
                     ) : niceState ? (
                         <>
