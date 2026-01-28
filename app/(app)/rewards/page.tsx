@@ -6,12 +6,7 @@ import { RewardCard } from '@/components/features/rewards/reward-card'
 import { MyRewardsList } from '@/components/features/rewards/my-rewards-list'
 import { RedemptionModal } from '@/components/features/rewards/redemption-modal'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader2, ChevronDown, Trophy } from 'lucide-react'
-import { SpinWheel } from '@/components/features/gamification/spin-wheel'
-import { getSpinConfig, SpinPrize } from '@/app/actions/spin-actions'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Button } from '@/components/ui/button'
+import { Loader2 } from 'lucide-react'
 
 export default function RewardsPage() {
     const { rewards, loading: loadingRewards } = useRewards()
@@ -20,16 +15,7 @@ export default function RewardsPage() {
     const [selectedReward, setSelectedReward] = useState<any>(null)
     const [modalOpen, setModalOpen] = useState(false)
 
-    const [spinConfig, setSpinConfig] = useState<SpinPrize[]>([])
-    const [spinConfigLoading, setSpinConfigLoading] = useState(true)
-    const [isSpinOpen, setIsSpinOpen] = useState(false)
-
-    useEffect(() => {
-        getSpinConfig().then(config => {
-            setSpinConfig(config)
-            setSpinConfigLoading(false)
-        })
-    }, [])
+    // No Effect needed
 
     const categories = ['all', 'food', 'drink', 'voucher']
 
@@ -50,45 +36,7 @@ export default function RewardsPage() {
         <div className="p-4 pb-24 space-y-6">
             <h1 className="text-2xl font-bold">Rewards</h1>
 
-            {/* Daily Spin Section */}
-            <Card className="border-primary/20 bg-gradient-to-b from-primary/5 to-transparent overflow-hidden">
-                <CardHeader className="pb-2">
-                    <Collapsible open={isSpinOpen} onOpenChange={setIsSpinOpen}>
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                                <CardTitle className="flex items-center gap-2 text-xl">
-                                    <Trophy className="h-5 w-5 text-primary" />
-                                    Daily Spin
-                                </CardTitle>
-                                <CardDescription>
-                                    Spin for a chance to win exclusive prizes and points!
-                                </CardDescription>
-                            </div>
-                            <CollapsibleTrigger asChild>
-                                <Button variant="ghost" size="sm" className="w-9 p-0">
-                                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isSpinOpen ? 'rotate-180' : ''}`} />
-                                    <span className="sr-only">Toggle Spin Wheel</span>
-                                </Button>
-                            </CollapsibleTrigger>
-                        </div>
-                        <CollapsibleContent className="pt-6">
-                            {spinConfigLoading ? (
-                                <div className="h-[300px] flex items-center justify-center">
-                                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                                </div>
-                            ) : (
-                                <SpinWheel
-                                    prizes={spinConfig}
-                                    onSpinComplete={() => {
-                                        // Refresh my rewards
-                                        mutateRedemptions()
-                                    }}
-                                />
-                            )}
-                        </CollapsibleContent>
-                    </Collapsible>
-                </CardHeader>
-            </Card>
+
 
             <Tabs defaultValue="catalog" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">

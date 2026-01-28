@@ -10,16 +10,22 @@ import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
+import { formatDistanceToNow } from 'date-fns'
+
 interface SpinWheelProps {
     prizes: SpinPrize[]
     onSpinComplete?: () => void
+    nextSpinTime?: string | null
 }
 
-export function SpinWheel({ prizes, onSpinComplete }: SpinWheelProps) {
+export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelProps) {
     const [spinning, setSpinning] = useState(false)
     const [result, setResult] = useState<SpinPrize | null>(null)
     const [showResult, setShowResult] = useState(false)
     const controls = useAnimation()
+
+    // Check if locked
+    const isLocked = nextSpinTime && new Date(nextSpinTime) > new Date()
 
     const handleSpin = async () => {
         if (spinning) return
@@ -201,6 +207,22 @@ export function SpinWheel({ prizes, onSpinComplete }: SpinWheelProps) {
                     'SPIN NOW'
                 )}
             </Button>
+
+            {/* Locked Overlay */}
+            {isLocked && (
+                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-xl">
+                    <div className="bg-card p-6 rounded-xl shadow-lg border text-center space-y-3 max-w-xs mx-4">
+                        <div className="text-4xl">🔒</div>
+                        <h3 className="font-bold text-xl">Already Spun Today</h3>
+                        <p className="text-muted-foreground text-sm">
+                            You've used your daily spin. Come back in {formatDistanceToNow(new Date(nextSpinTime!))}!
+                        </p>
+                        <Button disabled className="w-full">
+                            Next Spin: {new Date(nextSpinTime!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             <Dialog open={showResult} onOpenChange={(open) => {
                 if (!open) resetWheel()

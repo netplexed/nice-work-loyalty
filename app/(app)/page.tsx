@@ -12,16 +12,32 @@ import { NiceBalance } from '@/components/nice/nice-balance'
 import { Skeleton } from '@/components/ui/skeleton'
 import confetti from 'canvas-confetti'
 import { useNiceTank } from '@/hooks/use-nice-tank'
-import { getSpinConfig, SpinPrize } from '@/app/actions/spin-actions'
+import { getSpinConfig, SpinPrize, getUserSpinStatus } from '@/app/actions/spin-actions'
 
 export default function Dashboard() {
     const { niceState, loading, error, mutate } = useNiceTank()
     const [refreshTrigger, setRefreshTrigger] = useState(0)
     const [spinConfig, setSpinConfig] = useState<SpinPrize[]>([])
+    const [nextSpinTime, setNextSpinTime] = useState<string | null>(null)
 
     useEffect(() => {
         getSpinConfig().then(setSpinConfig)
+        getUserSpinStatus().then(status => {
+            if (!status.available) {
+                setNextSpinTime(status.nextSpinTime || null)
+            }
+        })
     }, [])
+
+    const refreshSpinStatus = () => {
+        getUserSpinStatus().then(status => {
+            if (!status.available) {
+                setNextSpinTime(status.nextSpinTime || null)
+            } else {
+                setNextSpinTime(null)
+            }
+        })
+    }
 
     const handleCollect = (amount: number) => {
         if (!niceState) return
@@ -100,7 +116,14 @@ export default function Dashboard() {
                 {spinConfig.length > 0 && (
                     <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800">
                         <h3 className="font-semibold mb-4 text-center">Daily Spin</h3>
-                        <SpinWheel prizes={spinConfig} onSpinComplete={() => setRefreshTrigger(prev => prev + 1)} />
+                        <SpinWheel
+                            prizes={spinConfig}
+                            nextSpinTime={nextSpinTime}
+                            onSpinComplete={() => {
+                                setRefreshTrigger(prev => prev + 1)
+                                refreshSpinStatus()
+                            }}
+                        />
                     </div>
                 )}
                 <ReferralCard />

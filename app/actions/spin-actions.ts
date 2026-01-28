@@ -58,3 +58,28 @@ export async function spin(): Promise<SpinResult> {
 
     return result
 }
+export async function getUserSpinStatus(): Promise<{ available: boolean, nextSpinTime?: string }> {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { available: false }
+
+    // Check availability
+    const { data: canSpin, error } = await supabase.rpc('can_spin_today', { p_user_id: user.id })
+
+    if (error) {
+        console.error('Error checking spin status:', error)
+        return { available: false }
+    }
+
+    // Calculate next spin time if false (tomorrow at 00:00)
+    let nextSpinTime: string | undefined
+    if (!canSpin) {
+        const tomorrow = new Date()
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        tomorrow.setHours(0, 0, 0, 0)
+        nextSpinTime = tomorrow.toISOString()
+    }
+
+    return { available: !!canSpin, nextSpinTime }
+}
