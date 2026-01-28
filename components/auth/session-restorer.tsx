@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { toast } from 'sonner'
 
 /**
  * iOS PWA often clears cookies on force quit.
@@ -10,6 +11,7 @@ import { useRouter } from 'next/navigation'
  */
 export function SessionRestorer() {
     const router = useRouter()
+    const pathname = usePathname()
     const supabase = createClient()
 
     useEffect(() => {
@@ -22,6 +24,11 @@ export function SessionRestorer() {
                 if (currentSession.refresh_token) {
                     localStorage.setItem('supabase-backup-token', currentSession.refresh_token)
                 }
+
+                // If we are logged in but on the login page (e.g. after refresh), redirect to home
+                if (pathname === '/login') {
+                    router.push('/')
+                }
                 return
             }
 
@@ -30,6 +37,7 @@ export function SessionRestorer() {
             if (!backupToken) return // No backup, truly logged out.
 
             console.log('[SessionRestorer] No active session found, attempting restore from backup...')
+            const toastId = toast.loading('Restoring session...')
 
             // 3. Attempt restore
             const { data, error } = await supabase.auth.refreshSession({ refresh_token: backupToken })
@@ -37,6 +45,7 @@ export function SessionRestorer() {
             if (error || !data.session) {
                 console.warn('[SessionRestorer] Failed to restore session:', error)
                 localStorage.removeItem('supabase-backup-token')
+                toast.dismiss(toastId)
                 return
             }
 
@@ -46,8 +55,16 @@ export function SessionRestorer() {
                 localStorage.setItem('supabase-backup-token', data.session.refresh_token)
             }
 
-            // Reload page to ensure server components get the new cookie
-            router.refresh()
+            toast.success('Session restored', { id: toastId })
+
+            // If on login page, go home. Otherwise just refresh logic/data.
+            if (pathname === '/login') {
+                router.push('/')
+                // We don't need refresh() here because push() will navigate to a protected page 
+                // which will re-run middleware/server components with the new cookie.
+            } else {
+                router.refresh()
+            }
         }
 
         restoreSession()
@@ -62,7 +79,7 @@ export function SessionRestorer() {
         })
 
         return () => subscription.unsubscribe()
-    }, [router, supabase])
+    }, [router, pathname, supabase])
 
     return null // Invisible component
 }
