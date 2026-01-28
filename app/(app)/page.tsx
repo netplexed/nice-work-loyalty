@@ -12,7 +12,9 @@ import { NiceBalance } from '@/components/nice/nice-balance'
 import { Skeleton } from '@/components/ui/skeleton'
 import confetti from 'canvas-confetti'
 import { useNiceTank } from '@/hooks/use-nice-tank'
-import { getSpinConfig, SpinPrize, getUserSpinStatus } from '@/app/actions/spin-actions'
+import { useNiceTank } from '@/hooks/use-nice-tank'
+import { SpinPrize } from '@/app/actions/spin-actions'
+import { useSpinWheel } from '@/hooks/use-spin-wheel'
 
 export default function Dashboard() {
     const { niceState, loading, error, mutate } = useNiceTank()
@@ -121,7 +123,7 @@ export default function Dashboard() {
                             nextSpinTime={nextSpinTime}
                             onSpinComplete={() => {
                                 setRefreshTrigger(prev => prev + 1)
-                                refreshSpinStatus()
+                                mutateStatus() // Revalidate spin status
                             }}
                         />
                     </div>
