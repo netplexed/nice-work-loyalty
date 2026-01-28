@@ -130,7 +130,7 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
     }
 
     return (
-        <div className="flex flex-col items-center justify-center space-y-8 py-8">
+        <div className="flex flex-col items-center justify-center space-y-8 py-8 relative">
             <div className="relative">
                 {/* Pointer */}
                 <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20 text-primary drop-shadow-md">
