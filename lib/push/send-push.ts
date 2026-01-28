@@ -127,9 +127,12 @@ export async function sendPushBatch(userIds: string[], title: string, body: stri
 }
 
 export async function sendBroadcastToAll(title: string, body: string, url = '/') {
+    console.log('[sendBroadcastToAll] Starting broadcast:', { title, bodyPreview: body.substring(0, 50), url })
+
     const supabase = createAdminClient()
 
     // 1. Fetch ALL subscriptions (No user filter)
+    console.log('[sendBroadcastToAll] Fetching all push subscriptions from database...')
     const { data, error } = await supabase
         .from('push_subscriptions')
         .select('*')
@@ -142,11 +145,11 @@ export async function sendBroadcastToAll(title: string, body: string, url = '/')
     const subscriptions = data as unknown as PushSubscription[]
 
     if (!subscriptions || subscriptions.length === 0) {
-        console.log('[sendBroadcastToAll] No subscriptions found.')
+        console.log('[sendBroadcastToAll] No subscriptions found in database. No push notifications will be sent.')
         return
     }
 
-    console.log(`[sendBroadcastToAll] Sending to ${subscriptions.length} endpoints.`)
+    console.log(`[sendBroadcastToAll] Found ${subscriptions.length} subscriptions. Sending push notifications...`)
 
     // 2. Prepare Payload
     const payload = JSON.stringify({

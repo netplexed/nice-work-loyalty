@@ -90,18 +90,37 @@ export async function createAnnouncement(data: Partial<Announcement>) {
     if (error) throw new Error(error.message)
 
     // Trigger Push Notification if Active
-    const isStartingNow = new Date(data.start_date || new Date()).getTime() <= new Date().getTime() + 60000 // Within 1 min margin or past
+    const startDate = new Date(data.start_date || new Date())
+    const now = new Date()
+    const isStartingNow = startDate.getTime() <= now.getTime() + 60000 // Within 1 min margin or past
+
+    console.log('[createAnnouncement] Push check:', {
+        title: data.title,
+        active: data.active,
+        startDate: startDate.toISOString(),
+        now: now.toISOString(),
+        isStartingNow,
+        willSendPush: data.active && isStartingNow
+    })
 
     if (data.active && isStartingNow) {
         // Strip HTML from content
         const plainBody = data.content?.replace(/<[^>]*>?/gm, '') || 'New Announcement!'
+
+        console.log('[createAnnouncement] Triggering sendBroadcastToAll with:', {
+            title: data.title || 'Announcement',
+            body: plainBody.substring(0, 50) + '...',
+            url: data.action_url || '/'
+        })
 
         // Fire and forget (don't await to block UI)
         sendBroadcastToAll(
             data.title || 'Announcement',
             plainBody,
             data.action_url || '/'
-        ).catch(err => console.error('Failed to send broadcast push:', err))
+        ).catch(err => console.error('[createAnnouncement] Failed to send broadcast push:', err))
+    } else {
+        console.log('[createAnnouncement] Skipping push notification - not active or scheduled for later')
     }
 
     revalidatePath('/')
