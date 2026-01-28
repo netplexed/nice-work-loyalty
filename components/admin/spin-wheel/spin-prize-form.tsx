@@ -77,8 +77,11 @@ export function SpinPrizeForm({ open, onOpenChange, initialData, onSuccess }: Sp
         setLoading(true)
 
         try {
+            // Sanitize data: remove joined fields like 'rewards' and metadata
+            const { rewards, id, created_at, updated_at, ...cleanFormData } = formData as any
+
             const dataToSave = {
-                ...formData,
+                ...cleanFormData,
                 reward_id: formData.type === 'reward' ? formData.reward_id : null,
                 points_value: formData.type === 'points' ? formData.points_value : 0,
                 expiry_hours: formData.type === 'reward' ? formData.expiry_hours : null,
