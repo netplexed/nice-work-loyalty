@@ -1,76 +1,86 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, useAnimation } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { canSpinToday, spinWheel } from '@/app/actions/game-actions'
-import { Loader2, Gift } from 'lucide-react'
-import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
+import { SpinPrize, spin } from '@/app/actions/spin-actions'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 interface SpinWheelProps {
-    onSpinSuccess?: (points: number) => void
+    prizes: SpinPrize[]
+    onSpinComplete?: () => void
 }
 
-export function SpinWheel({ onSpinSuccess }: SpinWheelProps) {
-    const [canSpin, setCanSpin] = useState(false)
+export function SpinWheel({ prizes, onSpinComplete }: SpinWheelProps) {
     const [spinning, setSpinning] = useState(false)
-    const [loading, setLoading] = useState(true)
+    const [result, setResult] = useState<SpinPrize | null>(null)
+    const [showResult, setShowResult] = useState(false)
     const controls = useAnimation()
 
-    useEffect(() => {
-        checkEligibility()
-    }, [])
-
-    const checkEligibility = async () => {
-        try {
-            const eligible = await canSpinToday()
-            setCanSpin(eligible)
-        } catch (error) {
-            console.error(error)
-        } finally {
-            setLoading(false)
-        }
-    }
-
     const handleSpin = async () => {
-        if (!canSpin || spinning) return
-
+        if (spinning) return
         setSpinning(true)
 
-        // Start spinning animation (indefinite until result comes back)
-        controls.start({
-            rotate: 360 * 5,
-            transition: { duration: 2, ease: "linear", repeat: Infinity }
-        })
-
         try {
-            // Call server to get result
-            const prize = await spinWheel()
+            // Start spinning animation (indefinite or fast) visually first?
+            // Actually, best to get result first for deterministic stop, 
+            // but we can animate a "loading" spin if needed. 
+            // For now, let's just do the action.
 
-            // Stop infinite spin
-            controls.stop()
+            const response = await spin()
 
-            // Calculate landing angle based on prize value (Visual only, simple mapping)
-            // simplified mapping for demo:
-            // 50 -> 45deg
-            // 100 -> 135deg
-            // 500 -> 225deg
-            // 1000 -> 315deg
-            let targetAngle = 0
-            if (prize.value === 50) targetAngle = 45 + 360 * 3
-            else if (prize.value === 100) targetAngle = 135 + 360 * 3
-            else if (prize.value === 500) targetAngle = 225 + 360 * 3
-            else targetAngle = 315 + 360 * 3 // Jackpot
+            if (!response.success || !response.prize) {
+                toast.error(response.error || 'Failed to spin. Please try again.')
+                setSpinning(false)
+                return
+            }
 
-            // Animate to result
+            const winningPrize = response.prize
+            setResult(winningPrize)
+
+            // Calculate angle
+            const prizeIndex = prizes.findIndex(p => p.id === winningPrize.id)
+            if (prizeIndex === -1) {
+                // Should not happen if config is synced, but fallback
+                toast.error('Error finding prize segment.')
+                setSpinning(false)
+                return
+            }
+
+            const segmentAngle = 360 / prizes.length
+            // We want the pointer (top, usually 270 or -90 deg in SVG) to land on the center of the segment.
+            // If we start at 0, segment 0 is usually 0-X degrees. 
+            // Let's assume standard unit circle, 0 is right.
+            // Adjust calculations for "Pointer at Top" (270 deg).
+
+            // Random jitter within the segment to look natural (+/- 40% of segment width)
+            const jitter = (Math.random() - 0.5) * segmentAngle * 0.8
+
+            // To land on index i, we need to rotate such that that segment is at the pointer.
+            // Pointer is at -90deg (top).
+            // Segment i center is at: i * segmentAngle + segmentAngle/2
+            // We need: Rotation + (i * segmentAngle + segmentAngle/2) = -90 (mod 360)
+            // So: Rotation = -90 - (i * segmentAngle + segmentAngle/2)
+
+            // Add 5 full rotations (1800 deg) for effect
+            const baseRotation = 1800
+            const targetRotation = baseRotation - 90 - (prizeIndex * segmentAngle + segmentAngle / 2) + jitter
+
             await controls.start({
-                rotate: targetAngle,
-                transition: { duration: 3, ease: "easeOut" }
+                rotate: targetRotation,
+                transition: {
+                    duration: 5,
+                    ease: [0.2, 0.8, 0.2, 1], // Cubic bezier for ease-out
+                }
             })
 
-            if (prize.value >= 500) {
+            // Success handling
+            setShowResult(true)
+            if (winningPrize.type !== 'loss') {
                 confetti({
                     particleCount: 100,
                     spread: 70,
@@ -78,126 +88,151 @@ export function SpinWheel({ onSpinSuccess }: SpinWheelProps) {
                 })
             }
 
-            toast.success(`You won: ${prize.description}!`)
+            if (onSpinComplete) onSpinComplete()
 
-            // Notify parent to refresh points
-            if (onSpinSuccess && prize.type === 'points') {
-                onSpinSuccess(prize.value)
-            }
-
-            setCanSpin(false) // Update local state immediately
-
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to spin')
-            controls.stop()
+        } catch (e) {
+            console.error(e)
+            toast.error('Something went wrong.')
         } finally {
             setSpinning(false)
+            // Reset rotation visually after a delay if needed, 
+            // but keeping it there is fine until closed
         }
     }
 
-    if (loading) return null
+    const resetWheel = () => {
+        setShowResult(false)
+        setResult(null)
+        controls.set({ rotate: 0 })
+    }
 
-    if (!canSpin && !spinning) {
-        return (
-            <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-dashed">
-                <CardContent className="flex flex-col items-center justify-center p-6 text-center space-y-2">
-                    <Gift className="w-8 h-8 text-indigo-400 opacity-50" />
-                    <p className="text-sm text-muted-foreground font-medium">Come back tomorrow for your next spin!</p>
+    if (prizes.length === 0) {
+        return <div className="text-center p-4">Loading wheel...</div>
+    }
 
-                    {/* Debug Reset Button */}
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs text-indigo-300 hover:text-indigo-500 hover:bg-indigo-50 mt-2"
-                        onClick={async () => {
-                            try {
-                                const { resetDailySpin } = await import('@/app/actions/game-actions')
-                                const result = await resetDailySpin() as any
-                                if (result.success) {
-                                    toast.success(`Reset complete! Deleted ${result.count} records.`)
-                                    checkEligibility()
-                                }
-                            } catch (e: any) {
-                                toast.error('Reset failed: ' + e.message)
-                            }
-                        }}
-                    >
-                        Reset Daily Spin (Dev)
-                    </Button>
-                </CardContent>
-            </Card>
-        )
+    const segmentAngle = 360 / prizes.length
+    const radius = 150
+    // Calculate path for a segment slice
+    // Using simple SVG trigonometry
+    // A slice is a path from center (0,0) to (r, 0) arc to (r*cos(a), r*sin(a)) line to (0,0)
+
+    // Convert polar to cartesian
+    const getCoordinatesForPercent = (percent: number) => {
+        const x = Math.cos(2 * Math.PI * percent) * radius
+        const y = Math.sin(2 * Math.PI * percent) * radius
+        return [x, y]
     }
 
     return (
-        <Card className="overflow-hidden border-2 border-indigo-100 shadow-xl bg-white relative">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
-            <CardHeader className="text-center pb-2">
-                <CardTitle className="text-xl">Daily Spin</CardTitle>
-                <CardDescription>Spin for a chance to win up to 1000 points!</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center p-6 pt-2">
-                <div className="relative w-64 h-64 mb-6">
-                    {/* Wheel Graphic */}
-                    <motion.div
-                        className="w-full h-full rounded-full border-4 border-indigo-500 shadow-2xl relative bg-white overflow-hidden"
-                        animate={controls}
-                        style={{
-                            background: 'conic-gradient(#e0e7ff 0deg 90deg, #c7d2fe 90deg 180deg, #a5b4fc 180deg 270deg, #818cf8 270deg 360deg)'
-                        }}
-                    >
-                        {/* Segments Text - simplified positioning */}
-                        <div className="absolute top-8 right-8 text-xs font-bold text-indigo-900 rotate-45">50</div>
-                        <div className="absolute bottom-8 right-8 text-xs font-bold text-indigo-900 rotate-[135deg]">100</div>
-                        <div className="absolute bottom-8 left-8 text-xs font-bold text-indigo-900 rotate-[225deg]">500</div>
-                        <div className="absolute top-8 left-8 text-xs font-bold text-indigo-900 rotate-[315deg]">1000</div>
-                    </motion.div>
-
-                    {/* Pointer */}
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 z-10">
-                        <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[20px] border-t-red-500 drop-shadow-md" />
-                    </div>
+        <div className="flex flex-col items-center justify-center space-y-8 py-8">
+            <div className="relative">
+                {/* Pointer */}
+                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20 text-primary drop-shadow-md">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="currentColor">
+                        <path d="M20 40L35 15C35 15 35 0 20 0C5 0 5 15 5 15L20 40Z" />
+                    </svg>
                 </div>
 
-                <Button
-                    size="lg"
-                    onClick={handleSpin}
-                    disabled={spinning || !canSpin}
-                    className="w-full max-w-xs bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold shadow-md transition-all hover:scale-105"
+                {/* Wheel */}
+                <motion.div
+                    animate={controls}
+                    className="relative w-[300px] h-[300px] rounded-full shadow-2xl border-4 border-white overflow-hidden"
+                    style={{
+                        boxShadow: '0 0 20px rgba(0,0,0,0.2)'
+                    }}
                 >
-                    {spinning ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Spinning...
-                        </>
-                    ) : (
-                        'SPIN NOW'
-                    )}
-                </Button>
+                    <svg viewBox="-150 -150 300 300" className="w-full h-full">
+                        {prizes.map((prize, i) => {
+                            // Start and end angles in radians
+                            const startAngle = (i * segmentAngle * Math.PI) / 180
+                            const endAngle = ((i + 1) * segmentAngle * Math.PI) / 180
 
-                {/* Debug Reset Button */}
-                <div className="mt-4">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs text-indigo-300 hover:text-indigo-500 hover:bg-indigo-50"
-                        onClick={async () => {
-                            try {
-                                const { resetDailySpin } = await import('@/app/actions/game-actions')
-                                const result = await resetDailySpin() as any
-                                if (result.success) {
-                                    toast.success(`Reset complete! Deleted ${result.count} records.`)
-                                    checkEligibility()
-                                }
-                            } catch (e: any) {
-                                toast.error('Reset failed: ' + e.message)
-                            }
-                        }}
-                    >
-                        Reset Daily Spin (Dev)
-                    </Button>
+                            const x1 = Math.cos(startAngle) * radius
+                            const y1 = Math.sin(startAngle) * radius
+                            const x2 = Math.cos(endAngle) * radius
+                            const y2 = Math.sin(endAngle) * radius
+
+                            // SVG Path command
+                            const d = [
+                                `M 0 0`,
+                                `L ${x1} ${y1}`,
+                                `A ${radius} ${radius} 0 0 1 ${x2} ${y2}`,
+                                `Z`
+                            ].join(' ')
+
+                            return (
+                                <g key={prize.id}>
+                                    <path d={d} fill={prize.color} stroke="white" strokeWidth="2" />
+                                    {/* Text Label */}
+                                    <g transform={`rotate(${(i * segmentAngle) + (segmentAngle / 2)}, 0, 0) translate(${radius * 0.6}, 0)`}>
+                                        <text
+                                            x="0"
+                                            y="0"
+                                            fill={prize.color === '#E2E8F0' || prize.color === '#F1F5F9' || prize.color === '#CBD5E1' ? '#334155' : 'white'}
+                                            fontSize="12"
+                                            fontWeight="600"
+                                            textAnchor="middle"
+                                            dominantBaseline="middle"
+                                            transform="rotate(0)" // Keep text readable if needed, or rotate 180 if upside down
+                                            style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                                        >
+                                            {prize.label}
+                                        </text>
+                                    </g>
+                                </g>
+                            )
+                        })}
+                    </svg>
+                </motion.div>
+
+                {/* Center Cap */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg z-10 flex items-center justify-center border-2 border-primary">
+                    <div className="w-8 h-8 bg-primary rounded-full animate-pulse" />
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+
+            <Button size="lg" onClick={handleSpin} disabled={spinning} className="px-8 text-lg font-bold min-w-[200px]">
+                {spinning ? (
+                    <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Spinning...
+                    </>
+                ) : (
+                    'SPIN NOW'
+                )}
+            </Button>
+
+            <Dialog open={showResult} onOpenChange={(open) => {
+                if (!open) resetWheel()
+            }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl text-center">
+                            {result?.type === 'loss' ? 'Oh no!' : 'Congratulations!'}
+                        </DialogTitle>
+                        <DialogDescription className="text-center pt-4">
+                            {result?.type === 'loss' ? (
+                                <span className="text-lg">Better luck next time!</span>
+                            ) : (
+                                <div className="flex flex-col items-center gap-4">
+                                    <span className="text-lg">You won</span>
+                                    <span className="text-3xl font-bold py-2 text-primary">{result?.label}</span>
+                                    {result?.type === 'reward' && (
+                                        <div className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 p-3 rounded-md text-sm border border-amber-200">
+                                            ⚠️ Expires in 36 hours. Check My Rewards!
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="sm:justify-center">
+                        <Button onClick={() => setShowResult(false)}>
+                            Okay, got it!
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
     )
 }

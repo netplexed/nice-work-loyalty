@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, Gift, Settings, LogOut, Scan, QrCode, DollarSign, BarChart3, MessageSquare, Mail, Workflow, LayoutTemplate, GitBranch, Megaphone } from 'lucide-react'
+import { LayoutDashboard, Users, Gift, Settings, LogOut, Scan, QrCode, DollarSign, BarChart3, MessageSquare, Mail, Workflow, LayoutTemplate, GitBranch, Megaphone, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -18,6 +18,7 @@ export function AdminSidebar() {
         { href: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
         { href: '/admin/users', icon: Users, label: 'Users' },
         { href: '/admin/rewards', icon: Gift, label: 'Rewards' },
+        { href: '/admin/rewards/spin-wheel', icon: Trophy, label: 'Spin Wheel' },
         { href: '/admin/redeem', icon: Scan, label: 'Redeem' },
         { href: '/admin/pos', icon: DollarSign, label: 'POS / Record' },
         { href: '/admin/settings', icon: Settings, label: 'Settings' },

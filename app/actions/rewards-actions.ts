@@ -10,6 +10,7 @@ export async function getAvailableRewards() {
         .from('rewards')
         .select('*')
         .eq('active', true)
+        .eq('is_hidden', false)
         .order('points_cost', { ascending: true })
 
     return data || []

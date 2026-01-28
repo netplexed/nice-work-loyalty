@@ -3,7 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Copy, CheckCircle, QrCode } from "lucide-react"
+import { Copy, CheckCircle, QrCode, Clock } from "lucide-react"
+import { formatDistanceToNow, isPast } from "date-fns"
 import type { Database } from '@/lib/supabase/database.types'
 import { toast } from "sonner"
 import { VoucherQR } from "./voucher-qr"
@@ -11,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 
 // Type definition for the joined data
 type RedemptionWithReward = Database['public']['Tables']['redemptions']['Row'] & {
+    expires_at?: string | null // Manually added as it's missing in generated types
     rewards: {
         name: string
         description: string | null
@@ -63,9 +65,37 @@ function RewardItem({ redemption }: { redemption: RedemptionWithReward }) {
                                 {status === 'pending' ? 'Available' : status}
                             </Badge>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                            Claimed on {new Date(created_at).toLocaleDateString()} • {points_spent} pts
+                        <div className="text-xs text-muted-foreground space-y-1">
+                            <div>
+                                Claimed on {new Date(created_at).toLocaleDateString()} • {points_spent} pts
+                            </div>
+                            {status === 'pending' && redemption.expires_at && (
+                                <div className={`flex items-center gap-1 font-medium ${isPast(new Date(redemption.expires_at)) ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'}`}>
+                                    <Clock className="w-3 h-3" />
+                                    <span>
+                                        {isPast(new Date(redemption.expires_at))
+                                            ? 'Expired'
+                                            : `Expires in ${formatDistanceToNow(new Date(redemption.expires_at))}`}
+                                    </span>
+                                </div>
+                            )}
                         </div>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                            <div>
+                                Claimed on {new Date(created_at).toLocaleDateString()} • {points_spent} pts
+                            </div>
+                            {status === 'pending' && redemption.expires_at && (
+                                <div className={`flex items-center gap-1 font-medium ${isPast(new Date(redemption.expires_at)) ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'}`}>
+                                    <Clock className="w-3 h-3" />
+                                    <span>
+                                        {isPast(new Date(redemption.expires_at))
+                                            ? 'Expired'
+                                            : `Expires in ${formatDistanceToNow(new Date(redemption.expires_at))}`}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
                     </div>
 
                     {/* Voucher Code Section */}
