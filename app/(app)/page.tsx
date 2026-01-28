@@ -13,6 +13,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import confetti from 'canvas-confetti'
 import { useNiceTank } from '@/hooks/use-nice-tank'
 import { useSpinWheel } from '@/hooks/use-spin-wheel'
+import { resetDailySpin } from '@/app/actions/debug-actions'
+import { RotateCcw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 export default function Dashboard() {
     const { niceState, loading, error, mutate } = useNiceTank()
@@ -63,6 +67,16 @@ export default function Dashboard() {
         }
     }
 
+    const handleDebugReset = async () => {
+        try {
+            await resetDailySpin()
+            await mutateStatus()
+            toast.success('Debug: Spin reset successful')
+        } catch (e) {
+            toast.error('Debug: Failed to reset')
+        }
+    }
+
     return (
         <div className="flex flex-col gap-8 pb-24 p-6 bg-gray-50/50 min-h-screen">
             <div className="space-y-6">
@@ -105,6 +119,20 @@ export default function Dashboard() {
                                 mutateStatus() // Revalidate spin status
                             }}
                         />
+                        />
+
+                        {/* Debug Tool */}
+                        <div className="mt-4 pt-4 border-t border-dashed flex justify-center">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs text-muted-foreground hover:text-destructive h-8 gap-1"
+                                onClick={handleDebugReset}
+                            >
+                                <RotateCcw className="w-3 h-3" />
+                                Reset Spin (Debug)
+                            </Button>
+                        </div>
                     </div>
                 )}
                 <ReferralCard />
