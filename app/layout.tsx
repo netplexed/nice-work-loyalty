@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from 'sonner'
 import { SessionRestorer } from '@/components/auth/session-restorer'
 import { SwrProvider } from '@/components/providers/swr-provider'
+import { NativePushListener } from '@/components/native-push-listener'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({
       >
         <SwrProvider>
           <SessionRestorer />
+          <NativePushListener />
           {children}
           <Toaster />
         </SwrProvider>

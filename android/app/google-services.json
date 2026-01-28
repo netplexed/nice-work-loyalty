@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "435650745210",
+    "project_id": "nice-work-loyalty",
+    "storage_bucket": "nice-work-loyalty.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:435650745210:android:10caa8167c424492c03cc3",
+        "android_client_info": {
+          "package_name": "com.niceworkloyalty.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCfiuHR7QQaK1tptUN91YCr3UHgXKNBFfc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
