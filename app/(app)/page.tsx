@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { PointsBalanceBranded as PointsBalance } from '@/components/features/home/points-balance-branded'
 import { NewsCarousel } from '@/components/features/home/news-carousel'
 import { QuickActions } from '@/components/features/home/quick-actions'
@@ -12,34 +12,13 @@ import { NiceBalance } from '@/components/nice/nice-balance'
 import { Skeleton } from '@/components/ui/skeleton'
 import confetti from 'canvas-confetti'
 import { useNiceTank } from '@/hooks/use-nice-tank'
-import { useNiceTank } from '@/hooks/use-nice-tank'
-import { SpinPrize } from '@/app/actions/spin-actions'
 import { useSpinWheel } from '@/hooks/use-spin-wheel'
 
 export default function Dashboard() {
     const { niceState, loading, error, mutate } = useNiceTank()
+    const { prizes: spinConfig, nextSpinTime, mutateStatus, loading: spinLoading } = useSpinWheel()
+
     const [refreshTrigger, setRefreshTrigger] = useState(0)
-    const [spinConfig, setSpinConfig] = useState<SpinPrize[]>([])
-    const [nextSpinTime, setNextSpinTime] = useState<string | null>(null)
-
-    useEffect(() => {
-        getSpinConfig().then(setSpinConfig)
-        getUserSpinStatus().then(status => {
-            if (!status.available) {
-                setNextSpinTime(status.nextSpinTime || null)
-            }
-        })
-    }, [])
-
-    const refreshSpinStatus = () => {
-        getUserSpinStatus().then(status => {
-            if (!status.available) {
-                setNextSpinTime(status.nextSpinTime || null)
-            } else {
-                setNextSpinTime(null)
-            }
-        })
-    }
 
     const handleCollect = (amount: number) => {
         if (!niceState) return
