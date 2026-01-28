@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Zap, Calendar, UserPlus, Timer } from 'lucide-react'
+import { Edit, Zap, Calendar, UserPlus, Timer, Trophy } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function AutomationsPage() {
@@ -41,6 +41,7 @@ export default function AutomationsPage() {
             case 'welcome': return <UserPlus className="w-5 h-5 text-green-500" />
             case 'birthday': return <Calendar className="w-5 h-5 text-purple-500" />
             case 'win_back': return <Timer className="w-5 h-5 text-orange-500" />
+            case 'milestone': return <Trophy className="w-5 h-5 text-yellow-500" />
             default: return <Zap className="w-5 h-5 text-blue-500" />
         }
     }
@@ -68,6 +69,7 @@ export default function AutomationsPage() {
                                         {auto.type === 'welcome' && 'Triggers when a new user registers'}
                                         {auto.type === 'birthday' && 'Triggers on the birthday month'}
                                         {auto.type === 'win_back' && `Triggers after ${auto.trigger_settings?.days_inactive || 30} days of inactivity`}
+                                        {auto.type === 'milestone' && `Triggers after ${auto.trigger_settings?.visits_required || 5} visits`}
                                     </CardDescription>
                                 </div>
                             </div>
