@@ -69,7 +69,7 @@ function RewardItem({ redemption }: { redemption: RedemptionWithReward }) {
                             <div>
                                 Claimed on {new Date(created_at).toLocaleDateString()} • {points_spent} pts
                             </div>
-                            {status === 'pending' && redemption.expires_at && (
+                            {(status === 'pending' || status === 'approved') && redemption.expires_at && (
                                 <div className={`flex items-center gap-1 font-medium ${isPast(new Date(redemption.expires_at)) ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'}`}>
                                     <Clock className="w-3 h-3" />
                                     <span>
@@ -80,21 +80,7 @@ function RewardItem({ redemption }: { redemption: RedemptionWithReward }) {
                                 </div>
                             )}
                         </div>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                            <div>
-                                Claimed on {new Date(created_at).toLocaleDateString()} • {points_spent} pts
-                            </div>
-                            {status === 'pending' && redemption.expires_at && (
-                                <div className={`flex items-center gap-1 font-medium ${isPast(new Date(redemption.expires_at)) ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'}`}>
-                                    <Clock className="w-3 h-3" />
-                                    <span>
-                                        {isPast(new Date(redemption.expires_at))
-                                            ? 'Expired'
-                                            : `Expires in ${formatDistanceToNow(new Date(redemption.expires_at))}`}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
+
 
                     </div>
 
