@@ -48,7 +48,7 @@ export function NativePushListener() {
             // Notification tapped
             await FirebaseMessaging.addListener('notificationActionPerformed', event => {
                 console.log('Push action:', event.notification)
-                const data = event.notification.data
+                const data = event.notification.data as any
                 if (data?.url) {
                     router.push(data.url)
                 }
