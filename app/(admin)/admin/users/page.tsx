@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { PointsAdjustmentDialog } from '@/components/admin/users/points-adjustment-dialog'
 import { NiceAdjustmentDialog } from '@/components/admin/users/nice-adjustment-dialog'
+import { GiveRewardDialog } from '@/components/admin/give-reward-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default async function UsersPage() {
@@ -72,6 +73,10 @@ export default async function UsersPage() {
                                             userId={user.id}
                                             userName={user.full_name || user.email}
                                             currentBalance={user.nice_accounts?.nice_collected_balance || 0}
+                                        />
+                                        <GiveRewardDialog
+                                            userId={user.id}
+                                            userName={user.full_name || user.email}
                                         />
                                     </TableCell>
                                 </TableRow>
