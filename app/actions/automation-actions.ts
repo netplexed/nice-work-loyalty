@@ -53,3 +53,24 @@ export async function updateAutomation(id: string, data: any) {
 export async function toggleAutomation(id: string, active: boolean) {
     return updateAutomation(id, { active })
 }
+
+export async function createAutomation(data: { name: string, type: string, email_subject: string }) {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    const { data: newAuto, error } = await supabase
+        .from('automations')
+        .insert({
+            ...data,
+            active: false,
+            trigger_settings: {},
+            email_body: '<p>Edit your content here...</p>'
+        })
+        .select()
+        .single()
+
+    if (error) throw new Error(error.message)
+    revalidatePath('/admin/automations')
+    return newAuto
+}
