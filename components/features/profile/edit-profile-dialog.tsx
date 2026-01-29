@@ -13,6 +13,11 @@ interface EditProfileDialogProps {
     profile: any
 }
 
+const TANUKI_AVATARS = [
+    '/images/tanuki-1.png',
+    '/images/tanuki-2.png'
+]
+
 export function EditProfileDialog({ profile }: EditProfileDialogProps) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)

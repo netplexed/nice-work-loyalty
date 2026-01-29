@@ -73,7 +73,7 @@ export function AvatarUpload({ profile }: AvatarUploadProps) {
     return (
         <div className="relative group">
             <Avatar className="w-24 h-24 border-4 border-white shadow-lg cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.full_name}`} className="object-cover" />
+                <AvatarImage src={avatarUrl || '/images/tanuki-1.png'} className="object-cover" />
                 <AvatarFallback>{profile.full_name?.[0]}</AvatarFallback>
             </Avatar>
 

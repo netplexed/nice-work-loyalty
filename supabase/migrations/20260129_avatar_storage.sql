@@ -3,8 +3,8 @@ insert into storage.buckets (id, name, public)
 values ('avatars', 'avatars', true)
 on conflict (id) do nothing;
 
--- Set up RLS for storage.objects
-alter table storage.objects enable row level security;
+-- Note: storage.objects already has RLS enabled by default.
+-- We do not need to alter the table.
 
 -- Policy: Everyone can view avatars
 create policy "Avatar images are publicly accessible"
