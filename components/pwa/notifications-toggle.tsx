@@ -79,7 +79,9 @@ export function NotificationsToggle() {
                 if (result.receive === 'granted') {
                     const { token } = await FirebaseMessaging.getToken()
                     const platform = Capacitor.getPlatform() === 'ios' ? 'ios' : 'android'
-                    await saveSubscription(token, platform)
+                    const result = await saveSubscription(token, platform)
+                    if (!result.success) throw new Error(result.error)
+
                     setIsSubscribed(true)
                     toast.success('Notifications enabled!')
                 } else {
@@ -97,7 +99,9 @@ export function NotificationsToggle() {
                 applicationServerKey: urlBase64ToUint8Array(vapidKey)
             })
 
-            await saveSubscription(JSON.parse(JSON.stringify(subscription)))
+            const result = await saveSubscription(JSON.parse(JSON.stringify(subscription)))
+            if (!result.success) throw new Error(result.error)
+
             setIsSubscribed(true)
             toast.success('Notifications enabled!')
         } catch (error: any) {

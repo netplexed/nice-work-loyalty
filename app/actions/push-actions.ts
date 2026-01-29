@@ -27,41 +27,46 @@ if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
 }
 
 export async function saveSubscription(subscription: any, platform: 'web' | 'ios' | 'android' = 'web') {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) throw new Error('Unauthorized')
+        if (!user) return { success: false, error: 'Unauthorized: Please log in again' }
 
-    let endpoint = ''
-    let keys = null
+        let endpoint = ''
+        let keys = null
 
-    if (platform === 'web') {
-        if (!subscription.endpoint || !subscription.keys) throw new Error('Invalid web subscription')
-        endpoint = subscription.endpoint
-        keys = subscription.keys
-    } else {
-        // For native, subscription is the FCM token string
-        if (typeof subscription !== 'string') throw new Error('Invalid native token')
-        endpoint = subscription
-        // keys remain null
+        if (platform === 'web') {
+            if (!subscription.endpoint || !subscription.keys) return { success: false, error: 'Invalid web subscription' }
+            endpoint = subscription.endpoint
+            keys = subscription.keys
+        } else {
+            // For native, subscription is the FCM token string
+            if (typeof subscription !== 'string') return { success: false, error: 'Invalid native token' }
+            endpoint = subscription
+            // keys remain null
+        }
+
+        // Check if exists
+        const { error } = await supabase
+            .from('push_subscriptions')
+            .upsert({
+                user_id: user.id,
+                endpoint: endpoint,
+                keys: keys,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'endpoint' })
+
+        if (error) {
+            console.error('Save subscription error:', error)
+            return { success: false, error: 'Database error: ' + error.message }
+        }
+
+        return { success: true }
+    } catch (e: any) {
+        console.error('Unexpected error in saveSubscription:', e)
+        return { success: false, error: e.message || 'Unknown server error' }
     }
-
-    // Check if exists
-    const { error } = await supabase
-        .from('push_subscriptions')
-        .upsert({
-            user_id: user.id,
-            endpoint: endpoint,
-            keys: keys,
-            updated_at: new Date().toISOString()
-        }, { onConflict: 'endpoint' })
-
-    if (error) {
-        console.error('Save subscription error:', error)
-        throw error
-    }
-
-    return { success: true }
 }
 
 export async function sendPushNotification(userId: string, title: string, body: string, url = '/') {

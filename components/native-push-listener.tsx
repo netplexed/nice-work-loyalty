@@ -22,7 +22,8 @@ export function NativePushListener() {
                     console.log('FCM Token:', token)
 
                     const platform = Capacitor.getPlatform() === 'ios' ? 'ios' : 'android'
-                    await saveSubscription(token, platform)
+                    const result = await saveSubscription(token, platform)
+                    if (!result.success) console.error('Failed to save native subscription:', result.error)
                 } else {
                     console.warn('Push permissions denied')
                 }
@@ -37,7 +38,8 @@ export function NativePushListener() {
             await FirebaseMessaging.addListener('tokenReceived', async event => {
                 console.log('Token Refresh:', event.token)
                 const platform = Capacitor.getPlatform() === 'ios' ? 'ios' : 'android'
-                await saveSubscription(event.token, platform)
+                const result = await saveSubscription(event.token, platform)
+                if (!result.success) console.error('Failed to refresh native subscription:', result.error)
             })
 
             // Notification received (foreground)
