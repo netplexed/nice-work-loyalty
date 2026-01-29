@@ -6,6 +6,8 @@ import { Switch } from '@/components/ui/switch'
 import { BellOff } from 'lucide-react'
 import { saveSubscription } from '@/app/actions/push-actions'
 import { toast } from 'sonner'
+import { Capacitor } from '@capacitor/core'
+import { FirebaseMessaging } from '@capacitor-firebase/messaging'
 
 function urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -28,7 +30,7 @@ export function NotificationsToggle() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
+        if (Capacitor.isNativePlatform() || ('serviceWorker' in navigator && 'PushManager' in window)) {
             setIsSupported(true)
             checkSubscription()
         } else {
@@ -39,6 +41,12 @@ export function NotificationsToggle() {
 
     async function checkSubscription() {
         try {
+            if (Capacitor.isNativePlatform()) {
+                const { receive } = await FirebaseMessaging.checkPermissions()
+                setIsSubscribed(receive === 'granted')
+                return
+            }
+
             // In dev mode or if SW fails, .ready hangs forever. Add timeout.
             const timeout = new Promise((resolve) => setTimeout(resolve, 2000));
             const registration = await Promise.race([
@@ -66,6 +74,20 @@ export function NotificationsToggle() {
     async function subscribe() {
         setLoading(true)
         try {
+            if (Capacitor.isNativePlatform()) {
+                const result = await FirebaseMessaging.requestPermissions()
+                if (result.receive === 'granted') {
+                    const { token } = await FirebaseMessaging.getToken()
+                    const platform = Capacitor.getPlatform() === 'ios' ? 'ios' : 'android'
+                    await saveSubscription(token, platform)
+                    setIsSubscribed(true)
+                    toast.success('Notifications enabled!')
+                } else {
+                    toast.error('Permission denied. Please enable in settings.')
+                }
+                return
+            }
+
             const registration = await navigator.serviceWorker.ready
             const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
             if (!vapidKey) throw new Error('Missing VAPID key')
@@ -89,6 +111,15 @@ export function NotificationsToggle() {
     async function unsubscribe() {
         setLoading(true)
         try {
+            if (Capacitor.isNativePlatform()) {
+                // Native unsubscribe typically involves revoking token or just server-side flag.
+                // For now we will just delete the token to stop receiving.
+                await FirebaseMessaging.deleteToken()
+                setIsSubscribed(false)
+                toast.info('Notifications disabled.')
+                return
+            }
+
             const registration = await navigator.serviceWorker.ready
             const subscription = await registration.pushManager.getSubscription()
             if (subscription) {
