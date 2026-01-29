@@ -10,6 +10,8 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Loader2, Pen, Camera, RefreshCcw } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { mutate } from 'swr'
+import { useRouter } from 'next/navigation'
 
 interface EditProfileDialogProps {
     profile: any
@@ -30,6 +32,7 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
     const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || TANUKI_AVATARS[0])
     const fileInputRef = useRef<HTMLInputElement>(null)
     const supabase = createClient()
+    const router = useRouter()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -43,9 +46,16 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
                 birthday: birthday || null,
                 avatar_url: avatarUrl
             })
+
             toast.success('Profile updated')
             setOpen(false)
-            window.location.reload()
+
+            // Invalidate SWR cache to force re-fetch on Profile page
+            await mutate('user-profile')
+
+            // Also refresh server components just in case
+            router.refresh()
+
         } catch (error: any) {
             toast.error(error.message)
         } finally {
