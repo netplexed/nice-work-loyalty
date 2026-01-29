@@ -14,6 +14,7 @@ import { MarketingConsentToggle } from '@/components/features/profile/marketing-
 import { VoucherQR } from '@/components/features/rewards/voucher-qr'
 import { EditProfileDialog } from '@/components/features/profile/edit-profile-dialog'
 import { DeleteAccountDialog } from '@/components/features/profile/delete-account-dialog'
+import { AvatarUpload } from '@/components/features/profile/avatar-upload'
 
 export default function ProfilePage() {
     const { profile, loading } = useUserProfile()
@@ -32,10 +33,7 @@ export default function ProfilePage() {
     return (
         <div className="p-4 pb-24 space-y-6">
             <div className="flex flex-col items-center space-y-4 pt-4">
-                <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.full_name}`} />
-                    <AvatarFallback>{profile.full_name?.[0]}</AvatarFallback>
-                </Avatar>
+                <AvatarUpload profile={profile} />
                 <div className="text-center">
                     <h1 className="text-2xl font-bold">{profile.full_name}</h1>
                     <p className="text-muted-foreground capitalize">{profile.tier} Member</p>
