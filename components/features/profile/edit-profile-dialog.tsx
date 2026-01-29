@@ -1,13 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { updateUserProfile } from '@/app/actions/user-actions'
+import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Loader2, Pen } from 'lucide-react'
+import { Loader2, Pen, Camera, RefreshCcw } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 interface EditProfileDialogProps {
     profile: any
@@ -25,10 +27,9 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
     const [email, setEmail] = useState(profile.email || '')
     const [phone, setPhone] = useState(profile.phone || '')
     const [birthday, setBirthday] = useState(profile.birthday || '')
-    const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || '')
-
-    // Default Tanuki Avatars
-    const TANUKI_AVATAR = "https://images.unsplash.com/photo-1618641986557-6ecd23ff938f?q=80&w=200&auto=format&fit=crop"
+    const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || TANUKI_AVATARS[0])
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const supabase = createClient()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -40,17 +41,48 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
                 email: email,
                 phone: phone || null,
                 birthday: birthday || null,
-                avatar_url: avatarUrl || TANUKI_AVATAR // Default to Tanuki if empty
+                avatar_url: avatarUrl
             })
             toast.success('Profile updated')
             setOpen(false)
-            // Ideally we'd trigger a refresh or update local state, but revalidatePath in action handles next visit
-            // For immediate UI update, we might ultimately need to hoist state or reload page
             window.location.reload()
         } catch (error: any) {
             toast.error(error.message)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            if (!event.target.files || event.target.files.length === 0) return
+
+            setLoading(true)
+            const file = event.target.files[0]
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${profile.id}/${Date.now()}.${fileExt}`
+            const filePath = `${fileName}`
+
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, file)
+
+            if (uploadError) throw uploadError
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath)
+
+            setAvatarUrl(publicUrl)
+            toast.success('Image uploaded successfully')
+
+        } catch (error: any) {
+            toast.error(error.message || 'Error uploading image')
+        } finally {
+            setLoading(false)
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''
+            }
         }
     }
 
@@ -70,40 +102,66 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="flex flex-col items-center gap-4 mb-4">
-                        <img
-                            src={avatarUrl || TANUKI_AVATAR}
-                            alt="Avatar Preview"
-                            className="w-24 h-24 rounded-full border-4 border-primary object-cover"
-                        />
+                        <div className="relative group">
+                            <img
+                                src={avatarUrl}
+                                alt="Avatar Preview"
+                                className="w-24 h-24 rounded-full border-4 border-primary object-cover bg-slate-100"
+                            />
+                        </div>
+
                         <div className="flex gap-2">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        <RefreshCcw className="w-3 h-3 mr-2" />
+                                        Use Tanuki
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-fit p-2">
+                                    <div className="flex gap-2">
+                                        {TANUKI_AVATARS.map((url, i) => (
+                                            <button
+                                                key={i}
+                                                type="button"
+                                                onClick={() => setAvatarUrl(url)}
+                                                className="hover:scale-105 transition-transform"
+                                            >
+                                                <img
+                                                    src={url}
+                                                    className="w-12 h-12 rounded-full border border-slate-200"
+                                                    alt={`Tanuki ${i + 1}`}
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setAvatarUrl(TANUKI_AVATAR)}
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={loading}
                             >
-                                Use Tanuki
+                                <Camera className="w-3 h-3 mr-2" />
+                                Change Picture
                             </Button>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setAvatarUrl(`https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName}`)}
-                            >
-                                Use Cartoon
-                            </Button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                            />
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="avatar">Avatar URL (Optional)</Label>
-                        <Input
-                            id="avatar"
-                            value={avatarUrl}
-                            onChange={e => setAvatarUrl(e.target.value)}
-                            placeholder="https://..."
-                        />
-                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                         <Input
