@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
+import useSWR from 'swr'
 import { Bell } from 'lucide-react'
 import { getUnreadCount } from '@/app/actions/messaging-actions'
 import { cn } from '@/lib/utils'
@@ -9,7 +10,9 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export function NotificationNav() {
-    const [count, setCount] = useState(0)
+    const { data: count = 0, mutate } = useSWR('unread-notifications', getUnreadCount, {
+        refreshInterval: 30000 // Poll every 30s as backup
+    })
     const pathname = usePathname()
     const isActive = pathname === '/notifications'
 
@@ -18,13 +21,9 @@ export function NotificationNav() {
         let channel: any
 
         const setupRealtime = async () => {
-            // Initial fetch
-            getUnreadCount().then(setCount)
-
-            // Get user for filter
             const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
 
-            // Realtime Subscription
             channel = supabase
                 .channel('notification-badge')
                 .on(
@@ -33,11 +32,11 @@ export function NotificationNav() {
                         event: 'INSERT',
                         schema: 'public',
                         table: 'notifications',
-                        filter: user ? `user_id=eq.${user.id}` : undefined
+                        filter: `user_id=eq.${user.id}`
                     },
                     () => {
-                        // On any new notification, re-fetch count
-                        getUnreadCount().then(setCount)
+                        console.log('Realtime notification received, refreshing badge...')
+                        mutate()
                     }
                 )
                 .subscribe()
@@ -48,7 +47,7 @@ export function NotificationNav() {
         return () => {
             if (channel) supabase.removeChannel(channel)
         }
-    }, [pathname])
+    }, [mutate])
 
     return (
         <Link

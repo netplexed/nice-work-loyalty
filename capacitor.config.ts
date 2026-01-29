@@ -10,6 +10,14 @@ const config: CapacitorConfig = {
     // Ensure cookies and headers are handled correctly
     androidScheme: 'https',
     iosScheme: 'https'
+  },
+  plugins: {
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
+    FirebaseMessaging: {
+      presentationOptions: ["badge", "sound", "alert"],
+    }
   }
 };
 

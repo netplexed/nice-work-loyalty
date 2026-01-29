@@ -5,6 +5,7 @@ import { Capacitor } from '@capacitor/core'
 import { FirebaseMessaging } from '@capacitor-firebase/messaging'
 import { saveSubscription } from '@/app/actions/push-actions'
 import { useRouter } from 'next/navigation'
+import { mutate } from 'swr'
 
 export function NativePushListener() {
     const router = useRouter()
@@ -45,6 +46,8 @@ export function NativePushListener() {
             // Notification received (foreground)
             await FirebaseMessaging.addListener('notificationReceived', event => {
                 console.log('Push received:', event.notification)
+                // Refresh badge count
+                mutate('unread-notifications')
             })
 
             // Notification tapped
