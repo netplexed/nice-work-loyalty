@@ -6,7 +6,6 @@ import { FirebaseMessaging } from '@capacitor-firebase/messaging'
 import { saveSubscription } from '@/app/actions/push-actions'
 import { useRouter } from 'next/navigation'
 import { mutate } from 'swr'
-import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
 export function NativePushListener() {
@@ -39,12 +38,8 @@ export function NativePushListener() {
                     const saveResult = await saveSubscription(token, platform)
                     if (saveResult.success) {
                         console.log('Native Push Registered')
-                        toast.success('Debug: Push Device Registered', { duration: 2000 })
                     } else {
-                        // Suppress toast if just unauthorized (handing race condition)
-                        if (!saveResult.error?.includes('Unauthorized')) {
-                            toast.error('Debug: Push Reg Failed: ' + saveResult.error)
-                        }
+                        console.error('Failed to save native subscription:', saveResult.error)
                     }
                 }
             } catch (e: any) {
