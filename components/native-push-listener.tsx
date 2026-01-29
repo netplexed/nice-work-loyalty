@@ -6,6 +6,7 @@ import { FirebaseMessaging } from '@capacitor-firebase/messaging'
 import { saveSubscription } from '@/app/actions/push-actions'
 import { useRouter } from 'next/navigation'
 import { mutate } from 'swr'
+import { toast } from 'sonner'
 
 export function NativePushListener() {
     const router = useRouter()
@@ -23,13 +24,21 @@ export function NativePushListener() {
                     console.log('FCM Token:', token)
 
                     const platform = Capacitor.getPlatform() === 'ios' ? 'ios' : 'android'
-                    const result = await saveSubscription(token, platform)
-                    if (!result.success) console.error('Failed to save native subscription:', result.error)
+                    const saveResult = await saveSubscription(token, platform)
+                    if (saveResult.success) {
+                        console.log('Native Push Registered')
+                        toast.success('Debug: Push Device Registered', { duration: 2000 })
+                    } else {
+                        console.error('Failed to save native subscription:', saveResult.error)
+                        toast.error('Debug: Push Reg Failed: ' + saveResult.error)
+                    }
                 } else {
                     console.warn('Push permissions denied')
+                    toast.error('Debug: Push Permission Denied')
                 }
-            } catch (e) {
+            } catch (e: any) {
                 console.error('Push init error:', e)
+                toast.error('Debug: Push Init Error: ' + e.message)
             }
         }
 
