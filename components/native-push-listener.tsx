@@ -7,6 +7,7 @@ import { saveSubscription } from '@/app/actions/push-actions'
 import { useRouter } from 'next/navigation'
 import { mutate } from 'swr'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 export function NativePushListener() {
     const router = useRouter()
@@ -14,7 +15,18 @@ export function NativePushListener() {
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return
 
+        const supabase = createClient()
+        let unsubscribeAuth: (() => void) | undefined
+
+        // Core Push Logic
         const initPush = async () => {
+            // Check auth first
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) {
+                console.log('Skipping push init - no user')
+                return
+            }
+
             try {
                 // 1. Request Permission
                 const result = await FirebaseMessaging.requestPermissions()
@@ -29,51 +41,56 @@ export function NativePushListener() {
                         console.log('Native Push Registered')
                         toast.success('Debug: Push Device Registered', { duration: 2000 })
                     } else {
-                        console.error('Failed to save native subscription:', saveResult.error)
-                        toast.error('Debug: Push Reg Failed: ' + saveResult.error)
+                        // Suppress toast if just unauthorized (handing race condition)
+                        if (!saveResult.error?.includes('Unauthorized')) {
+                            toast.error('Debug: Push Reg Failed: ' + saveResult.error)
+                        }
                     }
-                } else {
-                    console.warn('Push permissions denied')
-                    toast.error('Debug: Push Permission Denied')
                 }
             } catch (e: any) {
                 console.error('Push init error:', e)
-                toast.error('Debug: Push Init Error: ' + e.message)
             }
         }
 
-        // Listeners
         const addListeners = async () => {
             // Token refresh
             await FirebaseMessaging.addListener('tokenReceived', async event => {
-                console.log('Token Refresh:', event.token)
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user) return
+
                 const platform = Capacitor.getPlatform() === 'ios' ? 'ios' : 'android'
-                const result = await saveSubscription(event.token, platform)
-                if (!result.success) console.error('Failed to refresh native subscription:', result.error)
+                await saveSubscription(event.token, platform)
             })
 
-            // Notification received (foreground)
+            // Notification received
             await FirebaseMessaging.addListener('notificationReceived', event => {
-                console.log('Push received:', event.notification)
-                // Refresh badge count
                 mutate('unread-notifications')
             })
 
             // Notification tapped
             await FirebaseMessaging.addListener('notificationActionPerformed', event => {
-                console.log('Push action:', event.notification)
                 const data = event.notification.data as any
-                if (data?.url) {
-                    router.push(data.url)
-                }
+                if (data?.url) router.push(data.url)
             })
         }
 
-        initPush()
+        // Initialize listeners once
         addListeners()
+
+        // Check immediately
+        initPush()
+
+        // Listen for login events to retry init
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_IN') {
+                initPush()
+            }
+        })
+        unsubscribeAuth = () => subscription.unsubscribe()
 
         return () => {
             FirebaseMessaging.removeAllListeners()
+            if (unsubscribeAuth) unsubscribeAuth()
         }
     }, [router])
 
