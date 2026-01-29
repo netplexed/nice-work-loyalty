@@ -1,6 +1,20 @@
 import webPush from 'web-push'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getApps, initializeApp, cert, getApp } from 'firebase-admin/app'
+import { getMessaging } from 'firebase-admin/messaging'
+
+// Helper to init Firebase Admin
+function getFirebaseAdmin() {
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT) return null
+
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+
+    if (getApps().length === 0) {
+        return initializeApp({ credential: cert(serviceAccount) })
+    }
+    return getApp()
+}
 
 // Initialize VAPID
 webPush.setVapidDetails(
@@ -43,15 +57,29 @@ export async function sendPushNotification(userId: string, title: string, body: 
     // 3. Send to all user devices
     const results = await Promise.allSettled(subscriptions.map(async (sub) => {
         try {
-            await webPush.sendNotification({
-                endpoint: sub.endpoint,
-                keys: sub.keys
-            }, payload)
+            if (sub.keys) {
+                // WEB PUSH
+                await webPush.sendNotification({
+                    endpoint: sub.endpoint,
+                    keys: sub.keys
+                }, payload)
+            } else {
+                // NATIVE PUSH (FCM)
+                const app = getFirebaseAdmin()
+                if (app) {
+                    await getMessaging(app).send({
+                        token: sub.endpoint,
+                        notification: { title, body },
+                        data: { url }
+                    })
+                } else {
+                    console.warn('[sendPushNotification] Firebase Admin not configured, skipping native push')
+                }
+            }
             return { status: 'fulfilled', subId: sub.id }
         } catch (error: any) {
-            console.error(`[Push Failed] Sub ID: ${sub.id}, Status: ${error.statusCode}`, error)
-            if (error.statusCode === 410 || error.statusCode === 404) {
-                // Subscription expired/gone, remove it
+            console.error(`[Push Failed] Sub ID: ${sub.id}, Status: ${error.statusCode || error.code}`, error.message)
+            if (error.statusCode === 410 || error.statusCode === 404 || error.code === 'messaging/registration-token-not-registered') {
                 await supabase.from('push_subscriptions').delete().eq('id', sub.id)
             }
             throw error
@@ -108,17 +136,29 @@ export async function sendPushBatch(userIds: string[], title: string, body: stri
     // 3. Send in parallel
     const results = await Promise.allSettled(allSubscriptions.map(async (sub) => {
         try {
-            await webPush.sendNotification({
-                endpoint: sub.endpoint,
-                keys: sub.keys
-            }, payload)
-
+            if (sub.keys) {
+                // WEB PUSH
+                await webPush.sendNotification({
+                    endpoint: sub.endpoint,
+                    keys: sub.keys
+                }, payload)
+            } else {
+                // NATIVE PUSH (FCM)
+                const app = getFirebaseAdmin()
+                if (app) {
+                    await getMessaging(app).send({
+                        token: sub.endpoint,
+                        notification: { title, body },
+                        data: { url: '/' }
+                    })
+                } else {
+                    console.warn('[sendPushBatch] Firebase Admin not configured, skipping native push')
+                }
+            }
             return { status: 'fulfilled', subId: sub.id, userId: sub.user_id }
         } catch (error: any) {
-            console.error(`[Push Failed] Sub ID: ${sub.id} (User: ${sub.user_id}), Status: ${error.statusCode}`, error)
-
-            if (error.statusCode === 410 || error.statusCode === 404) {
-                // Subscription expired/gone, remove it
+            console.error(`[Push Failed] Sub ID: ${sub.id} (User: ${sub.user_id}), Status: ${error.statusCode || error.code}`, error.message)
+            if (error.statusCode === 410 || error.statusCode === 404 || error.code === 'messaging/registration-token-not-registered') {
                 await supabase.from('push_subscriptions').delete().eq('id', sub.id)
             }
             throw error
@@ -169,16 +209,29 @@ export async function sendBroadcastToAll(title: string, body: string, url = '/')
     // 3. Send in parallel
     const results = await Promise.allSettled(subscriptions.map(async (sub) => {
         try {
-            await webPush.sendNotification({
-                endpoint: sub.endpoint,
-                keys: sub.keys
-            }, payload)
-
+            if (sub.keys) {
+                // WEB PUSH
+                await webPush.sendNotification({
+                    endpoint: sub.endpoint,
+                    keys: sub.keys
+                }, payload)
+            } else {
+                // NATIVE PUSH (FCM)
+                const app = getFirebaseAdmin()
+                if (app) {
+                    await getMessaging(app).send({
+                        token: sub.endpoint,
+                        notification: { title, body },
+                        data: { url }
+                    })
+                } else {
+                    console.warn('[sendBroadcastToAll] Firebase Admin not configured, skipping native push')
+                }
+            }
             return { status: 'fulfilled', subId: sub.id, userId: sub.user_id }
         } catch (error: any) {
-            console.error(`[Push Failed] Sub ID: ${sub.id} (User: ${sub.user_id}), Status: ${error.statusCode}`, error)
-
-            if (error.statusCode === 410 || error.statusCode === 404) {
+            console.error(`[Push Failed] Sub ID: ${sub.id} (User: ${sub.user_id}), Status: ${error.statusCode || error.code}`, error.message)
+            if (error.statusCode === 410 || error.statusCode === 404 || error.code === 'messaging/registration-token-not-registered') {
                 await supabase.from('push_subscriptions').delete().eq('id', sub.id)
             }
             throw error

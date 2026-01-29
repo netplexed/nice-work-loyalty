@@ -93,17 +93,25 @@ export async function sendPushNotification(userId: string, title: string, body: 
                     // NATIVE PUSH (FCM)
                     const app = getFirebaseAdmin()
                     if (app) {
-                        const message = {
-                            token: sub.endpoint,
-                            notification: { title, body },
-                            data: { url }
-                        };
-                        await getMessaging(app).send(message)
+                        try {
+                            const message = {
+                                token: sub.endpoint,
+                                notification: { title, body },
+                                data: { url: url || '/' }
+                            };
+                            console.log('FCM Sending to:', sub.endpoint.substring(0, 20) + '...', message)
+                            const msgId = await getMessaging(app).send(message)
+                            console.log('FCM Sent Success:', msgId)
+                        } catch (fcmError: any) {
+                            console.error('FCM Send Error:', fcmError)
+                            throw fcmError
+                        }
                     } else {
                         console.warn('Firebase Admin not configured, skipping native push')
                     }
                 }
             } catch (err: any) {
+                console.error('Push Send Error (General):', err.message, err.statusCode, err.code)
                 if (err.statusCode === 410 || err.statusCode === 404 || err.code === 'messaging/registration-token-not-registered') {
                     // Cleanup invalid subscription
                     console.log(`Cleaning up invalid subscription ${sub.id}`)
