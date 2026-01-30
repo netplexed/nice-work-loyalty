@@ -35,7 +35,20 @@ export function NotificationNav() {
                         filter: `user_id=eq.${user.id}`
                     },
                     () => {
-                        console.log('Realtime notification received, refreshing badge...')
+                        console.log('Realtime notification INSERT, refreshing badge...')
+                        mutate()
+                    }
+                )
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'notifications',
+                        filter: `user_id=eq.${user.id}`
+                    },
+                    () => {
+                        console.log('Realtime notification UPDATE, refreshing badge...')
                         mutate()
                     }
                 )

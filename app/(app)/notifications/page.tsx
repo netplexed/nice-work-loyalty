@@ -5,24 +5,39 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { getUserNotifications, markNotificationRead, markAllRead } from '@/app/actions/messaging-actions'
 import { Bell, Check, MailOpen } from "lucide-react"
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { useNotifications } from '@/hooks/use-notifications'
+import { mutate as globalMutate } from 'swr'
 
 export default function NotificationsPage() {
     const { notifications, loading, mutate } = useNotifications()
 
     const handleMarkRead = async (id: string) => {
-        // Optimistic update
-        mutate(notifications.map(n => n.id === id ? { ...n, is_read: true } : n), false)
-        await markNotificationRead(id)
-        mutate() // Revalidate
+        try {
+            // Optimistic update
+            mutate(notifications.map(n => n.id === id ? { ...n, is_read: true } : n), false)
+            await markNotificationRead(id)
+            mutate() // Revalidate notifications list
+            globalMutate('unread-notifications') // Refresh badge count
+        } catch (e: any) {
+            toast.error('Failed to mark read', { description: e.message })
+            mutate() // Revert
+        }
     }
 
     const handleMarkAllRead = async () => {
-        mutate(notifications.map(n => ({ ...n, is_read: true })), false)
-        await markAllRead()
-        mutate()
+        try {
+            mutate(notifications.map(n => ({ ...n, is_read: true })), false)
+            await markAllRead()
+            mutate()
+            globalMutate('unread-notifications') // Refresh badge count
+            toast.success('All marked as read')
+        } catch (e: any) {
+            toast.error('Failed', { description: e.message })
+            mutate()
+        }
     }
 
     return (

@@ -92,9 +92,11 @@ export async function sendPushNotification(userId: string, title: string, body: 
     console.log(`[sendPushNotification] User ${userId}: ${succeeded} sent, ${failed} failed.`)
 }
 
-export async function sendPushBatch(userIds: string[], title: string, body: string) {
-    if (!userIds.length) return
+export async function sendPushBatch(targets: { userId: string, notificationId: string }[], title: string, body: string) {
+    if (!targets.length) return
     const supabase = createAdminClient()
+
+    const userIds = targets.map(t => t.userId)
 
     // 1. Fetch ALL subscriptions for these users (Using Admin Client = No RLS)
     // Chunk requests to avoid URL length limits with .in()
@@ -125,23 +127,33 @@ export async function sendPushBatch(userIds: string[], title: string, body: stri
 
     console.log(`[sendPushBatch] Sending to ${allSubscriptions.length} endpoints for ${userIds.length} target users.`)
 
-    // 2. Prepare Payload
-    const payload = JSON.stringify({
+    // 2. Prepare Payload (Base)
+    const basePayload = {
         title,
         body,
         url: '/', // Default URL for broadcasts
         icon: '/icon.png'
-    })
+    }
 
     // 3. Send in parallel
     const results = await Promise.allSettled(allSubscriptions.map(async (sub) => {
+        // Find the specific notification ID for this user
+        const target = targets.find(t => t.userId === sub.user_id)
+        const notificationId = target?.notificationId
+
+        const payloadData = {
+            ...basePayload,
+            notificationId
+        }
+        const payloadString = JSON.stringify(payloadData)
+
         try {
             if (sub.keys) {
                 // WEB PUSH
                 await webPush.sendNotification({
                     endpoint: sub.endpoint,
                     keys: sub.keys
-                }, payload)
+                }, payloadString)
             } else {
                 // NATIVE PUSH (FCM)
                 const app = getFirebaseAdmin()
@@ -149,7 +161,10 @@ export async function sendPushBatch(userIds: string[], title: string, body: stri
                     await getMessaging(app).send({
                         token: sub.endpoint,
                         notification: { title, body },
-                        data: { url: '/' }
+                        data: {
+                            url: basePayload.url,
+                            notificationId: notificationId || ''
+                        }
                     })
                 } else {
                     console.warn('[sendPushBatch] Firebase Admin not configured, skipping native push')

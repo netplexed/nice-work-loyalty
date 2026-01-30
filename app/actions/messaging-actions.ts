@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { verifyAdmin } from './admin-actions'
 import { revalidatePath } from 'next/cache'
+import { unstable_noStore as noStore } from 'next/cache'
 import { resolveTargetAudience, TargetCriteria } from './segmentation-actions'
 
 interface BroadcastParams {
@@ -60,7 +61,10 @@ export async function broadcastMessage(params: BroadcastParams) {
         is_read: false
     }))
 
-    const { error: notifError } = await supabase.from('notifications').insert(notifications)
+    const { data: insertedNotifications, error: notifError } = await supabase
+        .from('notifications')
+        .insert(notifications)
+        .select()
 
     if (notifError) throw new Error('Failed to send notifications')
 
@@ -70,7 +74,13 @@ export async function broadcastMessage(params: BroadcastParams) {
     // 5. Send Push (Background attempt)
     try {
         const { sendPushBatch } = await import('@/lib/push/send-push')
-        await sendPushBatch(userIds, params.title, params.body)
+
+        const pushTargets = insertedNotifications?.map(n => ({
+            userId: n.user_id,
+            notificationId: n.id
+        })) || []
+
+        await sendPushBatch(pushTargets, params.title, params.body)
     } catch (e) {
         console.error('Failed to send push batch:', e)
     }
@@ -125,6 +135,7 @@ export async function getBroadcasts() {
 // User Actions
 
 export async function getUserNotifications() {
+    noStore()
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
@@ -140,6 +151,7 @@ export async function getUserNotifications() {
 }
 
 export async function getUnreadCount() {
+    noStore()
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return 0
@@ -158,11 +170,28 @@ export async function markNotificationRead(id: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Unauthorized')
 
-    await supabase
+    console.log(`[markNotificationRead] user=${user.id} id=${id}`)
+
+    const { data, error, count } = await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('id', id)
         .eq('user_id', user.id)
+        .select()
+
+    if (error) {
+        console.error('[markNotificationRead] Error updating:', error)
+        throw new Error(error.message)
+    }
+
+    if (!data || data.length === 0) {
+        console.error('[markNotificationRead] No rows updated! Check RLS or ownership.')
+        // Check if notification exists at all
+        const { data: check } = await supabase.from('notifications').select('*').eq('id', id).single()
+        console.log('[markNotificationRead] Diagnostic check:', check)
+    } else {
+        console.log('[markNotificationRead] Success:', data)
+    }
 
     revalidatePath('/notifications')
 }
@@ -172,11 +201,21 @@ export async function markAllRead() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Unauthorized')
 
-    await supabase
+    console.log(`[markAllRead] user=${user.id}`)
+
+    const { data, error } = await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('user_id', user.id)
         .eq('is_read', false)
+        .select()
+
+    if (error) {
+        console.error('[markAllRead] Error:', error)
+        throw new Error(error.message)
+    }
+
+    console.log(`[markAllRead] Updated ${data?.length} notifications`)
 
     revalidatePath('/notifications')
 }
