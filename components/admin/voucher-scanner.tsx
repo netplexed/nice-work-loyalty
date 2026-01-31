@@ -15,9 +15,10 @@ import { toast } from "sonner"
 
 interface VoucherScannerProps {
     onScan: (data: string) => void
+    className?: string
 }
 
-export function VoucherScanner({ onScan }: VoucherScannerProps) {
+export function VoucherScanner({ onScan, className }: VoucherScannerProps) {
     const [open, setOpen] = useState(false)
     const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
     const [isScanning, setIsScanning] = useState(false)
@@ -97,7 +98,7 @@ export function VoucherScanner({ onScan }: VoucherScannerProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="secondary" className="gap-2 w-full sm:w-auto">
+                <Button variant="secondary" className={`gap-2 w-full sm:w-auto ${className || ''}`}>
                     <Camera className="w-4 h-4" />
                     Scan Camera
                 </Button>

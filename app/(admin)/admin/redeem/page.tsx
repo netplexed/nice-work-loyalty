@@ -62,7 +62,7 @@ export default function AdminRedeemPage() {
                 <CardContent>
                     <form onSubmit={handleFormSubmit} className="flex flex-col sm:flex-row gap-4">
                         <div className="flex gap-2 order-1 sm:order-2 w-full sm:w-auto">
-                            <VoucherScanner onScan={handleScan} />
+                            <VoucherScanner onScan={handleScan} className="flex-1 sm:flex-none" />
                             <Button type="submit" disabled={loading || !code} className="flex-1 sm:flex-none">
                                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Redeem'}
                             </Button>
