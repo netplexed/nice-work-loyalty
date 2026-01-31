@@ -39,21 +39,31 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
         setLoading(true)
 
         try {
-            await updateUserProfile({
+            const updates = {
                 full_name: fullName,
                 email: email,
                 phone: phone || null,
                 birthday: birthday || null,
                 avatar_url: avatarUrl
-            })
+            }
+
+            // 1. Update Server
+            await updateUserProfile(updates)
 
             toast.success('Profile updated')
             setOpen(false)
 
-            // Invalidate SWR cache to force re-fetch on Profile page
-            await mutate('user-profile')
+            // 2. Optimistic Update: Update client-side cache immediately with the new data
+            // We merge the existing profile with our updates
+            const optimisticData = { ...profile, ...updates }
 
-            // Also refresh server components just in case
+            // Update SWR cache without waiting for revalidation
+            await mutate('user-profile', optimisticData, false)
+
+            // 3. Trigger background revalidation to ensure server consistency
+            mutate('user-profile')
+
+            // 4. Refresh router for server components
             router.refresh()
 
         } catch (error: any) {
