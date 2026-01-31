@@ -60,19 +60,22 @@ export default function AdminRedeemPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleFormSubmit} className="flex gap-4">
-                        <div className="flex-1 flex gap-2">
+                    <form onSubmit={handleFormSubmit} className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex gap-2 order-1 sm:order-2 w-full sm:w-auto">
+                            <VoucherScanner onScan={handleScan} />
+                            <Button type="submit" disabled={loading || !code} className="flex-1 sm:flex-none">
+                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Redeem'}
+                            </Button>
+                        </div>
+
+                        <div className="flex-1 order-2 sm:order-1">
                             <Input
                                 placeholder="Enter voucher code"
                                 value={code}
                                 onChange={(e) => setCode(e.target.value)}
-                                className="font-mono text-lg uppercase"
+                                className="font-mono text-lg uppercase w-full"
                             />
-                            <VoucherScanner onScan={handleScan} />
                         </div>
-                        <Button type="submit" disabled={loading || !code}>
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Redeem'}
-                        </Button>
                     </form>
                 </CardContent>
             </Card>

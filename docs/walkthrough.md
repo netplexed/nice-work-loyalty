@@ -40,3 +40,16 @@ I updated the server actions to handle the `is_hidden` flag.
 6.  Go to the **App Rewards Page** (as a user) -> The reward should **NOT** be there.
 7.  Go to **Admin > Spin Wheel**.
 8.  Add a new prize -> Select "Reward Item" type -> Verify the hidden reward **IS** in the dropdown list.
+
+### Admin: Voucher Redemption
+1.  Go to **Admin > Redeem**.
+2.  **Layout Check**:
+    *   On Desktop: Input field is on the left, buttons on the right.
+    *   On Mobile: "Scan Camera" and "Redeem" buttons are at the top, Input is below them (full width).
+3.  **Scanner Check**:
+    *   Click "Scan Camera".
+    *   Verify camera starts (usually Rear camera).
+    *   Click the **Refresh/Switch Icon** in the header.
+    *   Verify camera switches to the other camera (Front/Rear).
+    *   Scan a valid voucher code.
+    *   Verify code populates the input field and redemption triggers.
