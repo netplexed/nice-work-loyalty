@@ -70,9 +70,16 @@ export default async function AdminRewardsPage() {
                                         {reward.redemptions?.[0]?.count || 0}
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant={reward.active ? 'default' : 'secondary'}>
-                                            {reward.active ? 'Active' : 'Archived'}
-                                        </Badge>
+                                        <div className="flex gap-1 items-center">
+                                            <Badge variant={reward.active ? 'default' : 'secondary'}>
+                                                {reward.active ? 'Active' : 'Archived'}
+                                            </Badge>
+                                            {reward.is_hidden && (
+                                                <Badge variant="outline">
+                                                    Hidden
+                                                </Badge>
+                                            )}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-right flex items-center justify-end gap-2">
                                         <ToggleRewardButton id={reward.id} isActive={reward.active} />

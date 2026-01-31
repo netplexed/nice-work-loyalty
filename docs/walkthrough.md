@@ -1,54 +1,42 @@
-# Marketing Automations Walkthrough
+# Walkthrough - Wheel Only Rewards
 
-## Overview
-The Marketing Automations feature allows you to send automated emails and rewards based on user lifecycle events.
+I have implemented the ability to create rewards specifically for the Spin Wheel (or other internal uses) that are hidden from the public Rewards Shop.
 
-### Managing Automations
-1.  Go to **[Automations](/admin/automations)** (Access via the new 'Automations' link in the Admin Sidebar).
-2.  Toggle automations **On/Off**.
-3.  Click **Edit** to configure triggers, email content, and rewards.
-4.  **[New]** Manage reusable email designs in **[Templates](/admin/marketing/templates)**.
+## Changes
 
+### 1. Admin Reward Management
+I updated the "Reward Form" in the Admin Panel to include a new **"Hide from Catalog"** option.
 
-### Triggers
-- **Welcome**: Sent to new users shortly after registration. (Checks for new users created within the last 3 days).
-- **Birthday**: Sent to users whose birthday is in the current month. Logged to ensure only one send per year.
-- **Win-back**: Sent to users who haven't visited (checked in) for `X` days (default 30). Includes a 90-day cooldown period to prevent spam.
+- **File**: `components/admin/rewards/reward-form-dialog.tsx`
+- **Change**: Added a checkbox `Hide from Catalog`. When checked, `is_hidden` is set to `true`.
 
-### Rewards
-- You can attach any active Reward (e.g. "Free Coffee") to an automation.
-- When triggered, a voucher for that reward is automatically generated for the user (Cost: 0 points).
+I also updated the Admin Rewards List to clearly label these rewards.
 
+- **File**: `app/(admin)/admin/rewards/page.tsx`
+- **Change**: Added a `Hidden` badge next to the status for hidden rewards.
 
-### Execution (Cron)
-The logic runs via an API route: `GET /api/cron/automations?key=YOUR_CRON_SECRET`.
-- You can trigger this manually for testing.
-- For production, set up a daily specific Cron job (e.g. Vercal Cron) to hit this endpoint.
+### 2. Backend Actions
+I updated the server actions to handle the `is_hidden` flag.
 
----
+- **File**: `app/actions/admin-actions.ts`
+- **Change**: Updated `createReward` and `updateReward` types to accept `is_hidden`.
 
-## Marketing 2.0: Custom Workflows
-Create flexible automation flows triggered by user events.
+### 3. Verification Results
 
-### 1. Email Templates
-Manage reusable email designs in **[Templates](/admin/marketing/templates)**.
-- Create a template once, reuse it in multiple workflows.
-- Supports rich HTML editing.
+| Feature | Behavior | Status |
+| :--- | :--- | :--- |
+| **Public Shop** | Rewards with `is_hidden = true` are **NOT** shown. | ✅ Verified |
+| **Spin Wheel Config** | Hidden rewards **ARE** available to be selected as prizes. | ✅ Verified |
+| **Admin Gifting** | Hidden rewards **ARE** available to be manually gifted. | ✅ Verified |
+| **Data Integrity** | `is_hidden` flag is correctly saved and retrieved from DB. | ✅ Verified |
 
-### 2. Workflow Builder
-Create flows in **[Workflows](/admin/marketing/workflows)**.
-1.  **Trigger**: Select an event (e.g., `order.completed`).
-2.  **Steps**: Build a sequence:
-    - ⏳ **Delay**: Wait for X hours.
-    - 📧 **Send Email**: Select a template.
-    - 🎁 **Grant Reward**: Auto-grant a reward voucher.
+## How to Test
 
-### 3. Execution Engine
-Workflows run via a separate Cron route designed for high-frequency checks (e.g., every 5-10 mins).
-
-### 4. Active Triggers (Events)
-The following events are now wired up and ready to use in your workflows:
-- `user.signup`: Triggered when a new user registers (via `getUserProfile` lazy creation).
-- `order.completed`: Triggered when an admin records a spend (`recordUserSpend`).
-    - **Properties**: `value` (Amount spent), `location`.
-
+1.  Go to **Admin > Rewards**.
+2.  Click **Add Reward** (or edit an existing one).
+3.  Check the **"Hide from Catalog (Wheel Only)"** checkbox (near the top).
+4.  Save the reward.
+5.  Verify the **"Hidden"** badge appears in the list.
+6.  Go to the **App Rewards Page** (as a user) -> The reward should **NOT** be there.
+7.  Go to **Admin > Spin Wheel**.
+8.  Add a new prize -> Select "Reward Item" type -> Verify the hidden reward **IS** in the dropdown list.

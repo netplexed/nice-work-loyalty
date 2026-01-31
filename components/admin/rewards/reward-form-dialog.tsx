@@ -31,6 +31,7 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [inventory, setInventory] = useState('')
     const [selectedLocations, setSelectedLocations] = useState<string[]>([])
+    const [isHidden, setIsHidden] = useState(false)
 
     const supabase = createClient()
 
@@ -49,6 +50,7 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
             setImageUrl(reward.image_url || '')
             setInventory(reward.inventory_remaining ? reward.inventory_remaining.toString() : '')
             setSelectedLocations(reward.locations || [])
+            setIsHidden(reward.is_hidden || false)
         } else {
             // Reset if creating new
             setName('')
@@ -59,6 +61,7 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
             setImageFile(null)
             setInventory('')
             setSelectedLocations([])
+            setIsHidden(false)
         }
     }, [reward, open])
 
@@ -92,7 +95,8 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
                 category,
                 image_url: finalImageUrl,
                 inventory_remaining: inventory ? parseInt(inventory) : undefined,
-                locations: selectedLocations.length > 0 ? selectedLocations : undefined
+                locations: selectedLocations.length > 0 ? selectedLocations : undefined,
+                is_hidden: isHidden
             }
 
             if (reward) {
@@ -143,6 +147,25 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
                         />
                     </div>
 
+                    <div className="flex items-center space-x-2 border p-3 rounded-md bg-muted/20">
+                        <Checkbox
+                            id="isHidden"
+                            checked={isHidden}
+                            onCheckedChange={(checked) => setIsHidden(checked === true)}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                            <Label
+                                htmlFor="isHidden"
+                                className="text-sm font-medium leading-none cursor-pointer"
+                            >
+                                Hide from Catalog (Wheel Only)
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                                If checked, this reward won't appear in the shop.
+                            </p>
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
                         <Label>Description</Label>
                         <Textarea
@@ -179,6 +202,8 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
                             </Select>
                         </div>
                     </div>
+
+
 
                     <div className="space-y-3">
                         <Label>Valid Locations</Label>

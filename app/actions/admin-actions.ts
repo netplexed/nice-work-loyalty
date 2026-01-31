@@ -197,6 +197,7 @@ export async function createReward(data: {
     category?: string
     image_url?: string
     active?: boolean
+    is_hidden?: boolean
     inventory_remaining?: number
     locations?: string[]
 }) {
@@ -228,6 +229,7 @@ export async function updateReward(id: string, data: {
     category?: string
     image_url?: string
     active?: boolean
+    is_hidden?: boolean
     inventory_remaining?: number
     locations?: string[]
 }) {
