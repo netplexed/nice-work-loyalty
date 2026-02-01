@@ -29,6 +29,7 @@ import { resetDailySpin } from '@/app/actions/debug-actions'
 import { RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { LotteryHomeWidget } from '@/components/lottery/LotteryHomeWidget'
 
 export default function Dashboard() {
     const { niceState, loading, error, mutate } = useNiceTank()
@@ -115,6 +116,9 @@ export default function Dashboard() {
                         </>
                     ) : null}
                 </div>
+
+                {/* Weighted slightly higher than news, below balanced/tank */}
+                <LotteryHomeWidget />
 
                 <NewsCarousel />
 
