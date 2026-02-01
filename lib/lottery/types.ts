@@ -47,6 +47,13 @@ export interface LotteryWinner {
     notified: boolean;
     notified_at: string | null;
     created_at: string;
+
+    // Joined/Formatted fields
+    user_name?: string;
+    user_avatar?: string | null;
+    draw_date?: string;
+    total_entries_in_pool?: number;
+    winning_ticket_number?: number;
 }
 
 export interface LotteryStats {

@@ -74,7 +74,7 @@ export default function LotteryPage() {
                                     size="lg"
                                     className="w-full bg-white text-purple-600 hover:bg-white/90 font-bold text-lg h-12"
                                     onClick={() => setIsPurchaseModalOpen(true)}
-                                    disabled={remaining?.can_purchase === 0 && niceState?.collectedBalance < 200}
+                                    disabled={remaining?.can_purchase === 0 && (niceState?.collectedBalance || 0) < 200}
                                 >
                                     <Ticket className="mr-2 h-5 w-5" />
                                     Get More Entries
@@ -148,19 +148,19 @@ export default function LotteryPage() {
                 <div className="grid gap-3">
                     {winnersLoading ? (
                         <Skeleton className="h-16 w-full" />
-                    ) : winnersData?.winners?.length > 0 ? (
+                    ) : winnersData?.winners && winnersData.winners.length > 0 ? (
                         winnersData.winners.map((winner) => (
                             <Card key={winner.id} className="overflow-hidden hover:bg-muted/30 transition-colors">
                                 <div className="flex items-center p-4">
                                     <div className="h-10 w-10 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-full flex items-center justify-center font-bold text-white shadow-sm shrink-0">
-                                        {winner.user_name.charAt(0)}
+                                        {(winner.user_name || 'A').charAt(0)}
                                     </div>
                                     <div className="ml-4 flex-1">
-                                        <p className="font-bold">{winner.user_name}</p>
+                                        <p className="font-bold">{winner.user_name || 'Anonymous'}</p>
                                         <p className="text-sm text-muted-foreground">Won {winner.prize_description}</p>
                                     </div>
                                     <div className="text-right text-xs text-muted-foreground hidden sm:block">
-                                        {new Date(winner.draw_date).toLocaleDateString()}
+                                        {winner.draw_date ? new Date(winner.draw_date).toLocaleDateString() : ''}
                                     </div>
                                 </div>
                             </Card>
