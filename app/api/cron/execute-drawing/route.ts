@@ -18,7 +18,8 @@ export async function GET(req: Request) {
             .eq('status', 'active')
             .lte('draw_date', new Date().toISOString())
             .limit(1)
-            .maybeSingle()
+            .limit(1)
+            .maybeSingle() as any
 
         if (error) throw error
 
