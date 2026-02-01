@@ -129,5 +129,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    overscroll-behavior-y: none; /* Prevent pull-to-refresh bounce */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+    touch-action: manipulation; /* Improve touch response */
   }
 }

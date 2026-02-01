@@ -4,14 +4,26 @@ import { useState } from 'react'
 import { PointsBalanceBranded as PointsBalance } from '@/components/features/home/points-balance-branded'
 import { NewsCarousel } from '@/components/features/home/news-carousel'
 import { QuickActions } from '@/components/features/home/quick-actions'
-import { RecentActivity } from '@/components/features/home/recent-activity'
-import { SpinWheel } from '@/components/features/gamification/spin-wheel'
-import { ReferralCard } from '@/components/features/gamification/referral-card'
 import { NiceTank } from '@/components/nice/nice-tank'
 import { NiceBalance } from '@/components/nice/nice-balance'
 import { Skeleton } from '@/components/ui/skeleton'
 import confetti from 'canvas-confetti'
 import { useNiceTank } from '@/hooks/use-nice-tank'
+
+// Lazy load below-the-fold components
+import dynamic from 'next/dynamic'
+
+const SpinWheel = dynamic(() => import('@/components/features/gamification/spin-wheel').then(mod => mod.SpinWheel), {
+    loading: () => <Skeleton className="h-48 w-full rounded-xl" />
+})
+
+const ReferralCard = dynamic(() => import('@/components/features/gamification/referral-card').then(mod => mod.ReferralCard), {
+    loading: () => <Skeleton className="h-32 w-full rounded-xl" />
+})
+
+const RecentActivity = dynamic(() => import('@/components/features/home/recent-activity').then(mod => mod.RecentActivity), {
+    loading: () => <Skeleton className="h-64 w-full rounded-xl" />
+})
 import { useSpinWheel } from '@/hooks/use-spin-wheel'
 import { resetDailySpin } from '@/app/actions/debug-actions'
 import { RotateCcw } from 'lucide-react'
