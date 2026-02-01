@@ -266,6 +266,176 @@ export interface Database {
                     active?: boolean
                 }
             }
+            lottery_drawings: {
+                Row: {
+                    id: string
+                    draw_date: string
+                    week_start_date: string
+                    prize_tier: 'standard' | 'monthly' | 'quarterly'
+                    prize_description: string
+                    prize_value: number
+                    status: 'upcoming' | 'active' | 'drawn' | 'awarded'
+                    total_entries: number
+                    total_participants: number
+                    winning_ticket_number: number | null
+                    random_seed: string | null
+                    drawn_at: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    draw_date: string
+                    week_start_date: string
+                    prize_tier: 'standard' | 'monthly' | 'quarterly'
+                    prize_description: string
+                    prize_value: number
+                    status?: 'upcoming' | 'active' | 'drawn' | 'awarded'
+                    total_entries?: number
+                    total_participants?: number
+                    winning_ticket_number?: number | null
+                    random_seed?: string | null
+                    drawn_at?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    draw_date?: string
+                    week_start_date?: string
+                    prize_tier?: 'standard' | 'monthly' | 'quarterly'
+                    prize_description?: string
+                    prize_value?: number
+                    status?: 'upcoming' | 'active' | 'drawn' | 'awarded'
+                    total_entries?: number
+                    total_participants?: number
+                    winning_ticket_number?: number | null
+                    random_seed?: string | null
+                    drawn_at?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+            }
+            lottery_entries: {
+                Row: {
+                    id: string
+                    drawing_id: string
+                    user_id: string
+                    entry_type: 'base' | 'purchased' | 'visit' | 'checkin'
+                    nice_spent: number | null
+                    quantity: number
+                    visit_id: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    drawing_id: string
+                    user_id: string
+                    entry_type: 'base' | 'purchased' | 'visit' | 'checkin'
+                    nice_spent?: number | null
+                    quantity?: number
+                    visit_id?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    drawing_id?: string
+                    user_id?: string
+                    entry_type?: 'base' | 'purchased' | 'visit' | 'checkin'
+                    nice_spent?: number | null
+                    quantity?: number
+                    visit_id?: string | null
+                    created_at?: string
+                }
+            }
+            lottery_winners: {
+                Row: {
+                    id: string
+                    drawing_id: string
+                    user_id: string
+                    prize_rank: number
+                    prize_description: string
+                    prize_value: number
+                    voucher_code: string | null
+                    voucher_expiry_date: string | null
+                    claimed: boolean
+                    claimed_at: string | null
+                    notified: boolean
+                    notified_at: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    drawing_id: string
+                    user_id: string
+                    prize_rank?: number
+                    prize_description: string
+                    prize_value: number
+                    voucher_code?: string | null
+                    voucher_expiry_date?: string | null
+                    claimed?: boolean
+                    claimed_at?: string | null
+                    notified?: boolean
+                    notified_at?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    drawing_id?: string
+                    user_id?: string
+                    prize_rank?: number
+                    prize_description?: string
+                    prize_value?: number
+                    voucher_code?: string | null
+                    voucher_expiry_date?: string | null
+                    claimed?: boolean
+                    claimed_at?: string | null
+                    notified?: boolean
+                    notified_at?: string | null
+                    created_at?: string
+                }
+            }
+            lottery_stats: {
+                Row: {
+                    id: string
+                    drawing_id: string
+                    total_participants: number
+                    total_entries: number
+                    total_nice_spent: number
+                    avg_entries_per_user: number | null
+                    entries_purchased: number
+                    entries_visit: number
+                    entries_checkin: number
+                    entries_base: number
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    drawing_id: string
+                    total_participants: number
+                    total_entries: number
+                    total_nice_spent: number
+                    avg_entries_per_user?: number | null
+                    entries_purchased?: number
+                    entries_visit?: number
+                    entries_checkin?: number
+                    entries_base?: number
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    drawing_id?: string
+                    total_participants?: number
+                    total_entries?: number
+                    total_nice_spent?: number
+                    avg_entries_per_user?: number | null
+                    entries_purchased?: number
+                    entries_visit?: number
+                    entries_checkin?: number
+                    entries_base?: number
+                    created_at?: string
+                }
+            }
         }
         Views: {
             [_: string]: {
