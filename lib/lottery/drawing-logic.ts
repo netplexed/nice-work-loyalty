@@ -50,14 +50,14 @@ export async function executeDrawing(drawingId: string) {
     if (totalTickets === 0) {
         // Handle no entries case
         await (supabase
-            .from('lottery_drawings')
+            .from('lottery_drawings') as any)
             .update({
                 status: 'drawn',
                 total_entries: 0,
                 total_participants: 0,
                 drawn_at: new Date().toISOString()
             })
-            .eq('id', drawingId) as any)
+            .eq('id', drawingId)
 
         return { winner: null, totalTickets: 0 }
     }
@@ -87,7 +87,7 @@ export async function executeDrawing(drawingId: string) {
 
     // Insert winner record
     const { error: winnerError } = await (supabase
-        .from('lottery_winners')
+        .from('lottery_winners') as any)
         .insert({
             drawing_id: drawingId,
             user_id: winnerEntry.userId,
@@ -96,13 +96,13 @@ export async function executeDrawing(drawingId: string) {
             prize_value: drawing.prize_value,
             voucher_code: voucherCode,
             voucher_expiry_date: voucherExpiry.toISOString()
-        }) as any)
+        })
 
     if (winnerError) throw new Error(`Failed to insert winner: ${winnerError.message}`)
 
     // Update drawing record
     const { error: updateError } = await (supabase
-        .from('lottery_drawings')
+        .from('lottery_drawings') as any)
         .update({
             status: 'drawn',
             winning_ticket_number: winningTicket,
@@ -111,7 +111,7 @@ export async function executeDrawing(drawingId: string) {
             total_entries: totalTickets,
             total_participants: userEntries.size
         })
-        .eq('id', drawingId) as any)
+        .eq('id', drawingId)
 
     if (updateError) throw new Error(`Failed to update drawing: ${updateError.message}`)
 
@@ -119,7 +119,7 @@ export async function executeDrawing(drawingId: string) {
     // We can do this async or here. Let's do it here.
     const stats = calculateStats(entries || [], drawingId, totalTickets, userEntries, drawing)
 
-    await (supabase.from('lottery_stats').insert(stats) as any)
+    await (supabase.from('lottery_stats') as any).insert(stats)
 
     return {
         winner: { userId: winnerEntry.userId, voucherCode },
