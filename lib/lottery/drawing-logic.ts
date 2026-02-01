@@ -11,7 +11,7 @@ export async function executeDrawing(drawingId: string) {
     const { data: entries, error: entriesError } = await supabase
         .from('lottery_entries')
         .select('*')
-        .eq('drawing_id', drawingId)
+        .eq('drawing_id', drawingId) as any
 
     if (entriesError) throw new Error(`Failed to fetch entries: ${entriesError.message}`)
 
@@ -20,7 +20,7 @@ export async function executeDrawing(drawingId: string) {
         .from('lottery_drawings')
         .select('*')
         .eq('id', drawingId)
-        .single()
+        .single() as any
 
     if (drawingError) throw new Error(`Failed to fetch drawing: ${drawingError.message}`)
     if (!drawing) throw new Error('Drawing not found')
@@ -49,7 +49,7 @@ export async function executeDrawing(drawingId: string) {
 
     if (totalTickets === 0) {
         // Handle no entries case
-        await supabase
+        await (supabase
             .from('lottery_drawings')
             .update({
                 status: 'drawn',
@@ -57,7 +57,7 @@ export async function executeDrawing(drawingId: string) {
                 total_participants: 0,
                 drawn_at: new Date().toISOString()
             })
-            .eq('id', drawingId)
+            .eq('id', drawingId) as any)
 
         return { winner: null, totalTickets: 0 }
     }
@@ -86,7 +86,7 @@ export async function executeDrawing(drawingId: string) {
     // In a real prod environment, we would use an RPC for atomicity.
 
     // Insert winner record
-    const { error: winnerError } = await supabase
+    const { error: winnerError } = await (supabase
         .from('lottery_winners')
         .insert({
             drawing_id: drawingId,
@@ -96,12 +96,12 @@ export async function executeDrawing(drawingId: string) {
             prize_value: drawing.prize_value,
             voucher_code: voucherCode,
             voucher_expiry_date: voucherExpiry.toISOString()
-        })
+        }) as any)
 
     if (winnerError) throw new Error(`Failed to insert winner: ${winnerError.message}`)
 
     // Update drawing record
-    const { error: updateError } = await supabase
+    const { error: updateError } = await (supabase
         .from('lottery_drawings')
         .update({
             status: 'drawn',
@@ -111,7 +111,7 @@ export async function executeDrawing(drawingId: string) {
             total_entries: totalTickets,
             total_participants: userEntries.size
         })
-        .eq('id', drawingId)
+        .eq('id', drawingId) as any)
 
     if (updateError) throw new Error(`Failed to update drawing: ${updateError.message}`)
 
@@ -119,7 +119,7 @@ export async function executeDrawing(drawingId: string) {
     // We can do this async or here. Let's do it here.
     const stats = calculateStats(entries || [], drawingId, totalTickets, userEntries, drawing)
 
-    await supabase.from('lottery_stats').insert(stats)
+    await (supabase.from('lottery_stats').insert(stats) as any)
 
     return {
         winner: { userId: winnerEntry.userId, voucherCode },
