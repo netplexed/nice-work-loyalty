@@ -280,7 +280,7 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
                                     <span className="text-3xl font-bold py-2 text-primary">{result?.label}</span>
                                     {result?.type === 'reward' && (
                                         <div className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 p-3 rounded-md text-sm border border-amber-200">
-                                            ⚠️ Expires in 36 hours. Check My Rewards!
+                                            ⚠️ Expires in {result?.expiry_hours || 36} hours. Check My Rewards!
                                         </div>
                                     )}
                                 </div>

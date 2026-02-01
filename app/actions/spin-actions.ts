@@ -10,6 +10,7 @@ export interface SpinPrize {
     points_value?: number
     reward_id?: string
     color: string
+    expiry_hours?: number
 }
 
 export interface SpinResult {

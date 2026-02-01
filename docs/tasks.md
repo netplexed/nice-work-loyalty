@@ -7,3 +7,7 @@
 - [x] Update `AdminRedeemPage` layout <!-- id: 4 -->
     - [x] Make form responsive (`flex-col` on mobile) <!-- id: 5 -->
     - [x] Reorder elements on mobile (Buttons top, Input bottom) as requested <!-- id: 6 -->
+
+- [x] Fix Spin Wheel Reward Expiration Display <!-- id: 7 -->
+    - [x] Update `SpinPrize` interface to include `expiry_hours` <!-- id: 8 -->
+    - [x] Update `SpinWheel` component to use dynamic expiry value <!-- id: 9 -->
