@@ -57,9 +57,6 @@ export default function LotteryPage() {
                                     <span>Draws in {currentData.time_until_draw}</span>
                                 </div>
                                 <h2 className="text-4xl sm:text-5xl font-black leading-none">{drawing.prize_description}</h2>
-                                <p className="text-lg opacity-90">
-                                    Prize Value: ${drawing.prize_value}
-                                </p>
                             </div>
 
                             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6  border border-white/20 space-y-4">
