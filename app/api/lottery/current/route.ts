@@ -49,8 +49,8 @@ export async function GET() {
 
             // Double check we haven't already awarded (though userEntries was empty)
             // Perform insert safely
-            const { data: newEntry, error: insertError } = await supabaseAdmin
-                .from('lottery_entries')
+            const { data: newEntry, error: insertError } = await (supabaseAdmin
+                .from('lottery_entries') as any)
                 .insert({
                     drawing_id: drawing.id,
                     user_id: user.id,
