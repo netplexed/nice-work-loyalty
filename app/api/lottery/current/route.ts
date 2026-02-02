@@ -36,25 +36,51 @@ export async function GET() {
             .eq('drawing_id', drawing.id)
             .eq('user_id', user.id)
 
-        if (entries) {
-            userEntries = entries
-            totalUserEntries = entries.reduce((sum, e) => sum + e.quantity, 0)
+        userEntries = entries || []
 
-            breakdown.base = entries.filter(e => e.entry_type === 'base').reduce((s, e) => s + e.quantity, 0)
-            breakdown.purchased = entries.filter(e => e.entry_type === 'purchased').reduce((s, e) => s + e.quantity, 0)
-            breakdown.visit = entries.filter(e => e.entry_type === 'visit').reduce((s, e) => s + e.quantity, 0)
-            breakdown.checkin = entries.filter(e => e.entry_type === 'checkin').reduce((s, e) => s + e.quantity, 0)
+        // --- LAZY AUTO-ENTRY CHECK ---
+        // If drawing has auto-entry config, ensure user gets their free entry
+        if (drawing.auto_entry_config?.type === 'all' && userEntries.length === 0) {
+            const qty = drawing.auto_entry_config.quantity || 1
+
+            // Double check we haven't already awarded (though userEntries was empty)
+            // Perform insert safely
+            const { data: newEntry, error: insertError } = await supabase
+                .from('lottery_entries')
+                .insert({
+                    drawing_id: drawing.id,
+                    user_id: user.id,
+                    entry_type: 'base',
+                    quantity: qty
+                })
+                .select()
+                .single()
+
+            if (!insertError && newEntry) {
+                // Update local state to reflect the new entry immediately
+                userEntries = [newEntry]
+
+                // Async update total stats (don't await to avoid blocking UI)
+                supabase.rpc('recalculate_lottery_stats', { p_drawing_id: drawing.id }).then(() => { })
+            }
+        }
+
+        // Re-calculate derived stats
+        if (userEntries.length > 0) {
+            totalUserEntries = userEntries.reduce((sum, e) => sum + e.quantity, 0)
+            breakdown.base = userEntries.filter(e => e.entry_type === 'base').reduce((s, e) => s + e.quantity, 0)
+            breakdown.purchased = userEntries.filter(e => e.entry_type === 'purchased').reduce((s, e) => s + e.quantity, 0)
+            breakdown.visit = userEntries.filter(e => e.entry_type === 'visit').reduce((s, e) => s + e.quantity, 0)
+            breakdown.checkin = userEntries.filter(e => e.entry_type === 'checkin').reduce((s, e) => s + e.quantity, 0)
 
             // Calculate remaining limits
             // Purchased limit: 10
             remaining.can_purchase = Math.max(0, 10 - breakdown.purchased)
 
-            // Visit limit: 3 entries (count of entries, not visits, but 1 visit = 1 entry)
-            // Wait, "visit bonus: +1 entry per visit (max 3 per week)" implies 3 bonus ENTRIES.
-            // My logic in SQL counts quantity.
+            // Visit limit: 3 entries
             remaining.can_visit = Math.max(0, 3 - breakdown.visit)
 
-            // Checkin: 2 entries once per week. If checking count > 0, then already claimed.
+            // Checkin: 2 entries once per week
             remaining.can_checkin = breakdown.checkin === 0
         }
     }
