@@ -311,3 +311,24 @@ begin
     return jsonb_build_object('success', true, 'message', '+2 lottery entries! Thanks for checking in!');
 end;
 $$ language plpgsql security definer;
+- -   M A N U A L   U P D A T E   V 2 :   L o t t e r y   F e a t u r e s  
+ - -   R u n   t h i s   i n   S u p a b a s e   S Q L   E d i t o r   t o   a d d   s u p p o r t   f o r :  
+ - -   1 .   R e w a r d - b a s e d   p r i z e s   ( n o t   j u s t   N I C E   p o i n t s )  
+ - -   2 .   F l e x i b l e   A u t o - E n t r y   r u l e s  
+  
+ - -   A d d   c o l u m n s   f o r   R e w a r d   P r i z e s  
+ a l t e r   t a b l e   p u b l i c . l o t t e r y _ d r a w i n g s  
+ a d d   c o l u m n   i f   n o t   e x i s t s   p r i z e _ t y p e   t e x t   c h e c k   ( p r i z e _ t y p e   i n   ( ' n i c e ' ,   ' r e w a r d ' ) )   d e f a u l t   ' n i c e ' ,  
+ a d d   c o l u m n   i f   n o t   e x i s t s   r e w a r d _ i d   u u i d   r e f e r e n c e s   p u b l i c . r e w a r d s ( i d ) ;  
+  
+ c r e a t e   i n d e x   i f   n o t   e x i s t s   i d x _ l o t t e r y _ d r a w i n g s _ r e w a r d   o n   p u b l i c . l o t t e r y _ d r a w i n g s ( r e w a r d _ i d ) ;  
+  
+ - -   A d d   c o l u m n   f o r   A u t o - E n t r y   C o n f i g  
+ a l t e r   t a b l e   p u b l i c . l o t t e r y _ d r a w i n g s  
+ a d d   c o l u m n   i f   n o t   e x i s t s   a u t o _ e n t r y _ c o n f i g   j s o n b ;  
+  
+ - -   C o m m e n t :  
+ - -   p r i z e _ t y p e :   ' n i c e '   o r   ' r e w a r d '  
+ - -   r e w a r d _ i d :   L i n k   t o   t h e   r e w a r d   i f   p r i z e _ t y p e   i s   ' r e w a r d '  
+ - -   a u t o _ e n t r y _ c o n f i g :   J S O N   r u l e s   l i k e   {   " t y p e " :   " r e c e n t _ v i s i t " ,   " d a y s " :   3 0 ,   " q u a n t i t y " :   1   }  
+ 

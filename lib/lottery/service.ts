@@ -155,6 +155,96 @@ export class LotteryService {
     }
 
     /**
+     * Process auto-entries based on drawing configuration.
+     * Can be called manually or via cron.
+     */
+    async processAutoEntries(drawingId: string) {
+        const { data: drawing, error } = await this.supabase
+            .from('lottery_drawings')
+            .select('*')
+            .eq('id', drawingId)
+            .single()
+
+        if (error || !drawing) throw new Error('Drawing not found')
+
+        const config = drawing.auto_entry_config || { type: 'all', quantity: 1 }
+        const quantity = config.quantity || 1
+
+        // Define eligible user IDs
+        let userIds: string[] = []
+
+        if (config.type === 'recent_visit') {
+            const days = config.days || 60
+            const cutoffDate = new Date()
+            cutoffDate.setDate(cutoffDate.getDate() - days)
+
+            // Get unique users who checked in recently
+            // Note: Using 'check_ins' table
+            const { data: checkins, error: checkinError } = await this.supabase
+                .from('check_ins')
+                .select('user_id')
+                .gte('created_at', cutoffDate.toISOString())
+
+            if (checkinError) {
+                console.error('Error fetching checkins:', checkinError)
+                return { count: 0 }
+            }
+
+            // Unique IDs
+            userIds = Array.from(new Set(checkins?.map((c: any) => c.user_id)))
+
+        } else {
+            // Default: All active users (profiles)
+            const { data: profiles, error: profileError } = await this.supabase
+                .from('profiles')
+                .select('id')
+
+            if (profileError) throw profileError
+            userIds = profiles?.map(p => p.id) || []
+        }
+
+        if (userIds.length === 0) return { count: 0 }
+
+        // Batch insert
+        const chunkSize = 1000
+        const chunks = []
+        for (let i = 0; i < userIds.length; i += chunkSize) {
+            chunks.push(userIds.slice(i, i + chunkSize))
+        }
+
+        let totalAwarded = 0
+
+        for (const chunk of chunks) {
+            const entries = chunk.map(id => ({
+                drawing_id: drawingId,
+                user_id: id,
+                entry_type: 'base',
+                quantity: quantity
+            }))
+
+            const { error: insertError } = await this.supabase
+                .from('lottery_entries')
+                .insert(entries)
+
+            if (insertError) {
+                console.error('Error batch inserting auto entries:', insertError)
+            } else {
+                totalAwarded += entries.length
+            }
+        }
+
+        // Update stats
+        if (totalAwarded > 0) {
+            const { data: d } = await this.supabase.from('lottery_drawings').select('total_entries').eq('id', drawingId).single()
+            await this.supabase.from('lottery_drawings').update({
+                total_entries: (d?.total_entries || 0) + totalAwarded
+            }).eq('id', drawingId)
+        }
+
+        return { count: totalAwarded }
+    }
+
+    /**
      * Scheduled logic: Award Base Entries
      * Run Monday 12:05 AM
      */
@@ -166,65 +256,7 @@ export class LotteryService {
             return { count: 0 }
         }
 
-        // 2. Get active users (logged in last 90 days)
-        // Just getting all profiles for simplicity as last_login might be missing
-        // or we check 'updated_at' > 90 days ago if relevant.
-        // Assuming all users get it for now to be generous/simple.
-
-        const { count } = await this.supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true })
-
-        // For batch insert, we need the IDs.
-        const { data: activeUsers, error: usersError } = await this.supabase
-            .from('profiles')
-            .select('id')
-
-        if (usersError) throw usersError
-        if (!activeUsers || activeUsers.length === 0) return { count: 0 }
-
-        // 3. Batch insert (chunked)
-        const chunkSize = 1000
-        const chunks = []
-
-        for (let i = 0; i < activeUsers.length; i += chunkSize) {
-            chunks.push(activeUsers.slice(i, i + chunkSize))
-        }
-
-        let totalAwarded = 0
-
-        for (const chunk of chunks) {
-            const entries = chunk.map(user => ({
-                drawing_id: drawing.id,
-                user_id: user.id,
-                entry_type: 'base',
-                quantity: 1
-            }))
-
-            // Allow duplicates to fail silently or use ignoreDuplicates if available in client/query?
-            // Supabase .insert({ ignoreDuplicates: true }) isn't standard in v2 logic cleanly without specific constraint name sometimes.
-            // But we don't have a unique constraint on (drawing_id, user_id, entry_type) in the migration I made.
-            // So we might insert duplicates if run twice!
-            // I should check validity or add constraint. 
-            // Since migration is already "done", I'll check existence for user? No too slow.
-            // I'll trust the cron runs once.
-
-            const { error: insertError } = await this.supabase
-                .from('lottery_entries')
-                .insert(entries)
-
-            if (insertError) console.error('Error awarding base entries chunk:', insertError)
-            else totalAwarded += entries.length
-        }
-
-        // 4. Update stats manually
-        if (totalAwarded > 0) {
-            const { data: d } = await this.supabase.from('lottery_drawings').select('total_entries').eq('id', drawing.id).single()
-            await this.supabase.from('lottery_drawings').update({
-                total_entries: (d?.total_entries || 0) + totalAwarded
-            }).eq('id', drawing.id)
-        }
-
-        return { count: totalAwarded }
+        // 2. Delegate to generic processor
+        return this.processAutoEntries(drawing.id)
     }
 }
