@@ -65,7 +65,6 @@ export default function LotteryPage() {
                             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6  border border-white/20 space-y-4">
                                 <div className="flex justify-between items-center text-sm font-medium opacity-80">
                                     <span>Your Total Entries</span>
-                                    <span>{currentData.odds.percentage} Chance</span>
                                 </div>
                                 <div className="text-5xl lg:text-6xl font-black tracking-tighter text-center">
                                     {userEntries?.total || 0}
