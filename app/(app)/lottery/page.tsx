@@ -50,13 +50,13 @@ export default function LotteryPage() {
                     <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-black/10 rounded-full blur-3xl" />
 
                     <CardContent className="p-8 relative z-10">
-                        <div className="grid md:grid-cols-2 gap-8 items-center">
+                        <div className="grid lg:grid-cols-2 gap-8 items-center">
                             <div className="space-y-4">
                                 <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm">
                                     <Clock className="w-4 h-4" />
                                     <span>Draws in {currentData.time_until_draw}</span>
                                 </div>
-                                <h2 className="text-5xl font-black leading-none">{drawing.prize_description}</h2>
+                                <h2 className="text-4xl sm:text-5xl font-black leading-none">{drawing.prize_description}</h2>
                                 <p className="text-lg opacity-90">
                                     Prize Value: ${drawing.prize_value}
                                 </p>
@@ -67,17 +67,19 @@ export default function LotteryPage() {
                                     <span>Your Total Entries</span>
                                     <span>{currentData.odds.percentage} Chance</span>
                                 </div>
-                                <div className="text-6xl font-black tracking-tighter text-center">
+                                <div className="text-5xl lg:text-6xl font-black tracking-tighter text-center">
                                     {userEntries?.total || 0}
                                 </div>
                                 <Button
                                     size="lg"
-                                    className="w-full bg-white text-purple-600 hover:bg-white/90 font-bold text-lg h-12"
+                                    className="w-full bg-white text-purple-600 hover:bg-white/90 font-bold text-lg h-auto py-3 whitespace-normal shadow-sm"
                                     onClick={() => setIsPurchaseModalOpen(true)}
                                     disabled={remaining?.can_purchase === 0 && (niceState?.collectedBalance || 0) < 200}
                                 >
-                                    <Ticket className="mr-2 h-5 w-5" />
-                                    Get More Entries
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Ticket className="shrink-0 h-5 w-5" />
+                                        <span>Get More Entries</span>
+                                    </div>
                                 </Button>
                                 <div className="text-center text-xs opacity-70">
                                     You can buy {remaining?.can_purchase} more this week
