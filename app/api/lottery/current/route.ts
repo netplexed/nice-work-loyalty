@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 import { formatDistance, addMinutes } from 'date-fns'
 
@@ -43,9 +44,12 @@ export async function GET() {
         if (drawing.auto_entry_config?.type === 'all' && userEntries.length === 0) {
             const qty = drawing.auto_entry_config.quantity || 1
 
+            // Use Admin Client to bypass RLS for insertion
+            const supabaseAdmin = createAdminClient()
+
             // Double check we haven't already awarded (though userEntries was empty)
             // Perform insert safely
-            const { data: newEntry, error: insertError } = await supabase
+            const { data: newEntry, error: insertError } = await supabaseAdmin
                 .from('lottery_entries')
                 .insert({
                     drawing_id: drawing.id,

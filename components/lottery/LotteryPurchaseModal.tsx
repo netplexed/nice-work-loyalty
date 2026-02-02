@@ -56,7 +56,7 @@ export function LotteryPurchaseModal({ open, onOpenChange, niceBalance, drawingI
             })
 
             // Refresh data
-            mutate('/api/lottery/current')
+            await mutate('/api/lottery/current')
             onOpenChange(false)
 
         } catch (error: any) {
