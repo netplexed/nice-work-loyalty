@@ -3,8 +3,9 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { executeDrawing } from '@/lib/lottery/drawing-logic'
+import { LotteryDrawing } from '@/lib/lottery/types'
 
-export async function getAdminLotteryDrawings() {
+export async function getAdminLotteryDrawings(): Promise<LotteryDrawing[]> {
     try {
         const supabase = createAdminClient()
 
@@ -17,7 +18,7 @@ export async function getAdminLotteryDrawings() {
             console.error('Error fetching drawings:', error)
             return [] // Return empty array on error to prevent page crash
         }
-        return data
+        return data as LotteryDrawing[]
     } catch (e) {
         console.error('Unexpected error fetching drawings:', e)
         return []
