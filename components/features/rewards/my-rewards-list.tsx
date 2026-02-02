@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Copy, CheckCircle, QrCode, Clock } from "lucide-react"
-import { formatDistanceToNow, isPast } from "date-fns"
+import { formatDistanceToNow, isPast, differenceInHours } from "date-fns"
 import type { Database } from '@/lib/supabase/database.types'
 import { toast } from "sonner"
 import { VoucherQR } from "./voucher-qr"
@@ -73,9 +73,16 @@ function RewardItem({ redemption }: { redemption: RedemptionWithReward }) {
                                 <div className={`flex items-center gap-1 font-medium ${isPast(new Date(redemption.expires_at)) ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'}`}>
                                     <Clock className="w-3 h-3" />
                                     <span>
-                                        {isPast(new Date(redemption.expires_at))
-                                            ? 'Expired'
-                                            : `Expires in ${formatDistanceToNow(new Date(redemption.expires_at))}`}
+                                        {(() => {
+                                            if (isPast(new Date(redemption.expires_at!))) return 'Expired'
+
+                                            const hours = differenceInHours(new Date(redemption.expires_at!), new Date())
+                                            if (hours < 48) {
+                                                return `Expires in ${hours} hours`
+                                            }
+
+                                            return `Expires in ${formatDistanceToNow(new Date(redemption.expires_at!))}`
+                                        })()}
                                     </span>
                                 </div>
                             )}
@@ -146,8 +153,15 @@ export function MyRewardsList({ redemptions }: MyRewardsListProps) {
         )
     }
 
-    const available = redemptions.filter(r => r.status === 'pending' || r.status === 'approved')
-    const history = redemptions.filter(r => r.status !== 'pending' && r.status !== 'approved')
+    const available = redemptions.filter(r => {
+        const isExpired = r.expires_at ? isPast(new Date(r.expires_at)) : false
+        return (r.status === 'pending' || r.status === 'approved') && !isExpired
+    })
+
+    const history = redemptions.filter(r => {
+        const isExpired = r.expires_at ? isPast(new Date(r.expires_at)) : false
+        return (r.status !== 'pending' && r.status !== 'approved') || isExpired
+    })
 
     return (
         <div className="space-y-8">
