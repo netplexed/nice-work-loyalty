@@ -109,6 +109,9 @@ export default function SpinWheelAdminPage() {
                                 {prize.type === 'points' && (
                                     <div>Value: <span className="font-medium text-foreground">{prize.points_value} pts</span></div>
                                 )}
+                                {prize.type === 'nice' && (
+                                    <div>Value: <span className="font-medium text-foreground">{prize.points_value} Nice</span></div>
+                                )}
                                 {prize.type === 'reward' && (
                                     <div>Reward: <span className="font-medium text-foreground">{prize.rewards?.name || 'Unknown'}</span></div>
                                 )}

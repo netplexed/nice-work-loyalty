@@ -14,7 +14,7 @@ import { Loader2 } from 'lucide-react'
 interface SpinPrize {
     id?: string
     label: string
-    type: 'points' | 'reward' | 'loss'
+    type: 'points' | 'nice' | 'reward' | 'loss'
     points_value: number
     reward_id: string | null
     probability: number
@@ -30,6 +30,7 @@ interface SpinPrizeFormProps {
     onSuccess: () => void
 }
 
+// Force rebuild: Added nice option
 export function SpinPrizeForm({ open, onOpenChange, initialData, onSuccess }: SpinPrizeFormProps) {
     const [loading, setLoading] = useState(false)
     const [rewards, setRewards] = useState<any[]>([])
@@ -83,7 +84,7 @@ export function SpinPrizeForm({ open, onOpenChange, initialData, onSuccess }: Sp
             const dataToSave = {
                 ...cleanFormData,
                 reward_id: formData.type === 'reward' ? formData.reward_id : null,
-                points_value: formData.type === 'points' ? formData.points_value : 0,
+                points_value: (formData.type === 'points' || formData.type === 'nice') ? formData.points_value : 0,
                 expiry_hours: formData.type === 'reward' ? formData.expiry_hours : null,
             }
 
@@ -142,6 +143,7 @@ export function SpinPrizeForm({ open, onOpenChange, initialData, onSuccess }: Sp
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="points">Points</SelectItem>
+                                    <SelectItem value="nice">Nice Points</SelectItem>
                                     <SelectItem value="reward">Reward Item</SelectItem>
                                     <SelectItem value="loss">No Prize</SelectItem>
                                 </SelectContent>
@@ -164,9 +166,9 @@ export function SpinPrizeForm({ open, onOpenChange, initialData, onSuccess }: Sp
                         </div>
                     </div>
 
-                    {formData.type === 'points' && (
+                    {(formData.type === 'points' || formData.type === 'nice') && (
                         <div className="grid gap-2">
-                            <Label>Points Value</Label>
+                            <Label>{formData.type === 'nice' ? 'Nice Amount' : 'Points Value'}</Label>
                             <Input
                                 type="number"
                                 value={formData.points_value}

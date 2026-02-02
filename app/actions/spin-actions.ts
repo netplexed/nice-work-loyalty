@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 export interface SpinPrize {
     id: string
     label: string
-    type: 'points' | 'reward' | 'loss'
+    type: 'points' | 'nice' | 'reward' | 'loss'
     points_value?: number
     reward_id?: string
     color: string
