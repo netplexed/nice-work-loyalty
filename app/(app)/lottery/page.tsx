@@ -40,7 +40,7 @@ export default function LotteryPage() {
             {/* Header / Hero */}
             <div className="space-y-2 text-center">
                 <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">Weekly Lottery</h1>
-                <p className="text-muted-foreground text-lg">Use your Nice to win real dining vouchers.</p>
+                <p className="text-muted-foreground text-lg">Use your Nice to win real prizes.</p>
             </div>
 
             {drawing ? (
@@ -54,7 +54,7 @@ export default function LotteryPage() {
                             <div className="space-y-4">
                                 <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm">
                                     <Clock className="w-4 h-4" />
-                                    <span>Draws in {currentData.time_until_draw}</span>
+                                    <span>Draw {currentData.time_until_draw}</span>
                                 </div>
                                 <h2 className="text-4xl sm:text-5xl font-black leading-none">{drawing.prize_description}</h2>
                             </div>

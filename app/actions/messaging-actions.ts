@@ -140,10 +140,15 @@ export async function getUserNotifications() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
 
+    // Filter out notifications older than 2 months
+    const twoMonthsAgo = new Date()
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2)
+
     const { data } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
+        .gt('created_at', twoMonthsAgo.toISOString())
         .order('created_at', { ascending: false })
         .limit(50)
 

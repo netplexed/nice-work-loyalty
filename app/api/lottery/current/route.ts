@@ -3,6 +3,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 import { formatDistance, addMinutes } from 'date-fns'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
