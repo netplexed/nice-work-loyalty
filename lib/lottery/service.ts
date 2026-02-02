@@ -193,6 +193,19 @@ export class LotteryService {
             // Unique IDs
             userIds = Array.from(new Set(checkins?.map((c: any) => c.user_id)))
 
+        } else if (config.type === 'push_enabled') {
+            // Users with active push subscriptions
+            const { data: subs, error: subError } = await this.supabase
+                .from('push_subscriptions')
+                .select('user_id')
+
+            if (subError) {
+                console.error('Error fetching push subscriptions:', subError)
+                return { count: 0 }
+            }
+
+            userIds = Array.from(new Set(subs?.map((s: any) => s.user_id)))
+
         } else {
             // Default: All active users (profiles)
             const { data: profiles, error: profileError } = await this.supabase

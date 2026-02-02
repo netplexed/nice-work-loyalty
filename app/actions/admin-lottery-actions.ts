@@ -85,6 +85,19 @@ export async function createLotteryDrawingAdmin({
     revalidatePath('/admin/lottery')
 }
 
+export async function cancelLotteryDrawingAdmin(drawingId: string) {
+    const supabase = createAdminClient()
+
+    const { data, error } = await (supabase.rpc as any)('cancel_lottery_drawing', {
+        p_drawing_id: drawingId
+    })
+
+    if (error) throw new Error(error.message)
+    if (data && !data.success) throw new Error(data.message)
+
+    revalidatePath('/admin/lottery')
+}
+
 export async function executeDrawingAdmin(drawingId: string) {
     try {
         await executeDrawing(drawingId)

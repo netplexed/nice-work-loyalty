@@ -40,3 +40,29 @@ export function ExecuteDrawingButton({ drawingId }: { drawingId: string }) {
         </Button>
     )
 }
+
+import { cancelLotteryDrawingAdmin } from '@/app/actions/admin-lottery-actions'
+import { Ban } from 'lucide-react'
+
+export function CancelDrawingButton({ drawingId }: { drawingId: string }) {
+    const [isPending, startTransition] = useTransition()
+
+    const handleCancel = () => {
+        if (!confirm('Are you sure you want to CANCEL this drawing?\n\nThis will refund all purchased tickets to users.')) return
+
+        startTransition(async () => {
+            try {
+                await cancelLotteryDrawingAdmin(drawingId)
+                toast.success('Drawing cancelled and refunds processed.')
+            } catch (error: any) {
+                toast.error('Error: ' + error.message)
+            }
+        })
+    }
+
+    return (
+        <Button variant="outline" size="icon" onClick={handleCancel} disabled={isPending} title="Cancel Drawing" className="text-muted-foreground hover:text-red-500">
+            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+        </Button>
+    )
+}

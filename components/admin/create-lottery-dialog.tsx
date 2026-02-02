@@ -225,6 +225,7 @@ export function CreateLotteryDialog() {
                                                 <SelectContent>
                                                     <SelectItem value="all">Every Active User</SelectItem>
                                                     <SelectItem value="recent_visit">Recent Visitors Only</SelectItem>
+                                                    <SelectItem value="push_enabled">Users with Push Enabled</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>

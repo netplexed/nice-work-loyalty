@@ -2,7 +2,7 @@ import { getAdminLotteryDrawings } from '@/app/actions/admin-lottery-actions'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { LotteryManagementButtons, ExecuteDrawingButton } from '@/components/admin/lottery-management'
+import { LotteryManagementButtons, ExecuteDrawingButton, CancelDrawingButton } from '@/components/admin/lottery-management'
 import { format } from 'date-fns'
 
 const SafeDate = ({ date, fmt = 'MMM d, yyyy' }: { date: string | null | undefined, fmt?: string }) => {
@@ -80,9 +80,14 @@ export default async function AdminLotteryPage() {
                                             {drawing.winning_ticket_number ?? '-'}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            {drawing.status === 'active' && (
-                                                <ExecuteDrawingButton drawingId={drawing.id} />
-                                            )}
+                                            <div className="flex items-center justify-end gap-2">
+                                                {(drawing.status === 'active' || drawing.status === 'upcoming') && (
+                                                    <CancelDrawingButton drawingId={drawing.id} />
+                                                )}
+                                                {drawing.status === 'active' && (
+                                                    <ExecuteDrawingButton drawingId={drawing.id} />
+                                                )}
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))
