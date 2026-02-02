@@ -248,10 +248,19 @@ export class LotteryService {
 
         // Update stats
         if (totalAwarded > 0) {
-            const { data: d } = await this.supabase.from('lottery_drawings').select('total_entries').eq('id', drawingId).single()
-            await this.supabase.from('lottery_drawings').update({
-                total_entries: (d?.total_entries || 0) + totalAwarded
-            }).eq('id', drawingId)
+            // Call the new RPC function to recalculate stats correctly
+            const { error: statsError } = await this.supabase.rpc('recalculate_lottery_stats', {
+                p_drawing_id: drawingId
+            })
+
+            if (statsError) {
+                // Fallback for older DB versions if RPC doesn't exist yet
+                console.error('Error recalculating stats (RPC likely missing):', statsError)
+                const { data: d } = await this.supabase.from('lottery_drawings').select('total_entries').eq('id', drawingId).single()
+                await this.supabase.from('lottery_drawings').update({
+                    total_entries: (d?.total_entries || 0) + totalAwarded
+                }).eq('id', drawingId)
+            }
         }
 
         return { count: totalAwarded }
