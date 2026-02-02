@@ -1,23 +1,31 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { executeDrawing } from '@/lib/lottery/drawing-logic'
 
 export async function getAdminLotteryDrawings() {
-    const supabase = await createClient()
+    try {
+        const supabase = createAdminClient()
 
-    const { data, error } = await supabase
-        .from('lottery_drawings')
-        .select('*')
-        .order('week_start_date', { ascending: false })
+        const { data, error } = await (supabase
+            .from('lottery_drawings') as any)
+            .select('*')
+            .order('week_start_date', { ascending: false })
 
-    if (error) throw new Error(error.message)
-    return data
+        if (error) {
+            console.error('Error fetching drawings:', error)
+            return [] // Return empty array on error to prevent page crash
+        }
+        return data
+    } catch (e) {
+        console.error('Unexpected error fetching drawings:', e)
+        return []
+    }
 }
 
 export async function createWeeklyDrawingAdmin() {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Calculate next Sunday 8PM
     const now = new Date()
@@ -34,8 +42,8 @@ export async function createWeeklyDrawingAdmin() {
     const weekStart = new Date(drawDate)
     weekStart.setDate(weekStart.getDate() - 7)
 
-    const { error } = await supabase
-        .from('lottery_drawings')
+    const { error } = await (supabase
+        .from('lottery_drawings') as any)
         .insert({
             draw_date: drawDate.toISOString(),
             week_start_date: weekStart.toISOString(),
