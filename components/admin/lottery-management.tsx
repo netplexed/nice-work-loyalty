@@ -2,30 +2,15 @@
 
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
-import { createWeeklyDrawingAdmin, executeDrawingAdmin } from '@/app/actions/admin-lottery-actions'
+import { CreateLotteryDialog } from '@/components/admin/create-lottery-dialog'
+import { executeDrawingAdmin } from '@/app/actions/admin-lottery-actions'
 import { toast } from 'sonner'
-import { Loader2, Plus, Play } from 'lucide-react'
+import { Loader2, Play } from 'lucide-react'
 
+// This component is now just a container for the dialog, or we can export the dialog directly
+// For backward compatibility with the page usage, let's keep the name but render the dialog
 export function LotteryManagementButtons() {
-    const [isPending, startTransition] = useTransition()
-
-    const handleCreate = () => {
-        startTransition(async () => {
-            try {
-                await createWeeklyDrawingAdmin()
-                toast.success('New lottery drawing created')
-            } catch (error: any) {
-                toast.error(error.message)
-            }
-        })
-    }
-
-    return (
-        <Button onClick={handleCreate} disabled={isPending}>
-            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-            Create Weekly Drawing
-        </Button>
-    )
+    return <CreateLotteryDialog />
 }
 
 export function ExecuteDrawingButton({ drawingId }: { drawingId: string }) {
