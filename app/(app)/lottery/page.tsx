@@ -95,7 +95,7 @@ export default function LotteryPage() {
             )}
 
             {/* Stats / Info */}
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 gap-4">
                 <Card>
                     <CardContent className="p-6 flex flex-col items-center text-center">
                         <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-3">
@@ -118,19 +118,6 @@ export default function LotteryPage() {
                         <p className="text-sm text-muted-foreground mt-1">Buy entries with Nice. 200 Nice per entry (max 10/week).</p>
                         <div className="mt-2 text-xs font-medium bg-secondary px-2 py-1 rounded">
                             {userEntries?.breakdown?.purchased || 0} Purchased
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-6 flex flex-col items-center text-center">
-                        <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-3">
-                            <Clock className="w-6 h-6" />
-                        </div>
-                        <h3 className="font-bold">Check-in</h3>
-                        <p className="text-sm text-muted-foreground mt-1">Check-in weekly via the app for +2 entries bonus.</p>
-                        <div className="mt-2 text-xs font-medium bg-secondary px-2 py-1 rounded">
-                            {userEntries?.breakdown?.checkin ? 'Unlocked' : 'Locked'}
                         </div>
                     </CardContent>
                 </Card>
