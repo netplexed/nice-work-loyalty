@@ -269,11 +269,11 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle className="text-2xl text-center">
-                            {result?.type === 'loss' ? 'Oh no!' : 'Congratulations!'}
+                            {result?.type === 'loss' ? 'Sorry' : 'Congratulations!'}
                         </DialogTitle>
                         <DialogDescription className="text-center pt-4">
                             {result?.type === 'loss' ? (
-                                <span className="text-lg">Better luck next time!</span>
+                                <span className="text-lg">Sorry, you didn't win. Try again tomorrow!</span>
                             ) : (
                                 <div className="flex flex-col items-center gap-4">
                                     <span className="text-lg">You won</span>
@@ -293,7 +293,7 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
                         </Button>
                     </DialogFooter>
                 </DialogContent>
-            </Dialog>
-        </div>
+            </Dialog >
+        </div >
     )
 }
