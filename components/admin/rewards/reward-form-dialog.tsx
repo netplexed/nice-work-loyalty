@@ -7,10 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { createReward, updateReward } from '@/app/actions/admin-actions'
+import { createReward, updateReward, deleteReward } from '@/app/actions/admin-actions'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Loader2, Plus, Pen, Image as ImageIcon } from 'lucide-react'
+import { Loader2, Plus, Pen, Image as ImageIcon, Trash2 } from 'lucide-react'
 import { Checkbox } from "@/components/ui/checkbox"
 
 interface RewardFormDialogProps {
@@ -107,6 +107,25 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
                 toast.success('Reward created successfully')
             }
 
+            setOpen(false)
+        } catch (error: any) {
+            toast.error(error.message)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleDelete = async () => {
+        if (!reward) return
+
+        if (!confirm('Are you regarding about this? This will permanently delete the reward. If it has been redeemed, this might fail.')) {
+            return
+        }
+
+        setLoading(true)
+        try {
+            await deleteReward(reward.id)
+            toast.success('Reward deleted successfully')
             setOpen(false)
         } catch (error: any) {
             toast.error(error.message)
@@ -275,7 +294,18 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
                         </div>
                     </div>
 
-                    <DialogFooter>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        {reward && (
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={handleDelete}
+                                disabled={loading}
+                            >
+                                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                                Delete
+                            </Button>
+                        )}
                         <Button type="submit" disabled={loading}>
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {reward ? 'Update Reward' : 'Create Reward'}

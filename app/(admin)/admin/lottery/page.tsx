@@ -5,6 +5,15 @@ import { Badge } from '@/components/ui/badge'
 import { LotteryManagementButtons, ExecuteDrawingButton } from '@/components/admin/lottery-management'
 import { format } from 'date-fns'
 
+const SafeDate = ({ date, fmt = 'MMM d, yyyy' }: { date: string | null | undefined, fmt?: string }) => {
+    if (!date) return <span>-</span>
+    try {
+        return <span>{format(new Date(date), fmt)}</span>
+    } catch (e) {
+        return <span className="text-red-500 text-xs">Invalid Date</span>
+    }
+}
+
 export default async function AdminLotteryPage() {
     const drawings = await getAdminLotteryDrawings()
 
@@ -57,8 +66,8 @@ export default async function AdminLotteryPage() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex flex-col">
-                                                <span className="font-medium">{format(new Date(drawing.draw_date), 'MMM d, yyyy')}</span>
-                                                <span className="text-xs text-muted-foreground">{format(new Date(drawing.draw_date), 'h:mm a')}</span>
+                                                <span className="font-medium"><SafeDate date={drawing.draw_date} /></span>
+                                                <span className="text-xs text-muted-foreground"><SafeDate date={drawing.draw_date} fmt="h:mm a" /></span>
                                             </div>
                                         </TableCell>
                                         <TableCell>

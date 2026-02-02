@@ -254,6 +254,24 @@ export async function toggleRewardStatus(id: string, isActive: boolean) {
     return updateReward(id, { active: isActive })
 }
 
+export async function deleteReward(id: string) {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+
+    const { error } = await supabase
+        .from('rewards')
+        .delete()
+        .eq('id', id)
+
+    if (error) throw error
+
+    revalidatePath('/admin/rewards')
+    revalidatePath('/rewards')
+    return { success: true }
+}
+
 export async function verifyAndRedeemVoucher(code: string) {
     const isAdmin = await verifyAdmin()
     if (!isAdmin) throw new Error('Unauthorized')
