@@ -249,7 +249,7 @@ export class LotteryService {
         // Update stats
         if (totalAwarded > 0) {
             // Call the new RPC function to recalculate stats correctly
-            const { error: statsError } = await this.supabase.rpc('recalculate_lottery_stats', {
+            const { error: statsError } = await (this.supabase.rpc as any)('recalculate_lottery_stats', {
                 p_drawing_id: drawingId
             })
 

@@ -111,10 +111,10 @@ export async function executeDrawingAdmin(drawingId: string) {
 export async function recalculateDrawingStats(drawingId: string) {
     const supabase = createAdminClient()
     try {
-        const { error } = await supabase.rpc('recalculate_lottery_stats', {
+        const { error } = await (supabase.rpc as any)('recalculate_lottery_stats', {
             p_drawing_id: drawingId
         })
-        
+
         if (error) throw new Error(error.message)
         revalidatePath('/admin/lottery')
         return { success: true }

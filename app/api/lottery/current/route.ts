@@ -60,8 +60,8 @@ export async function GET() {
                 // Update local state to reflect the new entry immediately
                 userEntries = [newEntry]
 
-                // Async update total stats (don't await to avoid blocking UI)
-                supabase.rpc('recalculate_lottery_stats', { p_drawing_id: drawing.id }).then(() => { })
+                    // Async update total stats (don't await to avoid blocking UI)
+                    (supabase.rpc as any)('recalculate_lottery_stats', { p_drawing_id: drawing.id }).then(() => { })
             }
         }
 
