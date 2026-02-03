@@ -57,6 +57,9 @@ export default function LotteryPage() {
                                     <span>Draw {currentData.time_until_draw}</span>
                                 </div>
                                 <h2 className="text-4xl sm:text-5xl font-black leading-none">{drawing.prize_description}</h2>
+                                <p className="text-xs sm:text-sm opacity-90 font-medium max-w-md">
+                                    Note: To be eligible for the lottery, please turn on push notifications.
+                                </p>
                             </div>
 
                             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6  border border-white/20 space-y-4">
