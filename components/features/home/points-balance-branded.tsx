@@ -58,7 +58,6 @@ export function PointsBalanceBranded({ refreshTrigger = 0 }: PointsBalanceProps)
                         <span className="capitalize font-medium px-2 py-0.5 bg-white/20 rounded-full text-xs border border-white/10">
                             {profile.tier} Member
                         </span>
-                        <span className="font-mono">${profile.total_spent} spent</span>
                     </div>
                     <div className="mt-6">
                         <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider mb-1 opacity-70">

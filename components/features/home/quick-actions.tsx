@@ -10,13 +10,12 @@ interface QuickActionsProps {
 
 export function QuickActions({ onCheckInSuccess }: QuickActionsProps) {
     const actions = [
-        { href: '/scan', icon: Scan, label: 'Scan' },
         { href: '/rewards', icon: Gift, label: 'Rewards' },
         { href: '/profile', icon: User, label: 'Profile' },
     ]
 
     return (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
             {actions.map((action) => (
                 <Link
                     key={action.label}

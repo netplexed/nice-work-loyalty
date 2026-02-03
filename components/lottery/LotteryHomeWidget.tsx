@@ -45,6 +45,9 @@ export function LotteryHomeWidget() {
                         <div>
                             <p className="text-xs font-medium opacity-90 uppercase tracking-wider mb-1">Weekly Lottery</p>
                             <h3 className="text-xl font-bold leading-tight">{drawing.prize_description}</h3>
+                            <p className="text-[10px] opacity-80 mt-1 font-medium">
+                                Enable push notifications to be eligible
+                            </p>
                         </div>
                         <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
                             <Ticket className="w-6 h-6 text-white" />
