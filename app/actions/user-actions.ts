@@ -38,7 +38,7 @@ export async function getUserProfile() {
 
         const { error: insertError } = await adminSupabase
             .from('profiles')
-            .insert(newProfile)
+            .insert(newProfile as any)
 
         if (insertError) {
             console.error('Error creating profile:', insertError)
