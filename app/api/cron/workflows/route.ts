@@ -116,13 +116,13 @@ export async function GET(req: NextRequest) {
                         await supabase.from('workflow_enrollments').update({
                             current_step_index: nextIndex,
                             next_execution_at: triggerTime.toISOString()
-                        }).eq('id', enrollment.id)
+                        } as any).eq('id', enrollment.id)
                     } else {
                         // Regular step, ready to run ASAP (or next tick)
                         await supabase.from('workflow_enrollments').update({
                             current_step_index: nextIndex,
                             next_execution_at: new Date().toISOString()
-                        }).eq('id', enrollment.id)
+                        } as any).eq('id', enrollment.id)
                     }
                 } else {
                     // No more steps
@@ -146,7 +146,7 @@ async function completeEnrollment(supabase: any, id: string) {
     await supabase.from('workflow_enrollments').update({
         status: 'completed',
         next_execution_at: null
-    }).eq('id', id)
+    } as any).eq('id', id)
 }
 
 async function sendWorkflowEmail(supabase: any, userId: string, templateId: string, subjectOverride: string, context: any) {
