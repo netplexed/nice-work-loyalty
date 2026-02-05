@@ -13,13 +13,27 @@ Supabase's built-in email service is rate-limited and often blocked by spam filt
     *   Create a new key with "Sending access".
     *   **Copy this key** (starts with `re_...`).
 
-## Step 2: Configure Supabase
+## Step 2: Choose your Sender Identity
+
+### Option A: Custom Domain (Recommended for Production)
+1.  In Resend, go to **Domains** and add `nicework.sg`.
+2.  Log in to your DNS provider (GoDaddy, Namecheap, Cloudflare, etc.).
+3.  Add the **DNS Records** (MX, TXT/SPF, DKIM) provided by Resend.
+4.  Wait for the status to turn to **Verified** (can take 5 mins to 24 hours).
+5.  **Supabase Sender Email:** `hello@nicework.sg` (Must match your verified domain).
+
+### Option B: Test Domain (Quick Start)
+*Use this if you just want to test immediately without touching DNS.*
+1.  **Supabase Sender Email:** `onboarding@resend.dev`
+2.  **Limitation:** You can ONLY send emails to the address you used to sign up for Resend.
+
+## Step 3: Configure Supabase
 1.  Log in to your **Supabase Dashboard**.
 2.  Select your project.
 3.  Go to **Project Settings** (gear icon) -> **Authentication** -> **SMTP Settings**.
 4.  Switch **Enable Custom SMTP** to **ON**.
 5.  Fill in the details:
-    *   **Sender Email:** `onboarding@resend.dev` (Use this exact email for testing if you haven't verified a domain yet).
+    *   **Sender Email:** `hello@nicework.sg` (OR `onboarding@resend.dev` if using Option B).
     *   **Sender Name:** `Nice Work Loyalty`
     *   **Host:** `smtp.resend.com`
     *   **Port:** `465` (Recommended) or `587`.
@@ -27,11 +41,13 @@ Supabase's built-in email service is rate-limited and often blocked by spam filt
     *   **Password:** `[Paste your Resend API Key]` (`re_...`).
 6.  Click **Save**.
 
-## Step 3: Test
-**Important:** When using the test email `onboarding@resend.dev`, Resend **only allows sending to the email address you used to sign up for Resend**.
-1.  Try creating an account using **your own email address** (the one linked to your Resend account).
-2.  Check your inbox.
+## Step 4: Test
+1.  Go to your App's Login Page.
+2.  Try "Create Account".
+    *   **If Option A:** Use any email.
+    *   **If Option B:** Use ONLY your admin/Resend signup email.
+3.  Check your inbox.
 
 ## Troubleshooting
--   **Email not sending?** If you are using the test sender (`onboarding@resend.dev`), ensure you are creating an account with **your admin email only**. It will block random emails.
--   **Spam:** Ensure your **Sender Email** matches the domain you verified in Resend. Spoofing other domains will send emails to spam.
+-   **"Sender Identity missing":** Your "Sender Email" in Supabase does not match a verified domain in Resend.
+-   **Email not sending (Option B)?** You are trying to email a user that is not your own admin email.
