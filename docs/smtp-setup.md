@@ -19,20 +19,19 @@ Supabase's built-in email service is rate-limited and often blocked by spam filt
 3.  Go to **Project Settings** (gear icon) -> **Authentication** -> **SMTP Settings**.
 4.  Switch **Enable Custom SMTP** to **ON**.
 5.  Fill in the details:
-    *   **Sender Email:** `noreply@yourdomain.com` (Must match the verified domain in Resend).
+    *   **Sender Email:** `onboarding@resend.dev` (Use this exact email for testing if you haven't verified a domain yet).
     *   **Sender Name:** `Nice Work Loyalty`
     *   **Host:** `smtp.resend.com`
     *   **Port:** `465` (Recommended) or `587`.
-    *   **User:** `resend` (This is the literal username, do not change).
-    *   **Password:** `[Paste your Resend API Key here]` (`re_...`).
-    *   **Minimum Interval:** 60 (Default is fine).
+    *   **User:** `resend` (Literal username).
+    *   **Password:** `[Paste your Resend API Key]` (`re_...`).
 6.  Click **Save**.
 
 ## Step 3: Test
-1.  Go to your App's Login Page.
-2.  Try "Create Account" with a real email.
-3.  Check your inbox! It should arrive instantly.
+**Important:** When using the test email `onboarding@resend.dev`, Resend **only allows sending to the email address you used to sign up for Resend**.
+1.  Try creating an account using **your own email address** (the one linked to your Resend account).
+2.  Check your inbox.
 
 ## Troubleshooting
--   **"Rate Limit Exceeded":** If you see this in Supabase logs *before* switching, the switch to SMTP will fix it.
+-   **Email not sending?** If you are using the test sender (`onboarding@resend.dev`), ensure you are creating an account with **your admin email only**. It will block random emails.
 -   **Spam:** Ensure your **Sender Email** matches the domain you verified in Resend. Spoofing other domains will send emails to spam.
