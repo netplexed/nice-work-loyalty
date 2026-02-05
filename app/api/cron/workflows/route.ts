@@ -36,7 +36,8 @@ export async function GET(req: NextRequest) {
 
     const results = []
 
-    for (const enrollment of enrollments) {
+    // Cast to any because workflow_enrollments table is missing from generated types
+    for (const enrollment of (enrollments as any[])) {
         try {
             const workflow = enrollment.marketing_workflows
             if (!workflow) continue
