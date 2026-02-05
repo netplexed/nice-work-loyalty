@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Home, Gift, Scan, User } from 'lucide-react'
+import { Home, Gift, User } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { NotificationNav } from '@/components/layout/notification-nav'
@@ -20,15 +20,6 @@ export default function AppLayout({
                 <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 pb-safe">
                     <div className="max-w-md mx-auto flex items-center justify-around h-16">
                         <NavItem href="/" icon={Home} label="Home" />
-                        <NavItem href="/rewards" icon={Gift} label="Rewards" />
-                        <div className="relative -top-5">
-                            <Link
-                                href="/scan"
-                                className="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg active:scale-95 transition-transform"
-                            >
-                                <Scan className="w-7 h-7" />
-                            </Link>
-                        </div>
                         <NotificationNav />
                         <NavItem href="/profile" icon={User} label="Profile" />
                     </div>
