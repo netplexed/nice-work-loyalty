@@ -113,7 +113,7 @@ export async function getNiceState(): Promise<NiceState> {
 
     if (!user) throw new Error('Not authenticated')
 
-    const { data: account, error } = await supabase
+    let { data: account, error } = await supabase
         .from('nice_accounts')
         .select('*')
         .eq('user_id', user.id)
