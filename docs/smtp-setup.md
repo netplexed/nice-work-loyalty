@@ -48,6 +48,20 @@ Supabase's built-in email service is rate-limited and often blocked by spam filt
     *   **If Option B:** Use ONLY your admin/Resend signup email.
 3.  Check your inbox.
 
+## Step 5: Customize Email Content
+You can change the subject line and body text of your emails directly in Supabase.
+1.  Go to **Authentication** > **Email Templates**.
+2.  Select the template you want to edit (e.g., "Confirm Your Signup").
+3.  **Edit the Body:** You can use HTML and variables.
+    *   **Essential Variable:** You MUST include `{{ .ConfirmationURL }}` (or the specific variable for that template) so the user can click the link.
+    *   **Example Body:**
+        ```html
+        <h2>Welcome to Nice Work Loyalty!</h2>
+        <p>Thanks for joining. Please confirm your email by clicking below:</p>
+        <p><a href="{{ .ConfirmationURL }}">Confirm Email</a></p>
+        ```
+4.  Click **Save**.
+
 ## Troubleshooting
 -   **"Sender Identity missing":** Your "Sender Email" in Supabase does not match a verified domain in Resend.
 -   **Email not sending (Option B)?** You are trying to email a user that is not your own admin email.
