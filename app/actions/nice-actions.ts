@@ -119,10 +119,21 @@ export async function getNiceState(): Promise<NiceState> {
         .eq('user_id', user.id)
         .single()
 
-    if (error || !account) {
-        // Handle case where account might not exist yet (though trigger should handle it)
-        console.error('Error fetching nice account:', error)
-        throw new Error('Nice account not found')
+    if (!account) {
+        // Self-healing: Create account if missing (e.g. trigger failed)
+        console.log('Nice account missing for user, creating default...')
+        const { data: newAccount, error: createError } = await supabase
+            .from('nice_accounts')
+            .insert({ user_id: user.id })
+            .select()
+            .single()
+
+        if (createError || !newAccount) {
+            console.error('Failed to auto-create nice account:', createError)
+            throw new Error('Failed to initialize Nice account')
+        }
+
+        account = newAccount
     }
 
     const tankNice = calculateCurrentTankNice(account)
