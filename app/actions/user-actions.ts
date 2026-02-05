@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { trackEvent } from '@/app/actions/marketing-event-actions'
 
+import { createAdminClient } from '@/lib/supabase/admin'
+
 export async function getUserProfile() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -18,6 +20,10 @@ export async function getUserProfile() {
 
     if (!profile) {
         // Lazy create profile if it doesn't exist
+        // MUST use Admin Client because users might not have INSERT permission on profiles
+        // (RLS usually restricts INSERT to Service Role/Triggers)
+        const adminSupabase = createAdminClient()
+
         const newProfile = {
             id: user.id,
             email: user.email,
@@ -30,7 +36,7 @@ export async function getUserProfile() {
             updated_at: new Date().toISOString()
         }
 
-        const { error: insertError } = await supabase
+        const { error: insertError } = await adminSupabase
             .from('profiles')
             .insert(newProfile)
 

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getUserProfile } from '@/app/actions/user-actions'
 
 // Types
 export interface NiceAccount {
@@ -121,6 +122,11 @@ export async function getNiceState(): Promise<NiceState> {
 
     if (!account) {
         // Self-healing: Create account if missing (e.g. trigger failed)
+
+        // 1. Ensure Profile exists first (handles case where Profile trigger also failed)
+        // This function will auto-create the profile if missing
+        await getUserProfile()
+
         console.log('Nice account missing for user, creating default...')
         const { data: newAccount, error: createError } = await supabase
             .from('nice_accounts')
