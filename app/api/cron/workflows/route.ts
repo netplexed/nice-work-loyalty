@@ -113,16 +113,16 @@ export async function GET(req: NextRequest) {
                         const triggerTime = new Date()
                         triggerTime.setTime(triggerTime.getTime() + delayMs)
 
-                        await supabase.from('workflow_enrollments').update({
+                        await (supabase.from('workflow_enrollments') as any).update({
                             current_step_index: nextIndex,
                             next_execution_at: triggerTime.toISOString()
-                        } as any).eq('id', enrollment.id)
+                        }).eq('id', enrollment.id)
                     } else {
                         // Regular step, ready to run ASAP (or next tick)
-                        await supabase.from('workflow_enrollments').update({
+                        await (supabase.from('workflow_enrollments') as any).update({
                             current_step_index: nextIndex,
                             next_execution_at: new Date().toISOString()
-                        } as any).eq('id', enrollment.id)
+                        }).eq('id', enrollment.id)
                     }
                 } else {
                     // No more steps
@@ -143,10 +143,10 @@ export async function GET(req: NextRequest) {
 }
 
 async function completeEnrollment(supabase: any, id: string) {
-    await supabase.from('workflow_enrollments').update({
+    await (supabase.from('workflow_enrollments') as any).update({
         status: 'completed',
         next_execution_at: null
-    } as any).eq('id', id)
+    }).eq('id', id)
 }
 
 async function sendWorkflowEmail(supabase: any, userId: string, templateId: string, subjectOverride: string, context: any) {
