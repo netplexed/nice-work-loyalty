@@ -265,21 +265,26 @@ export function EmailLogin() {
                                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         Sign In
                                     </Button>
+                                </Tabs>
+
+                                <div className="mt-6 pt-6 border-t">
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onClick={passwordForm.handleSubmit(onPasswordSignUp)}
+                                        onClick={() => {
+                                            if (activeTab === 'password') {
+                                                passwordForm.handleSubmit(onPasswordSignUp)()
+                                            } else {
+                                                setActiveTab('password')
+                                            }
+                                        }}
                                         className="w-full"
                                         disabled={loading}
                                     >
                                         Create Account
                                     </Button>
                                 </div>
-                            </form>
-                        </Form>
-                    </TabsContent>
-                </Tabs>
-            </CardContent>
-        </Card>
-    )
+                            </CardContent>
+                        </Card>
+                        )
 }
