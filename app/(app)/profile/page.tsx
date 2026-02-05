@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSWRConfig } from 'swr'
 import { useUserProfile } from '@/hooks/use-user-profile'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -23,8 +24,20 @@ export default function ProfilePage() {
 
     // No manual fetching needed
 
+    const { mutate } = useSWRConfig()
+
     const handleSignOut = async () => {
+        // 1. Sign out from Supabase
         await supabase.auth.signOut()
+
+        // 2. Clear all SWR cache to prevent data leakage
+        await mutate(
+            () => true, // Match all keys
+            undefined,  // No data
+            { revalidate: false } // Don't revalidate
+        )
+
+        // 3. Redirect
         router.push('/login')
     }
 
