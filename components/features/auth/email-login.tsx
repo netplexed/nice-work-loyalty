@@ -130,6 +130,21 @@ export function EmailLogin() {
     async function onPasswordSignUp(values: z.infer<typeof passwordSchema>) {
         setLoading(true)
         try {
+            // Optimistically try to sign in first
+            // This handles the case where a user exists but clicks "Create Account"
+            const { error: signInError, data: signInData } = await supabase.auth.signInWithPassword({
+                email: values.email,
+                password: values.password,
+            })
+
+            if (!signInError && signInData.session) {
+                toast.success('Welcome back! Logged you in.')
+                router.push('/')
+                router.refresh()
+                return
+            }
+
+            // If sign in failed (likely invalid creds or no account), proceed to sign up
             const { error, data } = await supabase.auth.signUp({
                 email: values.email,
                 password: values.password,
