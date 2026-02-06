@@ -22,7 +22,10 @@ export function DeleteAccountDialog() {
     const handleDelete = async () => {
         setLoading(true)
         try {
-            await deleteAccount()
+            const result = await deleteAccount()
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to delete account')
+            }
             toast.success('Account deleted successfully')
             // Redirect handled by action/router usually, but we reload/redirect to be sure
             window.location.href = '/login'
