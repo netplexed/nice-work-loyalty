@@ -29,6 +29,13 @@ export async function deleteAccount() {
         await adminSupabase.from('redemptions').delete().eq('user_id', user.id)
         await adminSupabase.from('points_transactions').delete().eq('user_id', user.id)
 
+        // 3. Clean up Rewards & Lottery
+        await adminSupabase.from('lottery_entries').delete().eq('user_id', user.id)
+        await adminSupabase.from('lottery_winners').delete().eq('user_id', user.id)
+
+        // 4. Clean up Automation (Cast to any as tables might be missing from types)
+        await (adminSupabase.from('workflow_enrollments') as any).delete().eq('user_id', user.id)
+
         // 3. Clean up Referrals (both as referrer and referee)
         await adminSupabase.from('referrals').delete().or(`referrer_id.eq.${user.id},referee_id.eq.${user.id}`)
 
