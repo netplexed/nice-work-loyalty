@@ -6,6 +6,9 @@ import { SupabaseClient } from '@supabase/supabase-js'
 export async function processAutomations(specificUserId?: string) {
     // USE ADMIN CLIENT to bypass RLS and see all users/logs
     const supabase = createAdminClient()
+    const logs: string[] = []
+
+    const addLog = (msg: string) => logs.push(msg)
 
     // 1. Fetch Active Automations
     const { data: automations } = await supabase
@@ -14,13 +17,17 @@ export async function processAutomations(specificUserId?: string) {
         .eq('active', true) as any
 
     if (!automations || automations.length === 0) {
-        return { success: true, message: 'No active automations', results: [] as any[] }
+        addLog('No active automations found. Please enable them in Admin -> Automations or by migration.')
+        return { success: true, message: 'No active automations', results: [] as any[], logs }
     }
+
+    addLog(`Found ${automations.length} active automations`)
 
     const results = []
 
     for (const auto of automations) {
         let sentCount = 0
+        addLog(`Processing automation: ${auto.name} (${auto.type})`)
 
         // --- WELCOME AUTOMATION ---
         if (auto.type === 'welcome') {
@@ -29,16 +36,19 @@ export async function processAutomations(specificUserId?: string) {
 
             let query = supabase
                 .from('profiles')
-                .select('id, email, full_name, marketing_consent')
+                .select('id, email, full_name, marketing_consent, created_at')
                 .gte('created_at', cutoff.toISOString())
                 .eq('marketing_consent', true)
                 .not('email', 'is', null)
 
             if (specificUserId) {
                 query = query.eq('id', specificUserId)
+                addLog(`Checking specific user: ${specificUserId}`)
             }
 
             const { data: newUsers } = await query as any
+
+            addLog(`Found ${newUsers?.length || 0} candidates for Welcome automation`)
 
             if (newUsers) {
                 for (const user of newUsers) {
@@ -53,8 +63,11 @@ export async function processAutomations(specificUserId?: string) {
                     const { data: log } = await logQuery
 
                     if (!log) {
+                        addLog(`Sending Welcome to ${user.email}`)
                         await processAutomationForUser(supabase, auto, user)
                         sentCount++
+                    } else {
+                        addLog(`Skipping ${user.email}: Already received`)
                     }
                 }
             }
@@ -64,6 +77,7 @@ export async function processAutomations(specificUserId?: string) {
         else if (auto.type === 'birthday') {
             const today = new Date()
             const currentMonth = (today.getMonth() + 1).toString().padStart(2, '0')
+            addLog(`Checking Birthdays for month: ${currentMonth}`)
 
             let query = supabase
                 .from('profiles')
@@ -86,6 +100,8 @@ export async function processAutomations(specificUserId?: string) {
                     return m === currentMonth
                 })
 
+                addLog(`Found ${birthdayUsers.length} users with birthdays this month`)
+
                 for (const user of birthdayUsers) {
                     const yearStart = new Date(today.getFullYear(), 0, 1).toISOString()
 
@@ -98,8 +114,11 @@ export async function processAutomations(specificUserId?: string) {
                         .single()
 
                     if (!log) {
+                        addLog(`Sending Birthday to ${user.email}`)
                         await processAutomationForUser(supabase, auto, user)
                         sentCount++
+                    } else {
+                        addLog(`Skipping ${user.email}: Already received this year`)
                     }
                 }
             }
@@ -130,6 +149,8 @@ export async function processAutomations(specificUserId?: string) {
 
             const { data: potentialLostUsers } = await query as any
 
+            addLog(`Found ${potentialLostUsers?.length || 0} potential win-back users`)
+
             if (potentialLostUsers) {
                 for (const user of potentialLostUsers) {
                     if (!activeSet.has(user.id)) {
@@ -145,8 +166,11 @@ export async function processAutomations(specificUserId?: string) {
                             .single()
 
                         if (!log) {
+                            addLog(`Sending Win-Back to ${user.email}`)
                             await processAutomationForUser(supabase, auto, user)
                             sentCount++
+                        } else {
+                            addLog(`Skipping ${user.email}: In cool-down`)
                         }
                     }
                 }
@@ -156,7 +180,7 @@ export async function processAutomations(specificUserId?: string) {
         results.push({ name: auto.name, sent: sentCount })
     }
 
-    return { success: true, results }
+    return { success: true, results, logs }
 }
 
 
