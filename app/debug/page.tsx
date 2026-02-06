@@ -78,7 +78,11 @@ export default function DebugPage() {
             const { triggerManualAutomation } = await import('@/app/actions/debug-automations')
             const result = await triggerManualAutomation()
             if (result.success) {
-                const count = result.results.reduce((acc: number, curr: any) => acc + curr.sent, 0)
+                const res = result as any
+                if (res.logs && res.logs.length > 0) {
+                    res.logs.forEach((log: string) => addLog(`📝 ${log}`))
+                }
+                const count = res.results.reduce((acc: number, curr: any) => acc + curr.sent, 0)
                 addLog(`✅ Automations run. Sent: ${count} emails.`)
                 if (count > 0) {
                     toast.success(`Sent ${count} automation emails!`)
