@@ -14,8 +14,29 @@ export async function deleteAccount() {
 
         console.log('Attempting to delete user:', user.id)
 
-        // Use Admin Client to delete the Auth User directly
+        // Use Admin Client to delete everything
+        // We must perform manual cleanup because some tables might lack ON DELETE CASCADE
         const adminSupabase = createAdminClient()
+
+        // 1. Clean up unrelated data first
+        await adminSupabase.from('push_subscriptions').delete().eq('user_id', user.id)
+        await adminSupabase.from('nice_transactions').delete().eq('user_id', user.id)
+
+        // 2. Clean up Activity data
+        await adminSupabase.from('check_ins').delete().eq('user_id', user.id)
+        await adminSupabase.from('spins').delete().eq('user_id', user.id)
+        await adminSupabase.from('purchases').delete().eq('user_id', user.id)
+        await adminSupabase.from('redemptions').delete().eq('user_id', user.id)
+        await adminSupabase.from('points_transactions').delete().eq('user_id', user.id)
+
+        // 3. Clean up Referrals (both as referrer and referee)
+        await adminSupabase.from('referrals').delete().or(`referrer_id.eq.${user.id},referee_id.eq.${user.id}`)
+
+        // 4. Clean up Core Profiles
+        await adminSupabase.from('nice_accounts').delete().eq('user_id', user.id)
+        await adminSupabase.from('profiles').delete().eq('id', user.id)
+
+        // 5. Finally, delete Auth User
         const { error } = await adminSupabase.auth.admin.deleteUser(user.id)
 
         if (error) {
