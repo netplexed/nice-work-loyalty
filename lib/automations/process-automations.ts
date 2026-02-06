@@ -55,7 +55,7 @@ export async function processAutomations(specificUserId?: string) {
                     // Check log
                     const logQuery = supabase
                         .from('automation_logs')
-                        .select('id')
+                        .select('id, executed_at')
                         .eq('automation_id', auto.id)
                         .eq('user_id', user.id)
                         .single()
@@ -64,10 +64,15 @@ export async function processAutomations(specificUserId?: string) {
 
                     if (!log) {
                         addLog(`Sending Welcome to ${user.email}`)
-                        await processAutomationForUser(supabase, auto, user)
-                        sentCount++
+                        const result = await processAutomationForUser(supabase, auto, user)
+                        if (result.success) {
+                            sentCount++
+                            addLog(`✅ Sent Welcome to ${user.email}`)
+                        } else {
+                            addLog(`❌ Failed to send to ${user.email}: ${result.error}`)
+                        }
                     } else {
-                        addLog(`Skipping ${user.email}: Already received`)
+                        addLog(`Skipping ${user.email}: Already received (Log ID: ${log.id}, Sent: ${new Date(log.executed_at).toLocaleString()})`)
                     }
                 }
             }
@@ -107,7 +112,7 @@ export async function processAutomations(specificUserId?: string) {
 
                     const { data: log } = await supabase
                         .from('automation_logs')
-                        .select('id')
+                        .select('id, executed_at')
                         .eq('automation_id', auto.id)
                         .eq('user_id', user.id)
                         .gte('executed_at', yearStart)
@@ -115,10 +120,15 @@ export async function processAutomations(specificUserId?: string) {
 
                     if (!log) {
                         addLog(`Sending Birthday to ${user.email}`)
-                        await processAutomationForUser(supabase, auto, user)
-                        sentCount++
+                        const result = await processAutomationForUser(supabase, auto, user)
+                        if (result.success) {
+                            sentCount++
+                            addLog(`✅ Sent Birthday to ${user.email}`)
+                        } else {
+                            addLog(`❌ Failed to send to ${user.email}: ${result.error}`)
+                        }
                     } else {
-                        addLog(`Skipping ${user.email}: Already received this year`)
+                        addLog(`Skipping ${user.email}: Already received this year (${new Date(log.executed_at).toLocaleDateString()})`)
                     }
                 }
             }
@@ -141,6 +151,7 @@ export async function processAutomations(specificUserId?: string) {
                 .from('profiles')
                 .select('id, email, full_name, marketing_consent')
                 .eq('marketing_consent', true)
+                .gt('total_visits', 0) // Only win back users who have visited at least once
                 .not('email', 'is', null)
 
             if (specificUserId) {
@@ -149,7 +160,7 @@ export async function processAutomations(specificUserId?: string) {
 
             const { data: potentialLostUsers } = await query as any
 
-            addLog(`Found ${potentialLostUsers?.length || 0} potential win-back users`)
+            addLog(`Found ${potentialLostUsers?.length || 0} potential win-back users (visited > 0)`)
 
             if (potentialLostUsers) {
                 for (const user of potentialLostUsers) {
@@ -159,7 +170,7 @@ export async function processAutomations(specificUserId?: string) {
 
                         const { data: log } = await supabase
                             .from('automation_logs')
-                            .select('id')
+                            .select('id, executed_at')
                             .eq('automation_id', auto.id)
                             .eq('user_id', user.id)
                             .gte('executed_at', cooldown.toISOString())
@@ -167,10 +178,15 @@ export async function processAutomations(specificUserId?: string) {
 
                         if (!log) {
                             addLog(`Sending Win-Back to ${user.email}`)
-                            await processAutomationForUser(supabase, auto, user)
-                            sentCount++
+                            const result = await processAutomationForUser(supabase, auto, user)
+                            if (result.success) {
+                                sentCount++
+                                addLog(`✅ Sent Win-Back to ${user.email}`)
+                            } else {
+                                addLog(`❌ Failed to send to ${user.email}: ${result.error}`)
+                            }
                         } else {
-                            addLog(`Skipping ${user.email}: In cool-down`)
+                            addLog(`Skipping ${user.email}: In cool-down (Last sent: ${new Date(log.executed_at).toLocaleDateString()})`)
                         }
                     }
                 }
@@ -193,7 +209,7 @@ async function processAutomationForUser(supabase: SupabaseClient, auto: any, use
 
     if (error) {
         console.error('Failed to log automation, skipping', error)
-        return // Skip to avoid double send if race condition
+        return { success: false, error: 'Database log failed: ' + error.message }
     }
 
     // 2. Grant Reward (if any)
@@ -231,7 +247,9 @@ async function processAutomationForUser(supabase: SupabaseClient, auto: any, use
                 </p>
             `
         })
-    } catch (e) {
+        return { success: true }
+    } catch (e: any) {
         console.error(`Failed to send automation email to ${user.email}`, e)
+        return { success: false, error: e.message }
     }
 }
