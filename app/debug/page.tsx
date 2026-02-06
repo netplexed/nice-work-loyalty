@@ -71,6 +71,30 @@ export default function DebugPage() {
         }
     }
 
+    const handleTestAutomations = async () => {
+        setLoading(true)
+        addLog('Checking automations...')
+        try {
+            const { triggerManualAutomation } = await import('@/app/actions/debug-automations')
+            const result = await triggerManualAutomation()
+            if (result.success) {
+                const count = result.results.reduce((acc: number, curr: any) => acc + curr.sent, 0)
+                addLog(`✅ Automations run. Sent: ${count} emails.`)
+                if (count > 0) {
+                    toast.success(`Sent ${count} automation emails!`)
+                } else {
+                    toast.info('No pending automations found for you.')
+                }
+            } else {
+                addLog('❌ Automation error')
+            }
+        } catch (e: any) {
+            addLog(`❌ Error: ${e.message}`)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
         <div className="p-4 space-y-4 pb-20 max-w-md mx-auto">
             <h1 className="text-2xl font-bold">System Debugger</h1>
@@ -111,6 +135,25 @@ export default function DebugPage() {
                     <Button onClick={handleTestPush} disabled={loading} className="w-full">
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Send Test Push
+                    </Button>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4" />
+                        Test Automations
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                        Manually trigger pending automations (Welcome, Birthday, etc.) for your account.
+                        Checks if you meet criteria and haven't received it yet.
+                    </p>
+                    <Button onClick={handleTestAutomations} disabled={loading} className="w-full">
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Run Automations Check
                     </Button>
                 </CardContent>
             </Card>
