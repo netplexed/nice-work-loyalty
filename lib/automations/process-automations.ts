@@ -60,7 +60,8 @@ export async function processAutomations(specificUserId?: string) {
                         .eq('user_id', user.id)
                         .single()
 
-                    const { data: log } = await logQuery
+                    const { data: logRaw } = await logQuery
+                    const log = logRaw as any
 
                     if (!log) {
                         addLog(`Sending Welcome to ${user.email}`)
@@ -110,13 +111,15 @@ export async function processAutomations(specificUserId?: string) {
                 for (const user of birthdayUsers) {
                     const yearStart = new Date(today.getFullYear(), 0, 1).toISOString()
 
-                    const { data: log } = await supabase
+                    const { data: logRaw } = await supabase
                         .from('automation_logs')
                         .select('id, executed_at')
                         .eq('automation_id', auto.id)
                         .eq('user_id', user.id)
                         .gte('executed_at', yearStart)
                         .single()
+
+                    const log = logRaw as any
 
                     if (!log) {
                         addLog(`Sending Birthday to ${user.email}`)
@@ -168,13 +171,15 @@ export async function processAutomations(specificUserId?: string) {
                         const cooldown = new Date()
                         cooldown.setDate(cooldown.getDate() - 90)
 
-                        const { data: log } = await supabase
+                        const { data: logRaw } = await supabase
                             .from('automation_logs')
                             .select('id, executed_at')
                             .eq('automation_id', auto.id)
                             .eq('user_id', user.id)
                             .gte('executed_at', cooldown.toISOString())
                             .single()
+
+                        const log = logRaw as any
 
                         if (!log) {
                             addLog(`Sending Win-Back to ${user.email}`)
