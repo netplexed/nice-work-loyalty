@@ -5,20 +5,28 @@ import { revalidatePath } from 'next/cache'
 import { executeDrawing } from '@/lib/lottery/drawing-logic'
 import { LotteryDrawing } from '@/lib/lottery/types'
 
-export async function getAdminLotteryDrawings(): Promise<LotteryDrawing[]> {
+export async function getAdminLotteryDrawings(): Promise<any[]> {
     try {
         const supabase = createAdminClient()
 
         const { data, error } = await (supabase
             .from('lottery_drawings') as any)
-            .select('*')
+            .select(`
+                *,
+                lottery_winners (
+                    user_id,
+                    profiles (
+                        full_name
+                    )
+                )
+            `)
             .order('week_start_date', { ascending: false })
 
         if (error) {
             console.error('Error fetching drawings:', error)
-            return [] // Return empty array on error to prevent page crash
+            return []
         }
-        return data as LotteryDrawing[]
+        return data as any[]
     } catch (e) {
         console.error('Unexpected error fetching drawings:', e)
         return []

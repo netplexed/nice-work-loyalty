@@ -1,5 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { LotteryDrawing, LotteryEntry } from './types'
+import { sendEmail } from '@/lib/email/send-email'
+import { sendPushNotification } from '@/lib/push/send-push'
 
 // Setup crypto for random values
 const crypto = globalThis.crypto
@@ -115,6 +117,24 @@ export async function executeDrawing(drawingId: string) {
 
     if (updateError) throw new Error(`Failed to update drawing: ${updateError.message}`)
 
+    // 8. Notify winner
+    try {
+        await notifyLotteryWinner(winnerEntry.userId, drawing, voucherCode)
+
+        // Mark as notified in database
+        await (supabase
+            .from('lottery_winners') as any)
+            .update({
+                notified: true,
+                notified_at: new Date().toISOString()
+            })
+            .eq('drawing_id', drawingId)
+            .eq('user_id', winnerEntry.userId)
+    } catch (e) {
+        console.error('Failed to notify winner:', e)
+        // Don't fail the whole drawing if notification fails
+    }
+
     // Calculate stats
     // We can do this async or here. Let's do it here.
     const stats = calculateStats(entries || [], drawingId, totalTickets, userEntries, drawing)
@@ -164,5 +184,55 @@ function calculateStats(entries: any[], drawingId: string, totalTickets: number,
         entries_visit: visitCount,
         entries_checkin: checkinCount,
         entries_base: baseCount
+    }
+}
+
+async function notifyLotteryWinner(userId: string, drawing: any, voucherCode: string) {
+    const supabase = createAdminClient()
+
+    // 1. Fetch user details
+    const { data: userRaw } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', userId)
+        .single()
+
+    const user = userRaw as { email: string; full_name: string } | null
+
+    if (!user || !user.email) return
+
+    const title = '🎉 You won the lottery!'
+    const body = `Congratulations! You won the ${drawing.prize_description} in our weekly lottery. Your voucher code is ${voucherCode}.`
+
+    // 2. Send Push
+    try {
+        await sendPushNotification(userId, title, body, '/lottery')
+    } catch (e) {
+        console.error('Push notification failed:', e)
+    }
+
+    // 3. Send Email
+    try {
+        await sendEmail({
+            to: user.email,
+            subject: 'Congratulations! You are our Lottery Winner! 🏆',
+            html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h1 style="color: #f59e0b;">You Won! 🎉</h1>
+                    <p>Hi ${user.full_name || 'Lucky Winner'},</p>
+                    <p>We are excited to inform you that you have won this week's lottery drawing!</p>
+                    <div style="background: #fffbeb; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #fef3c7;">
+                        <h2 style="margin-top: 0;">Prize: ${drawing.prize_description}</h2>
+                        <p style="font-size: 18px;">Your Voucher Code: <strong>${voucherCode}</strong></p>
+                    </div>
+                    <p>To claim your prize, simply present this voucher code during your next visit.</p>
+                    <p>Thank you for being a part of our community!</p>
+                    <br/>
+                    <p>Best regards,<br/>The Nice Work Team</p>
+                </div>
+            `
+        })
+    } catch (e) {
+        console.error('Email notification failed:', e)
     }
 }

@@ -42,55 +42,64 @@ export default async function AdminLotteryPage() {
                                 <TableHead>Entries</TableHead>
                                 <TableHead>Players</TableHead>
                                 <TableHead>Winner Ticket</TableHead>
+                                <TableHead>Winner</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {drawings?.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                                         No drawings found. Create one to get started.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                drawings?.map((drawing) => (
-                                    <TableRow key={drawing.id}>
-                                        <TableCell>
-                                            <Badge variant={
-                                                drawing.status === 'active' ? 'default' :
-                                                    drawing.status === 'drawn' ? 'secondary' :
-                                                        drawing.status === 'upcoming' ? 'outline' : 'destructive'
-                                            }>
-                                                {drawing.status}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-col">
-                                                <span className="font-medium"><SafeDate date={drawing.draw_date} /></span>
-                                                <span className="text-xs text-muted-foreground"><SafeDate date={drawing.draw_date} fmt="h:mm a" /></span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {drawing.prize_description}
-                                            <div className="text-xs text-muted-foreground">{drawing.prize_value} NICE</div>
-                                        </TableCell>
-                                        <TableCell>{drawing.total_entries}</TableCell>
-                                        <TableCell>{drawing.total_participants}</TableCell>
-                                        <TableCell className="font-mono text-xs">
-                                            {drawing.winning_ticket_number ?? '-'}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                {(drawing.status === 'active' || drawing.status === 'upcoming') && (
-                                                    <CancelDrawingButton drawingId={drawing.id} />
-                                                )}
-                                                {drawing.status === 'active' && (
-                                                    <ExecuteDrawingButton drawingId={drawing.id} />
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                                drawings?.map((drawing) => {
+                                    const winner = drawing.lottery_winners?.[0]
+                                    const winnerName = winner?.profiles?.full_name || '-'
+
+                                    return (
+                                        <TableRow key={drawing.id}>
+                                            <TableCell>
+                                                <Badge variant={
+                                                    drawing.status === 'active' ? 'default' :
+                                                        drawing.status === 'drawn' ? 'secondary' :
+                                                            drawing.status === 'upcoming' ? 'outline' : 'destructive'
+                                                }>
+                                                    {drawing.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium"><SafeDate date={drawing.draw_date} /></span>
+                                                    <span className="text-xs text-muted-foreground"><SafeDate date={drawing.draw_date} fmt="h:mm a" /></span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                {drawing.prize_description}
+                                                <div className="text-xs text-muted-foreground">{drawing.prize_value} NICE</div>
+                                            </TableCell>
+                                            <TableCell>{drawing.total_entries}</TableCell>
+                                            <TableCell>{drawing.total_participants}</TableCell>
+                                            <TableCell className="font-mono text-xs">
+                                                {drawing.winning_ticket_number ?? '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {winnerName}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {(drawing.status === 'active' || drawing.status === 'upcoming') && (
+                                                        <CancelDrawingButton drawingId={drawing.id} />
+                                                    )}
+                                                    {drawing.status === 'active' && (
+                                                        <ExecuteDrawingButton drawingId={drawing.id} />
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })
                             )}
                         </TableBody>
                     </Table>
