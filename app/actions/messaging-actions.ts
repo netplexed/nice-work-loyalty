@@ -231,8 +231,8 @@ export async function sendNotification(
     const supabase = createAdminClient()
 
     // 1. Create In-App Notification
-    const { data: notification, error } = await supabase
-        .from('notifications')
+    const { data: notification, error } = await (supabase
+        .from('notifications') as any)
         .insert({
             user_id: userId,
             title: title,
