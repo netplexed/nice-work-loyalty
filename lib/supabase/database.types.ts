@@ -435,6 +435,148 @@ export interface Database {
                     entries_base?: number
                     created_at?: string
                 }
+            },
+            notifications: {
+                Row: {
+                    id: string
+                    created_at: string
+                    user_id: string
+                    title: string
+                    body: string
+                    type: string
+                    is_read: boolean
+                    data: Json | null
+                    broadcast_id: string | null
+                }
+                Insert: {
+                    id?: string
+                    created_at?: string
+                    user_id: string
+                    title: string
+                    body: string
+                    type: string
+                    is_read?: boolean
+                    data?: Json | null
+                    broadcast_id?: string | null
+                }
+                Update: {
+                    id?: string
+                    created_at?: string
+                    user_id?: string
+                    title?: string
+                    body?: string
+                    type?: string
+                    is_read?: boolean
+                    data?: Json | null
+                    broadcast_id?: string | null
+                }
+            },
+            referrals: {
+                Row: {
+                    id: string
+                    created_at: string
+                    referrer_id: string
+                    referral_code: string
+                }
+                Insert: {
+                    id?: string
+                    created_at?: string
+                    referrer_id: string
+                    referral_code: string
+                }
+                Update: {
+                    id?: string
+                    created_at?: string
+                    referrer_id?: string
+                    referral_code?: string
+                }
+            },
+            referral_redemptions: {
+                Row: {
+                    id: string
+                    created_at: string
+                    referrer_id: string
+                    referee_id: string
+                    code_used: string
+                    points_awarded: number
+                    referrer_rewarded: boolean
+                }
+                Insert: {
+                    id?: string
+                    created_at?: string
+                    referrer_id: string
+                    referee_id: string
+                    code_used: string
+                    points_awarded?: number
+                    referrer_rewarded?: boolean
+                }
+                Update: {
+                    id?: string
+                    created_at?: string
+                    referrer_id?: string
+                    referee_id?: string
+                    code_used?: string
+                    points_awarded?: number
+                    referrer_rewarded?: boolean
+                }
+            },
+            admin_broadcasts: {
+                Row: {
+                    id: string
+                    created_at: string
+                    title: string
+                    body: string
+                    target_criteria: Json | null
+                    sent_count: number
+                    created_by: string | null
+                }
+                Insert: {
+                    id?: string
+                    created_at?: string
+                    title: string
+                    body: string
+                    target_criteria?: Json | null
+                    sent_count?: number
+                    created_by?: string | null
+                }
+                Update: {
+                    id?: string
+                    created_at?: string
+                    title?: string
+                    body?: string
+                    target_criteria?: Json | null
+                    sent_count?: number
+                    created_by?: string | null
+                }
+            },
+            points_transactions: {
+                Row: {
+                    id: string
+                    created_at: string
+                    user_id: string
+                    staff_id: string | null
+                    transaction_type: string
+                    points: number
+                    description: string | null
+                }
+                Insert: {
+                    id?: string
+                    created_at?: string
+                    user_id: string
+                    staff_id?: string | null
+                    transaction_type: string
+                    points: number
+                    description?: string | null
+                }
+                Update: {
+                    id?: string
+                    created_at?: string
+                    user_id?: string
+                    staff_id?: string | null
+                    transaction_type?: string
+                    points?: number
+                    description?: string | null
+                }
             }
         }
         Views: {
