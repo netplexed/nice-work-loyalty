@@ -383,6 +383,53 @@ export async function recordUserSpend(userId: string, amount: number, location: 
             points_awarded: 0
         })
 
+    // 5. Check for Pending Referral Reward
+    // If the user (referee) hasn't triggered the reward for their referrer yet, do it now.
+    const { data: referralRedemption } = await supabase
+        .from('referral_redemptions')
+        .select('*')
+        .eq('referee_id', userId)
+        .eq('referrer_rewarded', false)
+        .maybeSingle()
+
+    if (referralRedemption) {
+        const REFERRER_BONUS = 500
+
+        // Award points to Referrer
+        const { error: referrerError } = await supabase
+            .from('points_transactions')
+            .insert({
+                user_id: referralRedemption.referrer_id,
+                staff_id: user?.id, // attributed to admin triggering the spend
+                transaction_type: 'earned_bonus',
+                points: REFERRER_BONUS,
+                description: `Referral Reward (Friend visited!)`
+            })
+
+        if (!referrerError) {
+            // Mark as rewarded
+            await supabase
+                .from('referral_redemptions')
+                .update({ referrer_rewarded: true })
+                .eq('id', referralRedemption.id)
+
+            // Notify Referrer
+            try {
+                const { sendNotification } = await import('@/app/actions/messaging-actions')
+                await sendNotification(
+                    referralRedemption.referrer_id,
+                    'You earned 500 Points!',
+                    'Your friend visited and made a purchase! Your referral bonus has been added.',
+                    '/points'
+                )
+            } catch (e) {
+                console.error('Failed to notify referrer', e)
+            }
+        } else {
+            console.error('Failed to award referral bonus', referrerError)
+        }
+    }
+
     revalidatePath('/admin')
     revalidatePath(`/admin/users/${userId}`)
 

@@ -40,7 +40,7 @@ export async function submitReferral(code: string) {
     }
 
     // 4. Record Redemption & Award Points
-    const BONUS_POINTS = 500
+    const BONUS_POINTS = 200
 
     // A. Insert Redemption Record
     const { error: redemptionError } = await supabase
@@ -49,7 +49,8 @@ export async function submitReferral(code: string) {
             referrer_id: referralRecord.referrer_id,
             referee_id: user.id,
             code_used: cleanCode,
-            points_awarded: BONUS_POINTS
+            points_awarded: BONUS_POINTS,
+            referrer_rewarded: false // Referrer gets points only after referee spends
         })
 
     if (redemptionError) {
@@ -69,18 +70,21 @@ export async function submitReferral(code: string) {
             description: `Referral Bonus (Used code ${cleanCode})`
         })
 
-    // C. Award Points to Referrer (The existing user)
-    const { error: referrerError } = await supabase
-        .from('points_transactions')
-        .insert({
-            user_id: referralRecord.referrer_id,
-            transaction_type: 'earned_bonus', // Standardizing on earned_bonus if 'earned_referral' enum doesn't map
-            points: BONUS_POINTS,
-            description: `Referral Reward (Friend used your code)`
-        })
+    if (refereeError) {
+        console.error('Error awarding points to referee:', refereeError)
+    }
 
-    if (refereeError || referrerError) {
-        console.error('Error awarding points:', refereeError, referrerError)
+    // 5. Notify Referrer
+    try {
+        const { sendNotification } = await import('@/app/actions/messaging-actions')
+        await sendNotification(
+            referralRecord.referrer_id,
+            'A friend just joined!',
+            'Someone used your referral code. You\'ll earn 500 bonus points as soon as they visit!',
+            '/profile'
+        )
+    } catch (e) {
+        console.error('Failed to notify referrer', e)
     }
 
     revalidatePath('/')

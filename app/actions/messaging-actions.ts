@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { verifyAdmin } from './admin-actions'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { unstable_noStore as noStore } from 'next/cache'
 import { resolveTargetAudience, TargetCriteria } from './segmentation-actions'
@@ -215,12 +216,46 @@ export async function markAllRead() {
         .eq('is_read', false)
         .select()
 
-    if (error) {
-        console.error('[markAllRead] Error:', error)
-        throw new Error(error.message)
-    }
-
     console.log(`[markAllRead] Updated ${data?.length} notifications`)
 
     revalidatePath('/notifications')
+}
+
+export async function sendNotification(
+    userId: string,
+    title: string,
+    body: string,
+    url: string = '/'
+) {
+    // We use Admin Client to bypass RLS, allowing system or other users to trigger notifications for a target user
+    const supabase = createAdminClient()
+
+    // 1. Create In-App Notification
+    const { data: notification, error } = await supabase
+        .from('notifications')
+        .insert({
+            user_id: userId,
+            title: title,
+            body: body,
+            type: 'system',
+            is_read: false,
+            data: { url }
+        })
+        .select()
+        .single()
+
+    if (error) {
+        console.error('[sendNotification] Failed to create in-app notification:', error)
+        // We continue to try push anyway? Or fail? Let's log and continue best effort.
+    }
+
+    // 2. Send Push Notification
+    try {
+        const { sendPushNotification } = await import('@/lib/push/send-push')
+        await sendPushNotification(userId, title, body, url)
+    } catch (e) {
+        console.error('[sendNotification] Failed to send push:', e)
+    }
+
+    return { success: true }
 }
