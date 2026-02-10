@@ -144,6 +144,7 @@ export async function getNiceState(): Promise<NiceState> {
 
     const tankNice = calculateCurrentTankNice(account)
     const effectiveRate = calculateEffectiveRate(account)
+    const isMultiplierActive = account.multiplier_expires_at && new Date() < new Date(account.multiplier_expires_at)
 
     return {
         collectedBalance: account.nice_collected_balance,
@@ -152,7 +153,7 @@ export async function getNiceState(): Promise<NiceState> {
         tankFillPercentage: (tankNice / account.tank_capacity) * 100,
         nicePerHour: effectiveRate,
         nicePerSecond: effectiveRate / 3600,
-        currentMultiplier: account.current_multiplier,
+        currentMultiplier: isMultiplierActive ? account.current_multiplier : 1.0,
         multiplierExpiresAt: account.multiplier_expires_at,
         tierBonus: account.tier_bonus,
         lastCollectedAt: account.tank_last_collected_at

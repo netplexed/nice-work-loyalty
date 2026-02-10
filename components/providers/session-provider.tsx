@@ -1,15 +1,22 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useEffect } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 
-/**
- * iOS PWA often clears cookies on force quit.
- * This component backs up the refresh token to localStorage and attempts to restore it if the cookie session is lost.
- */
-export function SessionRestorer() {
+type SessionContextType = {
+    isLoadingSession: boolean
+}
+
+const SessionContext = createContext<SessionContextType>({
+    isLoadingSession: true,
+})
+
+export const useSessionLoading = () => useContext(SessionContext)
+
+export function SessionProvider({ children }: { children: React.ReactNode }) {
+    const [isLoadingSession, setIsLoadingSession] = useState(true)
     const router = useRouter()
     const pathname = usePathname()
     const supabase = createClient()
@@ -24,8 +31,9 @@ export function SessionRestorer() {
                 if (currentSession.refresh_token) {
                     localStorage.setItem('supabase-backup-token', currentSession.refresh_token)
                 }
+                setIsLoadingSession(false)
 
-                // If we are logged in but on the login page (e.g. after refresh), redirect to home
+                // If we are logged in but on the login page, redirect to home
                 if (pathname === '/login') {
                     router.push('/')
                 }
@@ -34,34 +42,39 @@ export function SessionRestorer() {
 
             // 2. No session? Check for backup.
             const backupToken = localStorage.getItem('supabase-backup-token')
-            if (!backupToken) return // No backup, truly logged out.
+            if (!backupToken) {
+                // No backup, truly logged out.
+                setIsLoadingSession(false)
+                return
+            }
 
-            console.log('[SessionRestorer] No active session found, attempting restore from backup...')
+            console.log('[SessionProvider] No active session found, attempting restore from backup...')
             const toastId = toast.loading('Restoring session...')
 
             // 3. Attempt restore
             const { data, error } = await supabase.auth.refreshSession({ refresh_token: backupToken })
 
             if (error || !data.session) {
-                console.warn('[SessionRestorer] Failed to restore session:', error)
+                console.warn('[SessionProvider] Failed to restore session:', error)
                 localStorage.removeItem('supabase-backup-token')
+                setIsLoadingSession(false)
                 toast.dismiss(toastId)
                 return
             }
 
-            // 4. Success! Save new token and reload to sync server cookies
-            console.log('[SessionRestorer] Session restored! Reloading...')
+            // 4. Success! Save new token
+            console.log('[SessionProvider] Session restored!')
             if (data.session.refresh_token) {
                 localStorage.setItem('supabase-backup-token', data.session.refresh_token)
             }
 
             toast.success('Session restored', { id: toastId })
+            setIsLoadingSession(false)
 
-            // If on login page, go home. Otherwise just refresh logic/data.
+            // If on login page, go home. Any other protected route will re-run middleware/server components 
+            // after the router.refresh() or next navigation.
             if (pathname === '/login') {
                 router.push('/')
-                // We don't need refresh() here because push() will navigate to a protected page 
-                // which will re-run middleware/server components with the new cookie.
             } else {
                 router.refresh()
             }
@@ -81,5 +94,9 @@ export function SessionRestorer() {
         return () => subscription.unsubscribe()
     }, [router, pathname, supabase])
 
-    return null // Invisible component
+    return (
+        <SessionContext.Provider value={{ isLoadingSession }}>
+            {children}
+        </SessionContext.Provider>
+    )
 }

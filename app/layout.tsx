@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner'
-import { SessionRestorer } from '@/components/auth/session-restorer'
+import { SessionProvider } from '@/components/providers/session-provider'
 import { SwrProvider } from '@/components/providers/swr-provider'
 import { NativePushListener } from '@/components/native-push-listener'
 
@@ -41,10 +41,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SwrProvider>
-          <SessionRestorer />
-          <NativePushListener />
-          {children}
-          <Toaster />
+          <SessionProvider>
+            <NativePushListener />
+            {children}
+            <Toaster />
+          </SessionProvider>
         </SwrProvider>
       </body>
     </html>

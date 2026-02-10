@@ -11,6 +11,7 @@ export interface SpinPrize {
     reward_id?: string
     color: string
     expiry_hours?: number
+    probability: number
 }
 
 export interface SpinResult {

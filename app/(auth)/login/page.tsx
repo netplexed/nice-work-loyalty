@@ -1,6 +1,21 @@
+'use client'
+
 import { EmailLogin } from '@/components/features/auth/email-login'
+import { useSessionLoading } from '@/components/providers/session-provider'
+import { Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
+    const { isLoadingSession } = useSessionLoading()
+
+    if (isLoadingSession) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[50vh]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground animate-pulse">Restoring session...</p>
+            </div>
+        )
+    }
+
     return (
         <div className="flex flex-col items-center justify-center space-y-8">
             <div className="text-center space-y-2">
