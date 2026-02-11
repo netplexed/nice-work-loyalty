@@ -60,7 +60,7 @@ export async function getAdminStats() {
     }
 }
 
-export async function getAllUsers(page = 1, limit = 20) {
+export async function getAllUsers(page = 1, limit = 20, query = '') {
     const isAdmin = await verifyAdmin()
     if (!isAdmin) throw new Error('Unauthorized')
 
@@ -68,11 +68,17 @@ export async function getAllUsers(page = 1, limit = 20) {
     const from = (page - 1) * limit
     const to = from + limit - 1
 
-    const { data, count, error } = await supabase
+    let dbQuery = supabase
         .from('profiles')
         .select('*, nice_accounts(nice_collected_balance)', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(from, to)
+
+    if (query) {
+        dbQuery = dbQuery.or(`email.ilike.%${query}%,phone.ilike.%${query}%,full_name.ilike.%${query}%`)
+    }
+
+    const { data, count, error } = await dbQuery
 
     if (error) throw error
 

@@ -13,8 +13,20 @@ import { NiceAdjustmentDialog } from '@/components/admin/users/nice-adjustment-d
 import { GiveRewardDialog } from '@/components/admin/give-reward-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-export default async function UsersPage() {
-    const { users, total } = await getAllUsers()
+import { UserSearch } from '@/components/admin/users/user-search'
+
+export default async function UsersPage({
+    searchParams,
+}: {
+    searchParams?: {
+        query?: string
+        page?: string
+    }
+}) {
+    const query = searchParams?.query || ''
+    const currentPage = Number(searchParams?.page) || 1
+
+    const { users, total } = await getAllUsers(currentPage, 20, query)
 
     return (
         <div className="space-y-6">
@@ -23,6 +35,7 @@ export default async function UsersPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Users</h1>
                     <p className="text-muted-foreground">Manage your customer base ({total} total)</p>
                 </div>
+                <UserSearch />
             </div>
 
             <Card>
