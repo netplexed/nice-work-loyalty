@@ -139,17 +139,17 @@ export function DiningNav() {
                         </CardContent>
                     </Card>
                 </div>
-            </div>
-            <div className="p-6 bg-zinc-100 border-t mt-auto">
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span className="font-medium">Loyalty Program Questions?</span>
-                    <a href="mailto:hello@nicework.sg" className="flex items-center gap-2 hover:text-primary transition-colors">
-                        <Mail className="w-4 h-4" />
-                        hello@nicework.sg
-                    </a>
+
+                <div className="p-6 bg-zinc-100 border-t mt-auto">
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <span className="font-medium">Loyalty Program Questions?</span>
+                        <a href="mailto:hello@nicework.sg" className="flex items-center gap-2 hover:text-primary transition-colors">
+                            <Mail className="w-4 h-4" />
+                            hello@nicework.sg
+                        </a>
+                    </div>
                 </div>
-            </div>
-        </SheetContent>
+            </SheetContent>
         </Sheet >
     )
 }
