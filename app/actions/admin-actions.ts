@@ -200,6 +200,7 @@ export async function createReward(data: {
     is_hidden?: boolean
     inventory_remaining?: number
     locations?: string[]
+    expires_at?: string
 }) {
     const isAdmin = await verifyAdmin()
     if (!isAdmin) throw new Error('Unauthorized')
@@ -232,6 +233,7 @@ export async function updateReward(id: string, data: {
     is_hidden?: boolean
     inventory_remaining?: number
     locations?: string[]
+    expires_at?: string
 }) {
     const isAdmin = await verifyAdmin()
     if (!isAdmin) throw new Error('Unauthorized')

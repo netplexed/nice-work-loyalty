@@ -50,6 +50,11 @@ export function RewardCard({ reward, onRedeem }: RewardCardProps) {
                 <p className="text-xs text-muted-foreground line-clamp-3">
                     {reward.description}
                 </p>
+                {reward.expires_at && (
+                    <p className="text-[10px] text-orange-600 font-medium mt-1">
+                        Expires: {new Date(reward.expires_at).toLocaleDateString()}
+                    </p>
+                )}
             </CardContent>
             <CardFooter className="p-4 pt-0">
                 <Button

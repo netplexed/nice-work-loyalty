@@ -11,6 +11,7 @@ export async function getAvailableRewards() {
         .select('*')
         .eq('active', true)
         .eq('is_hidden', false)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
         .order('points_cost', { ascending: true })
 
     return data || []

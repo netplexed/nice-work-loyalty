@@ -32,6 +32,7 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
     const [inventory, setInventory] = useState('')
     const [selectedLocations, setSelectedLocations] = useState<string[]>([])
     const [isHidden, setIsHidden] = useState(false)
+    const [expiresAt, setExpiresAt] = useState('')
 
     const supabase = createClient()
 
@@ -51,6 +52,7 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
             setInventory(reward.inventory_remaining ? reward.inventory_remaining.toString() : '')
             setSelectedLocations(reward.locations || [])
             setIsHidden(reward.is_hidden || false)
+            setExpiresAt(reward.expires_at ? new Date(reward.expires_at).toISOString().slice(0, 16) : '')
         } else {
             // Reset if creating new
             setName('')
@@ -62,6 +64,7 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
             setInventory('')
             setSelectedLocations([])
             setIsHidden(false)
+            setExpiresAt('')
         }
     }, [reward, open])
 
@@ -96,7 +99,8 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
                 image_url: finalImageUrl,
                 inventory_remaining: inventory ? parseInt(inventory) : undefined,
                 locations: selectedLocations.length > 0 ? selectedLocations : undefined,
-                is_hidden: isHidden
+                is_hidden: isHidden,
+                expires_at: expiresAt ? new Date(expiresAt).toISOString() : undefined
             }
 
             if (reward) {
@@ -257,6 +261,16 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
                             min="0"
                         />
                         <p className="text-xs text-muted-foreground">Number of items available for redemption.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Expires At (Optional)</Label>
+                        <Input
+                            type="datetime-local"
+                            value={expiresAt}
+                            onChange={e => setExpiresAt(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">After this date/time, the reward will be hidden from the catalog.</p>
                     </div>
 
                     <div className="space-y-2">

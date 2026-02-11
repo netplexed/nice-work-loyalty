@@ -36,6 +36,7 @@ export default async function AdminRewardsPage() {
                                 <TableHead className="text-right">Cost</TableHead>
                                 <TableHead className="text-center">Inventory</TableHead>
                                 <TableHead className="text-center">Redemptions</TableHead>
+                                <TableHead>Expires</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
@@ -68,6 +69,15 @@ export default async function AdminRewardsPage() {
                                     </TableCell>
                                     <TableCell className="text-center font-mono">
                                         {reward.redemptions?.[0]?.count || 0}
+                                    </TableCell>
+                                    <TableCell className="text-xs">
+                                        {reward.expires_at ? (
+                                            <span className={new Date(reward.expires_at) < new Date() ? "text-red-500" : ""}>
+                                                {new Date(reward.expires_at).toLocaleDateString()}
+                                            </span>
+                                        ) : (
+                                            <span className="text-muted-foreground">—</span>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex gap-1 items-center">
