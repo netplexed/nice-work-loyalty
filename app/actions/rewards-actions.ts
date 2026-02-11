@@ -6,13 +6,32 @@ import { revalidatePath } from 'next/cache'
 export async function getAvailableRewards() {
     const supabase = await createClient()
 
-    const { data } = await supabase
+    // Try fetching with expiration filter
+    const { data, error } = await supabase
         .from('rewards')
         .select('*')
         .eq('active', true)
         .eq('is_hidden', false)
         .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
         .order('points_cost', { ascending: true })
+
+    if (error) {
+        // If column doesn't exist (migration not run), fall back to basic query
+        // Postgres error 42703: undefined_column
+        if (error.code === '42703') {
+            const { data: fallbackData } = await supabase
+                .from('rewards')
+                .select('*')
+                .eq('active', true)
+                .eq('is_hidden', false)
+                .order('points_cost', { ascending: true })
+
+            return fallbackData || []
+        }
+
+        console.error('Error fetching rewards:', error)
+        return []
+    }
 
     return data || []
 }
