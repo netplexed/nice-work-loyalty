@@ -30,7 +30,11 @@ export function RecentActivity() {
                             <div className="flex items-center p-4 gap-4">
                                 <div className={`
                    w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0
-                   ${item.points > 0 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}
+                   ${item.points > 0
+                                        ? 'bg-green-100 text-green-700'
+                                        : item.points === 0
+                                            ? 'bg-blue-50 text-blue-600'
+                                            : 'bg-orange-100 text-orange-700'}
                  `}>
                                     {item.points > 0 ? '+' : ''}{item.points}
                                 </div>

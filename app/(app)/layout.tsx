@@ -5,6 +5,7 @@ import { Home, Gift, User } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { NotificationNav } from '@/components/layout/notification-nav'
+import { DiningNav } from '@/components/layout/dining-nav'
 
 export default function AppLayout({
     children,
@@ -20,6 +21,7 @@ export default function AppLayout({
                 <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 pb-safe">
                     <div className="max-w-md mx-auto flex items-center justify-around h-16">
                         <NavItem href="/" icon={Home} label="Home" />
+                        <DiningNav />
                         <NavItem href="/rewards" icon={Gift} label="Rewards" />
                         <NotificationNav />
                         <NavItem href="/profile" icon={User} label="Profile" />

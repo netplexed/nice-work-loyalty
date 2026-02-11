@@ -31,11 +31,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 if (currentSession.refresh_token) {
                     localStorage.setItem('supabase-backup-token', currentSession.refresh_token)
                 }
-                setIsLoadingSession(false)
-
                 // If we are logged in but on the login page, redirect to home
                 if (pathname === '/login') {
                     router.push('/')
+                } else {
+                    setIsLoadingSession(false)
                 }
                 return
             }
@@ -69,13 +69,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             }
 
             toast.success('Session restored', { id: toastId })
-            setIsLoadingSession(false)
 
             // If on login page, go home. Any other protected route will re-run middleware/server components 
             // after the router.refresh() or next navigation.
             if (pathname === '/login') {
                 router.push('/')
             } else {
+                setIsLoadingSession(false)
                 router.refresh()
             }
         }
