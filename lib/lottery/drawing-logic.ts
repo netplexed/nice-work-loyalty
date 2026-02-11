@@ -87,6 +87,32 @@ export async function executeDrawing(drawingId: string) {
     // 7. Save results (Sequential operations since we don't have client-side transactions)
     // In a real prod environment, we would use an RPC for atomicity.
 
+    // If prize type is 'nice', award points immediately
+    if (drawing.prize_type === 'nice' && drawing.prize_value > 0) {
+        const { error: pointsError } = await (supabase.rpc as any)('collect_nice_transaction', {
+            p_user_id: winnerEntry.userId,
+            p_nice_amount: drawing.prize_value
+        })
+
+        if (pointsError) {
+            console.error('Failed to award lottery points:', pointsError)
+        }
+    } else if (drawing.prize_type === 'points' && drawing.prize_value > 0) {
+        // Award regular points
+        const { error: pointsError } = await (supabase
+            .from('points_transactions') as any)
+            .insert({
+                user_id: winnerEntry.userId,
+                transaction_type: 'earned_lottery',
+                points: drawing.prize_value,
+                description: `Lottery Win: ${drawing.prize_description}`
+            })
+
+        if (pointsError) {
+            console.error('Failed to award regular points:', pointsError)
+        }
+    }
+
     // Insert winner record
     const { error: winnerError } = await (supabase
         .from('lottery_winners') as any)
@@ -204,14 +230,29 @@ async function notifyLotteryWinner(userId: string, drawing: any, voucherCode: st
     const title = '🎉 You won the lottery!'
     const body = `Congratulations! You won the ${drawing.prize_description} in our weekly lottery. Your voucher code is ${voucherCode}.`
 
-    // 2. Send Push
+    // 2. Create In-App Notification (for Alerts page)
+    try {
+        await (supabase
+            .from('notifications') as any)
+            .insert({
+                user_id: userId,
+                title: title,
+                body: body,
+                type: 'system',
+                is_read: false
+            })
+    } catch (e) {
+        console.error('Failed to create in-app notification:', e)
+    }
+
+    // 3. Send Push
     try {
         await sendPushNotification(userId, title, body, '/lottery')
     } catch (e) {
         console.error('Push notification failed:', e)
     }
 
-    // 3. Send Email
+    // 4. Send Email
     try {
         await sendEmail({
             to: user.email,

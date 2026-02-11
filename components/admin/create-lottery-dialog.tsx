@@ -19,7 +19,7 @@ export function CreateLotteryDialog() {
     const [isPending, startTransition] = useTransition()
 
     // Prize Config
-    const [prizeType, setPrizeType] = useState<'nice' | 'reward'>('nice')
+    const [prizeType, setPrizeType] = useState<'nice' | 'reward' | 'points'>('nice')
     const [niceDescription, setNiceDescription] = useState('Weekly 1000 Nice Prize')
     const [niceValue, setNiceValue] = useState('1000')
     const [rewards, setRewards] = useState<any[]>([])
@@ -63,8 +63,8 @@ export function CreateLotteryDialog() {
             return
         }
 
-        const description = prizeType === 'nice' ? niceDescription : rewardDescription
-        const value = prizeType === 'nice' ? parseInt(niceValue) : 0
+        const description = (prizeType === 'nice' || prizeType === 'points') ? niceDescription : rewardDescription
+        const value = (prizeType === 'nice' || prizeType === 'points') ? parseInt(niceValue) : 0
 
         if (!description) {
             toast.error('Please enter a prize description')
@@ -119,14 +119,15 @@ export function CreateLotteryDialog() {
 
                     <div className="py-4 space-y-4">
                         {/* Prize Section */}
-                        <Tabs value={prizeType} onValueChange={(v) => setPrizeType(v as 'nice' | 'reward')}>
-                            <TabsList className="grid w-full grid-cols-2">
+                        <Tabs value={prizeType} onValueChange={(v) => setPrizeType(v as 'nice' | 'reward' | 'points')}>
+                            <TabsList className="grid w-full grid-cols-3">
                                 <TabsTrigger value="nice">Nice Points</TabsTrigger>
+                                <TabsTrigger value="points">Loyalty Points</TabsTrigger>
                                 <TabsTrigger value="reward">Product Reward</TabsTrigger>
                             </TabsList>
 
                             <div className="pt-4 space-y-4">
-                                {prizeType === 'nice' ? (
+                                {prizeType === 'nice' && (
                                     <>
                                         <div className="grid grid-cols-4 items-center gap-4">
                                             <Label htmlFor="nice-desc" className="text-right">Description</Label>
@@ -148,7 +149,34 @@ export function CreateLotteryDialog() {
                                             />
                                         </div>
                                     </>
-                                ) : (
+                                )}
+
+                                {prizeType === 'points' && (
+                                    <>
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                            <Label htmlFor="points-desc" className="text-right">Description</Label>
+                                            <Input
+                                                id="points-desc"
+                                                value={niceDescription}
+                                                onChange={(e) => setNiceDescription(e.target.value)}
+                                                className="col-span-3"
+                                                placeholder="e.g. 500 Loyalty Points"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                            <Label htmlFor="points-val" className="text-right">Amount</Label>
+                                            <Input
+                                                id="points-val"
+                                                type="number"
+                                                value={niceValue}
+                                                onChange={(e) => setNiceValue(e.target.value)}
+                                                className="col-span-3"
+                                            />
+                                        </div>
+                                    </>
+                                )}
+
+                                {prizeType === 'reward' && (
                                     <>
                                         <div className="grid grid-cols-4 items-center gap-4">
                                             <Label className="text-right">Select Reward</Label>

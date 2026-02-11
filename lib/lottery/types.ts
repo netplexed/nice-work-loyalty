@@ -9,6 +9,7 @@ export interface LotteryDrawing {
     prize_tier: LotteryPrizeTier;
     prize_description: string;
     prize_value: number;
+    prize_type: 'nice' | 'reward' | 'points';
     status: LotteryDrawingStatus;
 
     total_entries: number;

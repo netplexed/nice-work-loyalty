@@ -46,7 +46,7 @@ export async function createLotteryDrawingAdmin({
     prizeDescription: string
     prizeValue: number
     drawDate: string
-    prizeType?: 'nice' | 'reward'
+    prizeType?: 'nice' | 'reward' | 'points'
     rewardId?: string
     autoEntryConfig?: any
 }) {
