@@ -35,7 +35,7 @@ export function DiningNav() {
                     </SheetDescription>
                 </SheetHeader>
 
-                <div className="flex-1 overflow-y-auto p-6 pt-2 gap-6 flex flex-col">
+                <div className="flex-1 overflow-y-auto min-h-0 p-6 pt-2 gap-6 flex flex-col">
                     {/* Tanuki Raw */}
                     <Card className="border-none shadow-md bg-zinc-50 overflow-hidden">
                         <div className="h-32 bg-black relative flex items-center justify-center">
