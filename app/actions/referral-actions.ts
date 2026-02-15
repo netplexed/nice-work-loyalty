@@ -116,3 +116,4 @@ export async function submitReferral(code: string) {
         console.error('[submitReferral] Fatal Error:', error)
         return { success: false, error: error.message || 'An unexpected error occurred' }
     }
+}
