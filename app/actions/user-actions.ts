@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { trackEvent } from '@/app/actions/marketing-event-actions'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { processAutomations } from '@/lib/automations/process-automations'
 
 export async function getUserProfile() {
     const supabase = await createClient()
@@ -47,6 +48,12 @@ export async function getUserProfile() {
 
         // Trigger Marketing Workflow (Signup)
         await trackEvent(user.id, 'user.signup', { email: user.email })
+
+        // --- IMMEDIATE WELCOME EMAIL ---
+        // Fire and forget (don't await to avoid slowing down the UI noticeably)
+        processAutomations(user.id).catch(err => {
+            console.error('[Immediate Automation] Failed:', err)
+        })
 
         return newProfile
     }
