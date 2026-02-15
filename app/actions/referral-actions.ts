@@ -14,15 +14,29 @@ export async function submitReferral(code: string) {
         const cleanCode = code.trim().toUpperCase()
         if (cleanCode.length < 5) throw new Error('Invalid code format')
 
+        // Use Admin Client for ALL DB interaction to bypass RLS policies
+        // (Referrals table has no public read policy, and writes need admin privs)
+        const { createAdminClient } = await import('@/lib/supabase/admin')
+        const supabaseAdmin = createAdminClient()
+
         // 2. Find the Referrer (Code Definition)
-        const { data: referralRecord, error: codeError } = await supabase
+        console.log(`[submitReferral] Looking up code: "${cleanCode}"`)
+
+        const { data: referralRecord, error: codeError } = await supabaseAdmin
             .from('referrals')
             .select('*')
             .eq('referral_code', cleanCode)
             .maybeSingle()
 
+        if (codeError) {
+            console.error('[submitReferral] Error fetching referral:', codeError)
+            throw new Error('Failed to verify referral code')
+        }
+
+        console.log('[submitReferral] Lookup result:', referralRecord ? 'Found' : 'Not Found', referralRecord)
+
         if (!referralRecord) {
-            throw new Error('Invalid referral code')
+            throw new Error(`Invalid referral code: ${cleanCode}`)
         }
 
         if (referralRecord.referrer_id === user.id) {
@@ -30,7 +44,7 @@ export async function submitReferral(code: string) {
         }
 
         // 3. Check if user already redeemed a code (One referral per user)
-        const { data: existingRedemption } = await supabase
+        const { data: existingRedemption } = await supabaseAdmin
             .from('referral_redemptions')
             .select('id')
             .eq('referee_id', user.id)
@@ -42,10 +56,6 @@ export async function submitReferral(code: string) {
 
         // 4. Record Redemption & Award Points
         const BONUS_POINTS = 200
-
-        // Use Admin Client to bypass RLS for sensitive writes (awarding points)
-        const { createAdminClient } = await import('@/lib/supabase/admin')
-        const supabaseAdmin = createAdminClient()
 
         console.log('[submitReferral] Inserting redemption (Admin)...')
         // A. Insert Redemption Record
@@ -82,8 +92,8 @@ export async function submitReferral(code: string) {
             console.error('Error awarding points to referee:', refereeError)
         }
 
-        // 5. Notify Referrer - DISABLED
         /*
+        // 5. Notify Referrer - DISABLED
         try {
             console.log('[submitReferral] Notifying referrer...')
             const { sendNotification } = await import('@/app/actions/messaging-actions')
@@ -106,4 +116,3 @@ export async function submitReferral(code: string) {
         console.error('[submitReferral] Fatal Error:', error)
         return { success: false, error: error.message || 'An unexpected error occurred' }
     }
-}

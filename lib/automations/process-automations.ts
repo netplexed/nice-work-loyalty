@@ -240,7 +240,7 @@ async function processAutomationForUser(supabase: SupabaseClient, auto: any, use
         // Check if user.full_name is present
         body = body.replace('{{name}}', user.full_name || 'Friend')
 
-        await sendEmail({
+        const emailResult = await sendEmail({
             to: user.email,
             subject: auto.email_subject,
             html: `
@@ -251,9 +251,20 @@ async function processAutomationForUser(supabase: SupabaseClient, auto: any, use
                 </p>
             `
         })
+
+        if (!emailResult.success) {
+            // CRITICAL: If email failed, we must DELETE the log so it can be retried later.
+            // Otherwise the user is permanently marked as "processed".
+            console.error(`Email failed for ${user.email}, deleting log to enable retry. Error: ${emailResult.error}`)
+            await supabase.from('automation_logs').delete().eq('automation_id', auto.id).eq('user_id', user.id)
+            return { success: false, error: emailResult.error }
+        }
+
         return { success: true }
     } catch (e: any) {
         console.error(`Failed to send automation email to ${user.email}`, e)
+        // Delete log on exception too
+        await supabase.from('automation_logs').delete().eq('automation_id', auto.id).eq('user_id', user.id)
         return { success: false, error: e.message }
     }
 }
