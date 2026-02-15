@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -26,9 +27,14 @@ export function DeleteAccountDialog() {
             if (!result.success) {
                 throw new Error(result.error || 'Failed to delete account')
             }
+
+            // Sign out client-side to clear session
+            const supabase = createClient()
+            await supabase.auth.signOut()
+
             toast.success('Account deleted successfully')
-            // Redirect handled by action/router usually, but we reload/redirect to be sure
-            window.location.href = '/login'
+            // Redirect to login page with deleted flag
+            window.location.href = '/login?deleted=true'
         } catch (error: any) {
             toast.error(error.message)
             setLoading(false)

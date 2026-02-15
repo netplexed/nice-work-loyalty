@@ -39,21 +39,21 @@ async function checkRecentUsers() {
         console.log(`User: ${user.email}, Created: ${new Date(user.created_at).toLocaleString()}, Consent: ${user.marketing_consent}`)
 
         // Check if they would be picked up by automation
-        if (user.marketing_consent) {
-            console.log('  -> ELIGIBLE for Welcome Email')
-            // Check logs
-            const { data: logs } = await supabase
-                .from('automation_logs')
-                .select('*')
-                .eq('user_id', user.id)
 
-            if (logs && logs.length > 0) {
-                console.log(`  -> ALREADY SENT (Logs found: ${logs.length})`)
-            } else {
-                console.log('  -> PENDING (Not sent yet)')
-            }
+        // Check if they would be picked up by automation
+        // Modified Logic: Welcome emails are sent regardless of consent
+        console.log('  -> ELIGIBLE for Welcome Email (Consent Ignored)')
+        // Check logs
+        const { data: logs } = await supabase
+            .from('automation_logs')
+            .select('*')
+            .eq('user_id', user.id)
+        // .eq('automation_id', ...) // We don't have the ID handy, but checking any log is a good proxy for now
+
+        if (logs && logs.length > 0) {
+            console.log(`  -> ALREADY SENT (Logs found: ${logs.length})`)
         } else {
-            console.log('  -> NOT ELIGIBLE (No Marketing Consent)')
+            console.log('  -> PENDING (Not sent yet)')
         }
     }
 }

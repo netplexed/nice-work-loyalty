@@ -63,8 +63,8 @@ async function simulateSignup() {
             id: authUser.user.id,
             email: email,
             phone: `+1555${Math.floor(Math.random() * 10000000)}`, // Random dummy phone
-            full_name: 'Test Welcome User',
-            marketing_consent: true
+            full_name: 'Test Welcome User No Consent',
+            marketing_consent: false
         })
 
         if (insertError) console.error('Error inserting profile:', insertError)

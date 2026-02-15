@@ -38,7 +38,6 @@ export async function processAutomations(specificUserId?: string) {
                 .from('profiles')
                 .select('id, email, full_name, marketing_consent, created_at')
                 .gte('created_at', cutoff.toISOString())
-                .eq('marketing_consent', true)
                 .not('email', 'is', null)
 
             if (specificUserId) {

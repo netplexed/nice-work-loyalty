@@ -3,9 +3,34 @@
 import { EmailLogin } from '@/components/features/auth/email-login'
 import { useSessionLoading } from '@/components/providers/session-provider'
 import { Loader2 } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { useEffect, Suspense } from 'react'
+import { toast } from 'sonner'
 
 export default function LoginPage() {
+    return (
+        <Suspense>
+            <LoginPageContent />
+        </Suspense>
+    )
+}
+
+function LoginPageContent() {
     const { isLoadingSession } = useSessionLoading()
+    const searchParams = useSearchParams()
+
+    useEffect(() => {
+        if (searchParams.get('deleted') === 'true') {
+            // Use a small timeout to ensure toast library is ready/mounted if needed, 
+            // though usually unnecessary. using setTimeout(..., 0) helps with hydration sometimes.
+            setTimeout(() => {
+                toast.message('We are sad to see you go! Rejoin anytime.', {
+                    description: 'Your account has been successfully deleted.',
+                    duration: 5000,
+                })
+            }, 0)
+        }
+    }, [searchParams])
 
     if (isLoadingSession) {
         return (
