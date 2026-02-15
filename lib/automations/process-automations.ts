@@ -205,16 +205,17 @@ export async function processAutomations(specificUserId?: string) {
 
 
 async function processAutomationForUser(supabase: SupabaseClient, auto: any, user: any) {
-    // 1. Log Execution immediately (Concurrency safety - simple)
-    const { error } = await supabase.from('automation_logs').insert({
+    const { error: logError } = await supabase.from('automation_logs').insert({
         automation_id: auto.id,
         user_id: user.id
     })
 
-    if (error) {
-        console.error('Failed to log automation, skipping', error)
-        return { success: false, error: 'Database log failed: ' + error.message }
+    if (logError) {
+        console.error(`[Automation] Failed to log execution for ${user.email}`, logError)
+        return { success: false, error: 'Database log failed: ' + logError.message }
     }
+
+    console.log(`[Automation] Log created for ${user.email}. Moving to reward issuance...`)
 
     // 2. Grant Reward (if any)
     if (auto.reward_id) {
@@ -253,12 +254,24 @@ async function processAutomationForUser(supabase: SupabaseClient, auto: any, use
         })
 
         if (!emailResult.success) {
-            // CRITICAL: If email failed, we must DELETE the log so it can be retried later.
-            // Otherwise the user is permanently marked as "processed".
-            console.error(`Email failed for ${user.email}, deleting log to enable retry. Error: ${emailResult.error}`)
+            console.error(`[Automation] Email failed for ${user.email}. Error: ${emailResult.error}`)
+
+            // Delete log so we can try again
             await supabase.from('automation_logs').delete().eq('automation_id', auto.id).eq('user_id', user.id)
+
+            // OPTIONAL: Alert admin if it's a "real" error (not just missing key)
+            if (emailResult.error !== 'Missing API Key') {
+                await sendEmail({
+                    to: 'admin@nicework.sg', // Or another admin email
+                    subject: `ALERT: Automation Failed for ${user.email}`,
+                    html: `<p>Automation <b>${auto.name}</b> failed to send email to ${user.email}.</p><p>Error: ${emailResult.error}</p>`
+                }).catch(() => { }) // Ignore if this fails too
+            }
+
             return { success: false, error: emailResult.error }
         }
+
+        console.log(`[Automation] ✅ Successfully processed ${auto.type} for ${user.email}`)
 
         return { success: true }
     } catch (e: any) {
