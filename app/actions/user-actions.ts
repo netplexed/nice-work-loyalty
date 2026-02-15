@@ -50,10 +50,12 @@ export async function getUserProfile() {
         await trackEvent(user.id, 'user.signup', { email: user.email })
 
         // --- IMMEDIATE WELCOME EMAIL ---
-        // Fire and forget (don't await to avoid slowing down the UI noticeably)
-        processAutomations(user.id).catch(err => {
+        // Await to ensure it finishes in serverless environment
+        try {
+            await processAutomations(user.id)
+        } catch (err) {
             console.error('[Immediate Automation] Failed:', err)
-        })
+        }
 
         return newProfile
     }
