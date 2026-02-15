@@ -262,7 +262,7 @@ async function processAutomationForUser(supabase: SupabaseClient, auto: any, use
             // OPTIONAL: Alert admin if it's a "real" error (not just missing key)
             if (emailResult.error !== 'Missing API Key') {
                 await sendEmail({
-                    to: 'admin@nicework.sg', // Or another admin email
+                    to: 'hello@nicework.sg', // Or another admin email
                     subject: `ALERT: Automation Failed for ${user.email}`,
                     html: `<p>Automation <b>${auto.name}</b> failed to send email to ${user.email}.</p><p>Error: ${emailResult.error}</p>`
                 }).catch(() => { }) // Ignore if this fails too

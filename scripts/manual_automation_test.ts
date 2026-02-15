@@ -15,7 +15,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 async function runManual() {
     console.log('Running manual automation test (Inline Logic)...')
-    const userId = 'd759efd9-40c6-4c98-80c5-531a48ac2949'
+    const userId = '180c8708-5139-4668-b485-7309de14064f'
     const email = 'howard@howardlo.com'
 
     // 1. Delete logs
@@ -35,10 +35,10 @@ async function runManual() {
     console.log('Sending email via Resend...')
     try {
         const { data, error: emailError } = await resend.emails.send({
-            from: 'Nice Work Loyalty <admin@nicework.sg>',
+            from: 'nice work <admin@nicework.sg>',
             to: email,
             subject: 'Welcome to Nice Work (Manual Test)',
-            html: '<h1>Welcome!</h1><p>This is a manual test from local script.</p>'
+            html: '<h1>Welcome!</h1><p>This is a manual test from local script with lowercase branding.</p>'
         })
 
         if (emailError) {
