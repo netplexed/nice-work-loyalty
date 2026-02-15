@@ -20,7 +20,6 @@ export async function submitReferral(code: string) {
         const supabaseAdmin = createAdminClient()
 
         // 2. Find the Referrer (Code Definition)
-        console.log(`[submitReferral] Looking up code: "${cleanCode}"`)
 
         const { data: referralRecord, error: codeError } = await (supabaseAdmin
             .from('referrals') as any)
@@ -33,7 +32,7 @@ export async function submitReferral(code: string) {
             throw new Error('Failed to verify referral code')
         }
 
-        console.log('[submitReferral] Lookup result:', referralRecord ? 'Found' : 'Not Found', referralRecord)
+
 
         if (!referralRecord) {
             throw new Error(`Invalid referral code: ${cleanCode}`)
@@ -57,7 +56,6 @@ export async function submitReferral(code: string) {
         // 4. Record Redemption & Award Points
         const BONUS_POINTS = 200
 
-        console.log('[submitReferral] Inserting redemption (Admin)...')
         // A. Insert Redemption Record
         const { error: redemptionError } = await (supabaseAdmin
             .from('referral_redemptions') as any)
@@ -78,7 +76,6 @@ export async function submitReferral(code: string) {
         }
 
         // B. Award Points to Referee (The new user)
-        console.log('[submitReferral] Awarding points to referee (Admin)...')
         const { error: refereeError } = await (supabaseAdmin
             .from('points_transactions') as any)
             .insert({
@@ -92,10 +89,8 @@ export async function submitReferral(code: string) {
             console.error('Error awarding points to referee:', refereeError)
         }
 
-        /*
-        // 5. Notify Referrer - DISABLED
+        // 5. Notify Referrer
         try {
-            console.log('[submitReferral] Notifying referrer...')
             const { sendNotification } = await import('@/app/actions/messaging-actions')
             await sendNotification(
                 referralRecord.referrer_id,
@@ -106,10 +101,7 @@ export async function submitReferral(code: string) {
         } catch (e) {
             console.error('Failed to notify referrer', e)
         }
-        */
 
-        console.log('[submitReferral] Success!')
-        // revalidatePath('/') // Temporarily disabled to debug
         return { success: true, points: BONUS_POINTS }
 
     } catch (error: any) {
