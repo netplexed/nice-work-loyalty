@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { processAutomations } from '@/lib/automations/process-automations'
 
 export async function getUserProfile() {
+    console.log('[Auth] getUserProfile called')
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
