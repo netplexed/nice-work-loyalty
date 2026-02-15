@@ -42,10 +42,14 @@ export async function submitReferral(code: string) {
     // 4. Record Redemption & Award Points
     const BONUS_POINTS = 200
 
-    console.log('[submitReferral] Inserting redemption...')
+    // Use Admin Client to bypass RLS for sensitive writes (awarding points)
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const supabaseAdmin = createAdminClient()
+
+    console.log('[submitReferral] Inserting redemption (Admin)...')
     // A. Insert Redemption Record
-    const { error: redemptionError } = await supabase
-        .from('referral_redemptions')
+    const { error: redemptionError } = await (supabaseAdmin
+        .from('referral_redemptions') as any)
         .insert({
             referrer_id: referralRecord.referrer_id,
             referee_id: user.id,
@@ -63,9 +67,9 @@ export async function submitReferral(code: string) {
     }
 
     // B. Award Points to Referee (The new user)
-    console.log('[submitReferral] Awarding points to referee...')
-    const { error: refereeError } = await supabase
-        .from('points_transactions')
+    console.log('[submitReferral] Awarding points to referee (Admin)...')
+    const { error: refereeError } = await (supabaseAdmin
+        .from('points_transactions') as any)
         .insert({
             user_id: user.id,
             transaction_type: 'earned_bonus',
