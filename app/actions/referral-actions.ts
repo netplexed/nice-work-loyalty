@@ -42,6 +42,7 @@ export async function submitReferral(code: string) {
     // 4. Record Redemption & Award Points
     const BONUS_POINTS = 200
 
+    console.log('[submitReferral] Inserting redemption...')
     // A. Insert Redemption Record
     const { error: redemptionError } = await supabase
         .from('referral_redemptions')
@@ -54,13 +55,15 @@ export async function submitReferral(code: string) {
         })
 
     if (redemptionError) {
+        console.error('[submitReferral] Redemption Insert Error:', redemptionError)
         if (redemptionError.code === '23505') { // Unique violation
             throw new Error('You have already been referred')
         }
-        throw redemptionError
+        throw new Error(`Redemption failed: ${redemptionError.message}`)
     }
 
     // B. Award Points to Referee (The new user)
+    console.log('[submitReferral] Awarding points to referee...')
     const { error: refereeError } = await supabase
         .from('points_transactions')
         .insert({
@@ -75,18 +78,20 @@ export async function submitReferral(code: string) {
     }
 
     // 5. Notify Referrer
-    try {
-        const { sendNotification } = await import('@/app/actions/messaging-actions')
-        await sendNotification(
-            referralRecord.referrer_id,
-            'A friend just joined!',
-            'Someone used your referral code. You\'ll earn 500 bonus points as soon as they visit!',
-            '/profile'
-        )
-    } catch (e) {
-        console.error('Failed to notify referrer', e)
-    }
+    // try {
+    //     console.log('[submitReferral] Notifying referrer...')
+    //     const { sendNotification } = await import('@/app/actions/messaging-actions')
+    //     await sendNotification(
+    //         referralRecord.referrer_id,
+    //         'A friend just joined!',
+    //         'Someone used your referral code. You\'ll earn 500 bonus points as soon as they visit!',
+    //         '/profile'
+    //     )
+    // } catch (e) {
+    //     console.error('Failed to notify referrer', e)
+    // }
 
-    revalidatePath('/')
+    console.log('[submitReferral] Success!')
+    // revalidatePath('/') // Temporarily disabled to debug
     return { success: true, points: BONUS_POINTS }
 }
