@@ -14,7 +14,6 @@ export async function submitReferral(code: string) {
     if (cleanCode.length < 5) throw new Error('Invalid code format')
 
     // 2. Find the Referrer (Code Definition)
-    /*
     const { data: referralRecord, error: codeError } = await supabase
         .from('referrals')
         .select('*')
@@ -77,8 +76,24 @@ export async function submitReferral(code: string) {
     if (refereeError) {
         console.error('Error awarding points to referee:', refereeError)
     }
+
+    // 5. Notify Referrer - DISABLED
+    /*
+    try {
+        console.log('[submitReferral] Notifying referrer...')
+        const { sendNotification } = await import('@/app/actions/messaging-actions')
+        await sendNotification(
+            referralRecord.referrer_id,
+            'A friend just joined!',
+            'Someone used your referral code. You\'ll earn 500 bonus points as soon as they visit!',
+            '/profile'
+        )
+    } catch (e) {
+        console.error('Failed to notify referrer', e)
+    }
     */
 
-    console.log('[submitReferral] Bypassed logic for debugging. Returning success.')
-    return { success: true, points: 200 }
+    console.log('[submitReferral] Success!')
+    // revalidatePath('/') // Temporarily disabled to debug
+    return { success: true, points: BONUS_POINTS }
 }
