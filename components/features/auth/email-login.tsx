@@ -113,7 +113,7 @@ export function EmailLogin() {
             <CardHeader>
                 <CardTitle>Welcome</CardTitle>
                 <CardDescription>
-                    Sign into your account or enter an email and password and create an account
+                    Sign into your account or enter an email and password to create an account
                 </CardDescription>
             </CardHeader>
             <CardContent>
