@@ -42,37 +42,45 @@ export async function processAutomations(specificUserId?: string) {
 
             if (specificUserId) {
                 query = query.eq('id', specificUserId)
-                addLog(`Checking specific user: ${specificUserId}`)
+                console.log(`[Automation] Filtering for specific user: ${specificUserId}`)
             }
 
-            const { data: newUsers } = await query as any
+            const { data: newUsers, error: queryError } = await query as any
 
-            addLog(`Found ${newUsers?.length || 0} candidates for Welcome automation`)
+            if (queryError) {
+                console.error(`[Automation] Database error fetching candidates:`, queryError)
+                continue
+            }
+
+            console.log(`[Automation] Found ${newUsers?.length || 0} candidates for Welcome automation`)
 
             if (newUsers) {
                 for (const user of newUsers) {
+                    console.log(`[Automation] Checking eligibility for: ${user.email} (ID: ${user.id})`)
                     // Check log
-                    const logQuery = supabase
+                    const { data: log, error: logCheckError } = await supabase
                         .from('automation_logs')
                         .select('id, executed_at')
                         .eq('automation_id', auto.id)
                         .eq('user_id', user.id)
-                        .single()
+                        .maybeSingle() as any
 
-                    const { data: logRaw } = await logQuery
-                    const log = logRaw as any
+                    if (logCheckError) {
+                        console.error(`[Automation] Error checking logs for ${user.email}:`, logCheckError)
+                        continue
+                    }
 
                     if (!log) {
-                        addLog(`Sending Welcome to ${user.email}`)
+                        console.log(`[Automation] No prior log for ${user.email}. Starting process...`)
                         const result = await processAutomationForUser(supabase, auto, user)
                         if (result.success) {
                             sentCount++
-                            addLog(`✅ Sent Welcome to ${user.email}`)
+                            console.log(`[Automation] ✅ Successfully completed ${auto.name} for ${user.email}`)
                         } else {
-                            addLog(`❌ Failed to send to ${user.email}: ${result.error}`)
+                            console.error(`[Automation] ❌ Execution failed for ${user.email}: ${result.error}`)
                         }
                     } else {
-                        addLog(`Skipping ${user.email}: Already received (Log ID: ${log.id}, Sent: ${new Date(log.executed_at).toLocaleString()})`)
+                        console.log(`[Automation] User ${user.email} already processed at ${log.executed_at}. Skipping.`)
                     }
                 }
             }
@@ -205,40 +213,58 @@ export async function processAutomations(specificUserId?: string) {
 
 
 async function processAutomationForUser(supabase: SupabaseClient, auto: any, user: any) {
+    console.log(`[Automation] [Execution] Starting for ${user.email}...`)
+
+    // 1. Log Execution immediately
     const { error: logError } = await supabase.from('automation_logs').insert({
         automation_id: auto.id,
         user_id: user.id
     })
 
     if (logError) {
-        console.error(`[Automation] Failed to log execution for ${user.email}`, logError)
+        console.error(`[Automation] [Execution] Database log failed for ${user.email}:`, logError)
         return { success: false, error: 'Database log failed: ' + logError.message }
     }
 
-    console.log(`[Automation] Log created for ${user.email}. Moving to reward issuance...`)
+    console.log(`[Automation] [Execution] Log created. Moving to reward issuance...`)
 
     // 2. Grant Reward (if any)
     if (auto.reward_id) {
-        // Fetch reward details
-        const { data: reward } = await supabase.from('rewards').select('*').eq('id', auto.reward_id).single()
+        console.log(`[Automation] [Execution] Fetching reward details: ${auto.reward_id}`)
+        const { data: reward, error: rewardFetchError } = await supabase.from('rewards').select('*').eq('id', auto.reward_id).single()
+
+        if (rewardFetchError) {
+            console.error(`[Automation] [Execution] Reward fetch failed:`, rewardFetchError)
+            await supabase.from('automation_logs').delete().eq('automation_id', auto.id).eq('user_id', user.id)
+            return { success: false, error: `Reward fetch failed: ${rewardFetchError.message}` }
+        }
+
         if (reward) {
-            // Issue Voucher
-            await supabase.from('redemptions').insert({
+            console.log(`[Automation] [Execution] Issuing reward "${reward.name}"...`)
+            const { error: redemptionError } = await supabase.from('redemptions').insert({
                 user_id: user.id,
                 reward_id: reward.id,
-                points_spent: 0, // Free
-                status: 'approved', // Auto-approved
+                points_spent: 0,
+                status: 'approved',
                 voucher_code: `AUTO-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
             })
+
+            if (redemptionError) {
+                console.error(`[Automation] [Execution] Redemption insert failed:`, redemptionError)
+                await supabase.from('automation_logs').delete().eq('automation_id', auto.id).eq('user_id', user.id)
+                return { success: false, error: `Redemption failed: ${redemptionError.message}` }
+            }
+            console.log(`[Automation] [Execution] Reward issued successfully.`)
+        } else {
+            console.warn(`[Automation] [Execution] Skip reward: ID ${auto.reward_id} not found.`)
         }
     }
 
     // 3. Send Email
     try {
-        const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/profile`
-        // Replace variables
+        console.log(`[Automation] [Execution] Preparing email...`)
+        const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://makenice.nicework.sg'}/profile`
         let body = auto.email_body || ''
-        // Check if user.full_name is present
         body = body.replace('{{name}}', user.full_name || 'Friend')
 
         const emailResult = await sendEmail({
@@ -254,29 +280,25 @@ async function processAutomationForUser(supabase: SupabaseClient, auto: any, use
         })
 
         if (!emailResult.success) {
-            console.error(`[Automation] Email failed for ${user.email}. Error: ${emailResult.error}`)
+            console.error(`[Automation] [Execution] Email SEND failed: ${emailResult.error}`)
 
             // Delete log so we can try again
             await supabase.from('automation_logs').delete().eq('automation_id', auto.id).eq('user_id', user.id)
 
-            // OPTIONAL: Alert admin if it's a "real" error (not just missing key)
-            if (emailResult.error !== 'Missing API Key') {
-                await sendEmail({
-                    to: 'hello@nicework.sg', // Or another admin email
-                    subject: `ALERT: Automation Failed for ${user.email}`,
-                    html: `<p>Automation <b>${auto.name}</b> failed to send email to ${user.email}.</p><p>Error: ${emailResult.error}</p>`
-                }).catch(() => { }) // Ignore if this fails too
-            }
+            // Alert admin
+            await sendEmail({
+                to: 'hello@nicework.sg',
+                subject: `ALERT: Automation Failed for ${user.email}`,
+                html: `<p>Automation <b>${auto.name}</b> failed to send email to ${user.email}.</p><p>Error: ${emailResult.error}</p>`
+            }).catch(() => { })
 
             return { success: false, error: emailResult.error }
         }
 
-        console.log(`[Automation] ✅ Successfully processed ${auto.type} for ${user.email}`)
-
+        console.log(`[Automation] [Execution] ✅ Final success for ${user.email}`)
         return { success: true }
     } catch (e: any) {
-        console.error(`Failed to send automation email to ${user.email}`, e)
-        // Delete log on exception too
+        console.error(`[Automation] [Execution] CRASH for ${user.email}:`, e)
         await supabase.from('automation_logs').delete().eq('automation_id', auto.id).eq('user_id', user.id)
         return { success: false, error: e.message }
     }
