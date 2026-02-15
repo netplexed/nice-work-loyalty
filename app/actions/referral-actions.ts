@@ -22,8 +22,8 @@ export async function submitReferral(code: string) {
         // 2. Find the Referrer (Code Definition)
         console.log(`[submitReferral] Looking up code: "${cleanCode}"`)
 
-        const { data: referralRecord, error: codeError } = await supabaseAdmin
-            .from('referrals')
+        const { data: referralRecord, error: codeError } = await (supabaseAdmin
+            .from('referrals') as any)
             .select('*')
             .eq('referral_code', cleanCode)
             .maybeSingle()
