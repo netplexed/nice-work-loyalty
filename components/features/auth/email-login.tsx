@@ -86,13 +86,9 @@ export function EmailLogin() {
                 return
             }
 
-            if (data.user && !data.session) {
-                toast.success('Account created! Please check your email to confirm.')
-            } else {
-                toast.success('Account created and logged in!')
-                router.push('/')
-                router.refresh()
-            }
+            toast.success('Account created! logging you in...')
+            router.push('/')
+            router.refresh()
         } catch (error) {
             toast.error('Failed to sign up')
         } finally {

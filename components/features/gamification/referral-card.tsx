@@ -47,8 +47,12 @@ export function ReferralCard() {
         if (!inputCode || inputCode.length < 5) return
         setSubmitting(true)
         try {
-            const { points } = await submitReferral(inputCode)
-            toast.success(`Code redeemed! You earned ${points} points!`)
+            const response = await submitReferral(inputCode)
+            if (!response.success) {
+                throw new Error(response.error || 'Failed to redeem code')
+            }
+
+            toast.success(`Code redeemed! You earned ${response.points} points!`)
             setInputCode('')
             confetti({
                 particleCount: 100,
