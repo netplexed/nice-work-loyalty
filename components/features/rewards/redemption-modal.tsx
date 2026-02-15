@@ -32,7 +32,14 @@ export function RedemptionModal({ reward, open, onOpenChange, onSuccess }: Redem
         setLoading(true)
         try {
             const result = await redeemReward(reward.id)
-            setVoucher(result.voucherCode)
+
+            if (!result.success) {
+                toast.error(result.error || 'Failed to redeem reward')
+                setLoading(false)
+                return
+            }
+
+            setVoucher(result.voucherCode || '')
             toast.success('Reward redeemed successfully!')
 
             // Notify parent to update My Rewards list instantly

@@ -70,7 +70,7 @@ export async function redeemReward(rewardId: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { success: false, error: 'Not authenticated' }
 
     // Get reward details
     const { data: reward } = await supabase
@@ -79,7 +79,7 @@ export async function redeemReward(rewardId: string) {
         .eq('id', rewardId)
         .single()
 
-    if (!reward) throw new Error('Reward not found')
+    if (!reward) return { success: false, error: 'Reward not found' }
 
     // Get user profile for points check
     const { data: profile } = await supabase
@@ -89,7 +89,7 @@ export async function redeemReward(rewardId: string) {
         .single()
 
     if (!profile || profile.points_balance < reward.points_cost) {
-        throw new Error('Insufficient points')
+        return { success: false, error: 'Insufficient points' }
     }
 
     // Generate voucher code (simple random string for MVP)
@@ -109,7 +109,7 @@ export async function redeemReward(rewardId: string) {
             voucher_code: voucherCode
         })
 
-    if (redemptionError) throw redemptionError
+    if (redemptionError) return { success: false, error: redemptionError.message }
 
     const { error: pointsError } = await supabase
         .from('points_transactions')
@@ -121,7 +121,7 @@ export async function redeemReward(rewardId: string) {
             reference_id: rewardId
         })
 
-    if (pointsError) throw pointsError
+    if (pointsError) return { success: false, error: pointsError.message }
 
     revalidatePath('/rewards')
     revalidatePath('/')
