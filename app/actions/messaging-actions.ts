@@ -105,7 +105,7 @@ export async function broadcastMessage(params: BroadcastParams) {
                 const items = emails.map(email => ({
                     to: email,
                     subject: params.title,
-                    html: `<p>${params.body}</p><br/><hr/><p style="font-size:12px; color: #666;">Nice Work Loyalty Broadcast. <a href="${process.env.NEXT_PUBLIC_APP_URL}/profile">Unsubscribe</a></p>`
+                    html: `<p>${params.body}</p><br/><hr/><p style="font-size:12px; color: #666;">nice work broadcast. <a href="${process.env.NEXT_PUBLIC_APP_URL}/profile">Unsubscribe</a></p>`
                 }))
 
                 // Limit concurrency

@@ -31,8 +31,8 @@ export function ReferralCard() {
         if (code && navigator.share) {
             try {
                 await navigator.share({
-                    title: 'Join me on Nice Work Loyalty!',
-                    text: `Use my code ${code} to get 200 bonus points!`,
+                    title: 'join me on nice work!',
+                    text: `use my code ${code} to get 200 bonus points!`,
                     url: window.location.origin
                 })
             } catch (err) {

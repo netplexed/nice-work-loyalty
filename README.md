@@ -1,7 +1,7 @@
-# Nice Work Loyalty App - Project Overview
+# nice work - Project Overview
 
 ## 1. Introduction
-Nice Work Loyalty is a comprehensive customer loyalty and engagement platform built for "Nice Work". It provides a seamless experience for customers to earn points, redeem rewards, and engage with the brand, while offering a powerful admin panel for staff to manage operations and marketing.
+nice work is a comprehensive customer loyalty and engagement platform.
 
 ## 2. Tech Stack
 - **Framework**: Next.js 14 (App Router)

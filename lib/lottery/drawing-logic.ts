@@ -269,7 +269,7 @@ async function notifyLotteryWinner(userId: string, drawing: any, voucherCode: st
                     <p>To claim your prize, simply present this voucher code during your next visit.</p>
                     <p>Thank you for being a part of our community!</p>
                     <br/>
-                    <p>Best regards,<br/>The Nice Work Team</p>
+                    <p>Best regards,<br/>the nice work team</p>
                 </div>
             `
         })

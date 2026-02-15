@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Nice Work Loyalty</string>
-    <string name="title_activity_main">Nice Work Loyalty</string>
+    <string name="app_name">nice work</string>
+    <string name="title_activity_main">nice work</string>
     <string name="package_name">com.niceworkloyalty.app</string>
     <string name="custom_url_scheme">com.niceworkloyalty.app</string>
 </resources>

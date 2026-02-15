@@ -44,7 +44,7 @@ export function PointsBalanceBranded({ refreshTrigger = 0 }: PointsBalanceProps)
 
                 {/* Nice Work Text - Watermark */}
                 <div className="absolute top-6 right-6 opacity-30 pointer-events-none z-0">
-                    <span className="text-xl font-medium tracking-tight text-white font-sans">nice work</span>
+                    <span className="text-xl font-medium tracking-tight text-white font-brand">nice work</span>
                 </div>
 
                 <CardHeader className="pb-2 relative z-10">

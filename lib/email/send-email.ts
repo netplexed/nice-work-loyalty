@@ -17,7 +17,7 @@ export async function sendEmail({ to, subject, html }: EmailPayload) {
 
     try {
         const { data, error } = await resend.emails.send({
-            from: 'Nice Work Loyalty <admin@nicework.sg>', // Update this domain once verified
+            from: 'nice work <admin@nicework.sg>', // Update this domain once verified
             to,
             subject,
             html,

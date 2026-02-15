@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'Nice Work Loyalty',
-        short_name: 'NiceWork',
+        name: 'nice work',
+        short_name: 'nice work',
         description: 'Loyalty program for Nice Work restaurants',
         start_url: '/',
         display: 'standalone',

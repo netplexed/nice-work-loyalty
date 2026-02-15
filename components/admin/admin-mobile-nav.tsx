@@ -13,7 +13,7 @@ import { AdminSidebar } from './admin-sidebar'
 export function AdminMobileNav() {
     return (
         <div className="flex items-center justify-between p-4 border-b bg-slate-900 border-slate-800 md:hidden">
-            <div className="font-bold text-white">Nice Work Admin</div>
+            <div className="font-bold text-white font-brand">nice work admin</div>
             <Sheet>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="text-white hover:bg-slate-800">

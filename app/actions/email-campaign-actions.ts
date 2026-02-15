@@ -113,7 +113,7 @@ export async function sendCampaign(campaignId: string) {
             <br/>
             <hr/>
             <p style="text-align: center; font-size: 12px; color: #888;">
-                You received this email from Nice Work Loyalty. 
+                you received this email from nice work. 
                 <a href="${unsubscribeUrl}">Unsubscribe</a>
             </p>
         `

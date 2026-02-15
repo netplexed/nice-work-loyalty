@@ -32,7 +32,7 @@ function LoginPageContent() {
         }
     }, [searchParams])
 
-    if (isLoadingSession) {
+    if (isLoadingSession && searchParams.get('deleted') !== 'true') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -43,9 +43,21 @@ function LoginPageContent() {
 
     return (
         <div className="flex flex-col items-center justify-center space-y-8">
-            <div className="text-center space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight text-[#1e40af]">Nice Work</h1>
-                <p className="text-muted-foreground">Loyalty Program</p>
+            <div className="text-center space-y-6">
+                <h1 className="text-5xl font-bold tracking-tighter text-foreground font-brand">nice work</h1>
+                <div className="flex items-center justify-center gap-8">
+                    <img
+                        src="/images/logos/tanuki-raw-logo.png"
+                        alt="Tanuki Raw"
+                        className="h-10 w-auto object-contain opacity-90 transition-opacity hover:opacity-100"
+                    />
+                    <div className="h-8 w-[1px] bg-border" />
+                    <img
+                        src="/images/logos/standing-sushi-bar-logo.png"
+                        alt="Standing Sushi Bar"
+                        className="h-10 w-auto object-contain opacity-90 transition-opacity hover:opacity-100"
+                    />
+                </div>
             </div>
 
             <EmailLogin />

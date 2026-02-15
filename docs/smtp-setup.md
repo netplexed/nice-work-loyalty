@@ -56,9 +56,9 @@ You can change the subject line and body text of your emails directly in Supabas
     *   **Essential Variable:** You MUST include `{{ .ConfirmationURL }}` (or the specific variable for that template) so the user can click the link.
     *   **Example Body:**
         ```html
-        <h2>Welcome to Nice Work Loyalty!</h2>
-        <p>Thanks for joining. Please confirm your email by clicking below:</p>
-        <p><a href="{{ .ConfirmationURL }}">Confirm Email</a></p>
+        <h2>welcome to nice work!</h2>
+        <p>thanks for joining. please confirm your email by clicking below:</p>
+        <p><a href="{{ .ConfirmationURL }}">confirm email</a></p>
         ```
 4.  Click **Save**.
 

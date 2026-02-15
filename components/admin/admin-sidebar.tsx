@@ -39,7 +39,7 @@ export function AdminSidebar() {
     return (
         <div className="h-full flex flex-col text-slate-300 bg-slate-900">
             <div className="p-6 border-b border-slate-800">
-                <h2 className="text-xl font-bold text-white tracking-tight">Nice Work Admin</h2>
+                <h2 className="text-xl font-bold text-white tracking-tight font-brand">nice work admin</h2>
             </div>
 
             <nav className="flex-1 p-4 space-y-1">

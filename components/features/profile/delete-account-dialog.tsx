@@ -31,6 +31,7 @@ export function DeleteAccountDialog() {
             // Sign out client-side to clear session
             const supabase = createClient()
             await supabase.auth.signOut()
+            localStorage.removeItem('supabase-backup-token')
 
             toast.success('Account deleted successfully')
             // Redirect to login page with deleted flag
