@@ -4,6 +4,7 @@ import { sendEmail } from '@/lib/email/send-email'
 import { SupabaseClient } from '@supabase/supabase-js'
 
 export async function processAutomations(specificUserId?: string) {
+    console.log(`[Automation] processAutomations called for ${specificUserId || 'ALL'}`)
     // USE ADMIN CLIENT to bypass RLS and see all users/logs
     const supabase = createAdminClient()
     const logs: string[] = []
