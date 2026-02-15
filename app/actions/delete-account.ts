@@ -39,11 +39,31 @@ export async function deleteAccount() {
         await (adminSupabase.from('notifications') as any).delete().eq('user_id', user.id)
 
         // 3. Clean up Referrals (both as referrer and referee)
-        await adminSupabase.from('referrals').delete().or(`referrer_id.eq.${user.id},referee_id.eq.${user.id}`)
+        const referralResult = await adminSupabase.from('referrals').delete().or(`referrer_id.eq.${user.id},referee_id.eq.${user.id}`)
+        if (referralResult.error) {
+            console.error('Error deleting referrals:', referralResult.error)
+            return { success: false, error: `Database error deleting user: ${referralResult.error.message}` }
+        }
+
+        // Clean up referral redemptions (both as referrer and referee)
+        const redemptionResult = await adminSupabase.from('referral_redemptions').delete().or(`referrer_id.eq.${user.id},referee_id.eq.${user.id}`)
+        if (redemptionResult.error) {
+            console.error('Error deleting referral redemptions:', redemptionResult.error)
+            return { success: false, error: `Database error deleting user: ${redemptionResult.error.message}` }
+        }
 
         // 4. Clean up Core Profiles
-        await adminSupabase.from('nice_accounts').delete().eq('user_id', user.id)
-        await adminSupabase.from('profiles').delete().eq('id', user.id)
+        const nicAccountResult = await adminSupabase.from('nice_accounts').delete().eq('user_id', user.id)
+        if (nicAccountResult.error) {
+            console.error('Error deleting nice_accounts:', nicAccountResult.error)
+            return { success: false, error: `Database error deleting user: ${nicAccountResult.error.message}` }
+        }
+
+        const profileResult = await adminSupabase.from('profiles').delete().eq('id', user.id)
+        if (profileResult.error) {
+            console.error('Error deleting profiles:', profileResult.error)
+            return { success: false, error: `Database error deleting user: ${profileResult.error.message}` }
+        }
 
         // 5. Finally, delete Auth User
         const { error } = await adminSupabase.auth.admin.deleteUser(user.id)
