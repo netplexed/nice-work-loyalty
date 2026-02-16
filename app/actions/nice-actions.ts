@@ -130,8 +130,8 @@ export async function getNiceState(): Promise<NiceState> {
 
         console.log('Nice account missing for user, creating default...')
         const adminSupabase = createAdminClient()
-        const { data: newAccount, error: createError } = await adminSupabase
-            .from('nice_accounts')
+        const { data: newAccount, error: createError } = await (adminSupabase
+            .from('nice_accounts') as any)
             .insert({ user_id: user.id })
             .select()
             .single()

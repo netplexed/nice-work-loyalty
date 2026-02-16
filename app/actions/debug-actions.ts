@@ -18,7 +18,7 @@ export async function resetDailySpin() {
     if (!user) throw new Error('Unauthorized')
 
     const adminSupabase = createAdminClient()
-    const { error } = await adminSupabase.rpc('debug_reset_daily_spin', {
+    const { error } = await (adminSupabase.rpc as any)('debug_reset_daily_spin', {
         p_user_id: user.id
     })
 
