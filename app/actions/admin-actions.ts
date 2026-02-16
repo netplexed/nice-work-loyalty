@@ -382,14 +382,37 @@ export async function recordUserSpend(userId: string, amount: number, location: 
         throw new Error('Failed to award points: ' + JSON.stringify(pointsError))
     }
 
-    // 4. Record Check-in (Visit)
-    await supabase
-        .from('check_ins')
-        .insert({
-            user_id: userId,
-            location: location,
-            points_awarded: 0
+    // 4. Award Nice visit accelerator based on recent recorded spend visits.
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+    const { count: recentVisitCount, error: recentVisitError } = await supabase
+        .from('purchases')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', sevenDaysAgo.toISOString())
+
+    if (!recentVisitError && recentVisitCount) {
+        let multiplier = 1.5
+        if (recentVisitCount >= 2) multiplier = 2.0
+        if (recentVisitCount >= 3) multiplier = 3.0
+
+        const expiresAt = new Date()
+        expiresAt.setHours(expiresAt.getHours() + 24)
+
+        const { error: visitBonusError } = await supabase.rpc('award_visit_bonus', {
+            p_user_id: userId,
+            p_multiplier: multiplier,
+            p_expires_at: expiresAt.toISOString(),
+            p_bonus_nice: 50
         })
+
+        if (visitBonusError) {
+            console.error('Failed to apply visit-based Nice bonus', visitBonusError)
+        }
+    } else if (recentVisitError) {
+        console.error('Failed to count recent visits from purchases', recentVisitError)
+    }
 
     // 5. Check for Pending Referral Reward
     // If the user (referee) hasn't triggered the reward for their referrer yet, do it now.

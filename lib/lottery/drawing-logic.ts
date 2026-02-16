@@ -87,15 +87,46 @@ export async function executeDrawing(drawingId: string) {
     // 7. Save results (Sequential operations since we don't have client-side transactions)
     // In a real prod environment, we would use an RPC for atomicity.
 
-    // If prize type is 'nice', award points immediately
+    // If prize type is 'nice', award Nice directly.
     if (drawing.prize_type === 'nice' && drawing.prize_value > 0) {
-        const { error: pointsError } = await (supabase.rpc as any)('collect_nice_transaction', {
-            p_user_id: winnerEntry.userId,
-            p_nice_amount: drawing.prize_value
-        })
+        const nicePrize = Math.floor(drawing.prize_value)
+        const { data: account, error: accountError } = await (supabase
+            .from('nice_accounts') as any)
+            .select('nice_collected_balance, total_nice_earned')
+            .eq('user_id', winnerEntry.userId)
+            .maybeSingle()
 
-        if (pointsError) {
-            console.error('Failed to award lottery points:', pointsError)
+        if (accountError) {
+            console.error('Failed to fetch nice account for lottery payout:', accountError)
+        } else if (!account) {
+            console.error('Missing nice account for lottery payout:', winnerEntry.userId)
+        } else {
+            const { error: updateNiceError } = await (supabase
+                .from('nice_accounts') as any)
+                .update({
+                    nice_collected_balance: account.nice_collected_balance + nicePrize,
+                    total_nice_earned: (account.total_nice_earned || 0) + nicePrize,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', winnerEntry.userId)
+
+            if (updateNiceError) {
+                console.error('Failed to award lottery nice:', updateNiceError)
+            } else {
+                const { error: niceTxError } = await (supabase
+                    .from('nice_transactions') as any)
+                    .insert({
+                        user_id: winnerEntry.userId,
+                        transaction_type: 'spin_win',
+                        nice_amount: nicePrize,
+                        description: `Lottery Win: ${drawing.prize_description}`,
+                        metadata: { drawing_id: drawingId }
+                    })
+
+                if (niceTxError) {
+                    console.error('Failed to log lottery nice transaction:', niceTxError)
+                }
+            }
         }
     } else if (drawing.prize_type === 'points' && drawing.prize_value > 0) {
         // Award regular points

@@ -26,11 +26,26 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'No active lottery drawing' }, { status: 404 })
         }
 
+        // Require at least one real purchase visit at this location
+        // within the active drawing window.
+        const { data: checkIn } = await supabase
+            .from('purchases')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('location', location_id)
+            .gte('created_at', new Date(drawing.week_start_date).toISOString())
+            .maybeSingle()
+
+        if (!checkIn) {
+            return NextResponse.json({ error: 'No eligible visit found for this location' }, { status: 400 })
+        }
+
         // Award Bonus
         const result = await service.awardCheckinBonus(user.id, drawing.id)
 
         return NextResponse.json(result)
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unexpected error'
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }

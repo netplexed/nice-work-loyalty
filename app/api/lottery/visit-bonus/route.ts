@@ -25,20 +25,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'No active lottery drawing' }, { status: 404 })
         }
 
-        // Award Bonus
-        // Verify visit ownership logic should ideally happen here or in RPC.
-        // For now, we trust the client or assume the RPC checks visit validity if linked?
-        // RPC `award_lottery_visit_bonus` checks if entry exists for this visit_id.
-        // It does NOT verify if visit_id belongs to user in the RPC (I missed that check).
-        // I should probably check that visit belongs to user here.
-
+        // Validate that the submitted "visit_id" maps to a real purchase
+        // for the authenticated user inside the active drawing window.
         const { data: visit } = await supabase
-            .from('visits')
-            .select('user_id')
+            .from('purchases')
+            .select('id, user_id, created_at')
             .eq('id', visit_id)
-            .single()
+            .eq('user_id', user.id)
+            .gte('created_at', new Date(drawing.week_start_date).toISOString())
+            .maybeSingle()
 
-        if (!visit || visit.user_id !== user.id) {
+        if (!visit) {
             return NextResponse.json({ error: 'Invalid visit record' }, { status: 400 })
         }
 
@@ -50,7 +47,8 @@ export async function POST(req: Request) {
         }
 
         return NextResponse.json(result)
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unexpected error'
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }
