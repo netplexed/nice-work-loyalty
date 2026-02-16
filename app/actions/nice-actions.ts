@@ -214,9 +214,7 @@ export async function convertNiceToPoints(
 
     if (!user) throw new Error('Not authenticated')
 
-    const pointsToGain = Math.floor(niceAmount / 4)
-
-    if (pointsToGain < 1) {
+    if (Math.floor(niceAmount / 4) < 1) {
         throw new Error('Amount too small to convert (min 4 Nice)')
     }
 
@@ -235,6 +233,6 @@ export async function convertNiceToPoints(
     return {
         newNiceBalance: data.new_nice_balance,
         newPointsBalance: data.new_points_balance,
-        pointsGained: pointsToGain
+        pointsGained: data.points_gained
     }
 }
