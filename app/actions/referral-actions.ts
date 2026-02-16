@@ -109,3 +109,32 @@ export async function submitReferral(code: string) {
         return { success: false, error: error.message || 'An unexpected error occurred' }
     }
 }
+
+export async function hasRedeemedReferralCode() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return false
+
+    try {
+        const { createAdminClient } = await import('@/lib/supabase/admin')
+        const supabaseAdmin = createAdminClient()
+
+        const { data, error } = await supabaseAdmin
+            .from('referral_redemptions')
+            .select('id')
+            .eq('referee_id', user.id)
+            .limit(1)
+            .maybeSingle()
+
+        if (error) {
+            console.error('[hasRedeemedReferralCode] Error fetching redemption:', error)
+            return false
+        }
+
+        return !!data
+    } catch (error) {
+        console.error('[hasRedeemedReferralCode] Fatal Error:', error)
+        return false
+    }
+}

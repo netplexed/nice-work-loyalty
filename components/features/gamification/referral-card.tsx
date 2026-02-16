@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { getReferralCode } from '@/app/actions/user-actions-extensions'
-import { submitReferral } from '@/app/actions/referral-actions'
+import { hasRedeemedReferralCode, submitReferral } from '@/app/actions/referral-actions'
 import { Copy, Share2, Users, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
@@ -13,11 +13,17 @@ import confetti from 'canvas-confetti'
 export function ReferralCard() {
     const [code, setCode] = useState<string | null>(null)
     const [inputCode, setInputCode] = useState('')
+    const [hasRedeemedCode, setHasRedeemedCode] = useState(false)
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
 
     useEffect(() => {
-        getReferralCode().then(setCode).finally(() => setLoading(false))
+        Promise.all([getReferralCode(), hasRedeemedReferralCode()])
+            .then(([nextCode, redeemed]) => {
+                setCode(nextCode)
+                setHasRedeemedCode(redeemed)
+            })
+            .finally(() => setLoading(false))
     }, [])
 
     const handleCopy = () => {
@@ -53,6 +59,7 @@ export function ReferralCard() {
             }
 
             toast.success(`Code redeemed! You earned ${response.points} points!`)
+            setHasRedeemedCode(true)
             setInputCode('')
             confetti({
                 particleCount: 100,
@@ -98,26 +105,31 @@ export function ReferralCard() {
                     </div>
                 </div>
 
-                {/* Enter Code Section */}
-                <div className="pt-2 border-t border-green-200/50">
-                    <label className="text-xs font-semibold text-green-800 uppercase tracking-wider mb-2 block">Have a code?</label>
-                    <div className="flex gap-2">
-                        <Input
-                            placeholder="Enter friend's code"
-                            value={inputCode}
-                            onChange={(e) => setInputCode(e.target.value)}
-                            className="bg-white/80 border-green-200 uppercase placeholder:normal-case"
-                            maxLength={10}
-                        />
-                        <Button
-                            onClick={handleRedeem}
-                            disabled={!inputCode || submitting}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        >
-                            {submitting ? '...' : <ArrowRight className="w-4 h-4" />}
-                        </Button>
+                {!hasRedeemedCode ? (
+                    <div className="pt-2 border-t border-green-200/50">
+                        <label className="text-xs font-semibold text-green-800 uppercase tracking-wider mb-2 block">Have a code?</label>
+                        <div className="flex gap-2">
+                            <Input
+                                placeholder="Enter friend's code"
+                                value={inputCode}
+                                onChange={(e) => setInputCode(e.target.value)}
+                                className="bg-white/80 border-green-200 uppercase placeholder:normal-case"
+                                maxLength={10}
+                            />
+                            <Button
+                                onClick={handleRedeem}
+                                disabled={!inputCode || submitting}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            >
+                                {submitting ? '...' : <ArrowRight className="w-4 h-4" />}
+                            </Button>
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="pt-2 border-t border-green-200/50">
+                        <p className="text-sm text-green-800">Referral code already redeemed.</p>
+                    </div>
+                )}
             </CardContent>
         </Card>
     )
