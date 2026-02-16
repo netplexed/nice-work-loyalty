@@ -12,6 +12,10 @@ This document defines the economic rules currently implemented in code for:
 
 It is intended to be the source of truth for product, ops, and engineering.
 
+## Terminology
+- Use `visit` as the canonical product term.
+- `check-in` / `check_ins` may still appear in legacy table, function, and route names for backward compatibility.
+
 ## Currency Model
 - `Points`:
   - Customer-facing loyalty currency for reward redemption.
@@ -22,7 +26,7 @@ It is intended to be the source of truth for product, ops, and engineering.
 ## Points Economics
 ### Earn
 - Spend accrual:
-  - Formula: `points = floor(spend_usd * 5)`
+  - Formula: `points = floor(spend_amount * 5)`
   - Source: `app/actions/admin-actions.ts`
 - Referral (referee):
   - `100` points on successful code redemption.
@@ -73,13 +77,14 @@ It is intended to be the source of truth for product, ops, and engineering.
 - Applied inside Nice rate calculation via `tier_bonus`.
 - Source: `supabase/migrations/20260124_nice_system.sql`
 
-### Visit/Check-in Multiplier (temporary)
+### Visit Multiplier (temporary)
 - Spend-recorded visit flow awards temporary multipliers based on recent 7-day purchases:
   - 1 visit: `1.5x`
   - 2 visits: `2.0x`
   - 3+ visits: `3.0x`
 - Duration: `24 hours`
-- Instant Nice bonus in this flow: `50 Nice`
+- Instant Nice bonus in this flow: `0 Nice`
+- Instant Points bonus in this flow: `0 Points`
 - Source: `app/actions/admin-actions.ts`
 
 ## Lottery Economics
@@ -93,7 +98,7 @@ It is intended to be the source of truth for product, ops, and engineering.
   - Limit: `3` visit bonus entries per drawing per user
   - Requires valid user-owned purchase visit in active drawing window
   - Source: `supabase/migrations/20260216_economics_consistency_fixes.sql`
-- Weekly +2 visit bonus entries:
+- Weekly +2 visit entries:
   - `+2` entries once per drawing
   - Requires at least one real purchase visit in active drawing window
   - Source: `supabase/migrations/20260216_economics_consistency_fixes.sql`

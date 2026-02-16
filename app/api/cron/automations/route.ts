@@ -1,23 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { processAutomations } from '@/lib/automations/process-automations'
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const key = searchParams.get('key')
+    const authHeader = req.headers.get('authorization')
+    const cronSecret = process.env.CRON_SECRET
 
-    // Simple protection: Check for CRON_SECRET or Admin Session
-    const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-
-    // Check Admin
-    let isAdmin = false
-    if (session) {
-        const { data } = await supabase.from('admin_users').select('id').eq('id', session.user.id).eq('active', true).single()
-        if (data) isAdmin = true
+    if (!cronSecret) {
+        return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 })
     }
 
-    if (key !== process.env.CRON_SECRET && !isAdmin) {
+    if (key !== cronSecret && authHeader !== `Bearer ${cronSecret}`) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

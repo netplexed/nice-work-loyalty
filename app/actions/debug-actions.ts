@@ -1,12 +1,26 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { verifyAdmin } from './admin-actions'
 
 export async function resetDailySpin() {
-    const supabase = await createClient()
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('Debug action disabled in production')
+    }
 
-    const { error } = await supabase.rpc('debug_reset_daily_spin')
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const adminSupabase = createAdminClient()
+    const { error } = await adminSupabase.rpc('debug_reset_daily_spin', {
+        p_user_id: user.id
+    })
 
     if (error) {
         console.error('Error resetting spin:', error)

@@ -3,7 +3,7 @@
 -- 1) Normalize spin/nice schema constraints to match runtime behavior
 -- 2) Align referral_redemptions default with current referee reward
 -- 3) Keep nice_accounts.tier_bonus in sync with profiles.tier
--- 4) Fix lottery visit/check-in bonus integrity checks and stats recalculation
+-- 4) Fix lottery visit bonus integrity checks and stats recalculation
 -- 5) Ensure lottery_entries.visit_id references purchases (visit = recorded spend)
 
 -- 1. Spin prizes: allow "nice" as a prize type.
@@ -274,7 +274,7 @@ BEGIN
 END;
 $$;
 
--- 11. Harden weekly +2 lottery bonus: require at least one real purchase this drawing week.
+-- 11. Harden weekly +2 visit entries: require at least one real purchase this drawing week.
 CREATE OR REPLACE FUNCTION public.award_lottery_checkin_bonus(
   p_user_id uuid,
   p_drawing_id uuid
@@ -317,7 +317,7 @@ BEGIN
       AND drawing_id = p_drawing_id
       AND entry_type = 'checkin'
   ) THEN
-    RETURN jsonb_build_object('success', false, 'message', 'Check-in bonus already earned this week');
+    RETURN jsonb_build_object('success', false, 'message', 'Weekly visit entries already earned this week');
   END IF;
 
   INSERT INTO public.lottery_entries (

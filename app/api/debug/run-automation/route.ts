@@ -1,8 +1,38 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { processAutomations } from '@/lib/automations/process-automations'
+import { createClient } from '@/lib/supabase/server'
+
+async function authorizeDebugRequest(req: NextRequest) {
+    const debugEnabled = process.env.NODE_ENV !== 'production' || process.env.ENABLE_DEBUG_ROUTES === 'true'
+    if (!debugEnabled) return false
+
+    const debugSecret = process.env.DEBUG_ROUTE_SECRET || process.env.CRON_SECRET
+    const authHeader = req.headers.get('authorization')
+    if (debugSecret && authHeader === `Bearer ${debugSecret}`) {
+        return true
+    }
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return false
+
+    const { data: admin } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('id', user.id)
+        .eq('active', true)
+        .maybeSingle()
+
+    return !!admin
+}
 
 export async function GET(req: NextRequest) {
+    const isAuthorized = await authorizeDebugRequest(req)
+    if (!isAuthorized) {
+        return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
     const { searchParams } = new URL(req.url)
     const email = searchParams.get('email')
     const userId = searchParams.get('userId')
@@ -21,8 +51,7 @@ export async function GET(req: NextRequest) {
         console.error('[Debug Automation] Crash:', e)
         return NextResponse.json({
             success: false,
-            error: e.message,
-            stack: e.stack
+            error: 'Automation debug run failed'
         }, { status: 500 })
     }
 }

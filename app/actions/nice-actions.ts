@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { getUserProfile } from '@/app/actions/user-actions'
 
@@ -114,7 +115,7 @@ export async function getNiceState(): Promise<NiceState> {
 
     if (!user) throw new Error('Not authenticated')
 
-    let { data: account, error } = await supabase
+    let { data: account } = await supabase
         .from('nice_accounts')
         .select('*')
         .eq('user_id', user.id)
@@ -128,7 +129,8 @@ export async function getNiceState(): Promise<NiceState> {
         await getUserProfile()
 
         console.log('Nice account missing for user, creating default...')
-        const { data: newAccount, error: createError } = await supabase
+        const adminSupabase = createAdminClient()
+        const { data: newAccount, error: createError } = await adminSupabase
             .from('nice_accounts')
             .insert({ user_id: user.id })
             .select()
@@ -200,39 +202,8 @@ export async function collectNice(): Promise<CollectionResult> {
 }
 
 
-export async function awardVisitBonus(
-    purchaseAmount: number
-): Promise<VisitBonusResult> {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) throw new Error('Not authenticated')
-
-    // Logic to determine multiplier based on recent visits would go here
-    // For MVP/Demo, we might just toggle it or set a fixed bonus
-    // Assuming simple logic:
-    const newMultiplier = 5.0 // Default for 1 visit
-
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 7)
-
-    const { data, error } = await supabase.rpc('award_visit_bonus', {
-        p_user_id: user.id,
-        p_multiplier: newMultiplier,
-        p_expires_at: expiresAt.toISOString(),
-        p_bonus_nice: 100
-    })
-
-    if (error) throw error
-
-    revalidatePath('/')
-
-    return {
-        bonusNiceAwarded: 100,
-        newMultiplier: newMultiplier,
-        multiplierExpiresAt: expiresAt,
-        previousMultiplier: data.previous_multiplier
-    }
+export async function awardVisitBonus(): Promise<VisitBonusResult> {
+    throw new Error('Deprecated: visit multipliers are applied from staff-recorded spend flow.')
 }
 
 export async function convertNiceToPoints(

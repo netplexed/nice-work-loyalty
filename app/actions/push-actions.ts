@@ -71,6 +71,22 @@ export async function saveSubscription(subscription: any, platform: 'web' | 'ios
 
 export async function sendPushNotification(userId: string, title: string, body: string, url = '/') {
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { success: false, error: 'Unauthorized' }
+
+    if (user.id !== userId) {
+        const { data: admin } = await supabase
+            .from('admin_users')
+            .select('id')
+            .eq('id', user.id)
+            .eq('active', true)
+            .maybeSingle()
+
+        if (!admin) {
+            return { success: false, error: 'Forbidden' }
+        }
+    }
 
     const { data: subs } = await supabase
         .from('push_subscriptions')

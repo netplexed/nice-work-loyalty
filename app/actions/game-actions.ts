@@ -99,7 +99,7 @@ export async function submitCheckIn(location: string) {
         throw new Error('Already checked in today')
     }
 
-    const points = 15
+    const points = 0
 
     const { error: checkinError } = await supabase
         .from('check_ins')
@@ -111,16 +111,18 @@ export async function submitCheckIn(location: string) {
 
     if (checkinError) throw checkinError
 
-    const { error: pointsError } = await supabase
-        .from('points_transactions')
-        .insert({
-            user_id: user.id,
-            transaction_type: 'earned_bonus',
-            points: points,
-            description: `Daily Check-in at ${location}`
-        })
+    if (points > 0) {
+        const { error: pointsError } = await supabase
+            .from('points_transactions')
+            .insert({
+                user_id: user.id,
+                transaction_type: 'earned_bonus',
+                points: points,
+                description: `Daily Visit at ${location}`
+            })
 
-    if (pointsError) throw pointsError
+        if (pointsError) throw pointsError
+    }
 
     revalidatePath('/')
     return { success: true, points }

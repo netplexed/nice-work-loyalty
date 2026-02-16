@@ -25,15 +25,11 @@ const RecentActivity = dynamic(() => import('@/components/features/home/recent-a
     loading: () => <Skeleton className="h-64 w-full rounded-xl" />
 })
 import { useSpinWheel } from '@/hooks/use-spin-wheel'
-import { resetDailySpin } from '@/app/actions/debug-actions'
-import { RotateCcw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
 import { LotteryHomeWidget } from '@/components/lottery/LotteryHomeWidget'
 
 export default function Dashboard() {
     const { niceState, loading, error, mutate } = useNiceTank()
-    const { prizes: spinConfig, nextSpinTime, mutateStatus, loading: spinLoading } = useSpinWheel()
+    const { prizes: spinConfig, nextSpinTime, mutateStatus } = useSpinWheel()
 
     const [refreshTrigger, setRefreshTrigger] = useState(0)
 
@@ -77,16 +73,6 @@ export default function Dashboard() {
                 ...niceState,
                 collectedBalance: niceState.collectedBalance - (pointsGained * 20), // Approx
             }) // Validate with server immediately to get exact new balance
-        }
-    }
-
-    const handleDebugReset = async () => {
-        try {
-            await resetDailySpin()
-            await mutateStatus()
-            toast.success('Debug: Spin reset successful')
-        } catch (e) {
-            toast.error('Debug: Failed to reset')
         }
     }
 
@@ -135,20 +121,6 @@ export default function Dashboard() {
                                 mutateStatus() // Revalidate spin status
                             }}
                         />
-
-
-                        {/* Debug Tool */}
-                        <div className="mt-4 pt-4 border-t border-dashed flex justify-center">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-xs text-muted-foreground hover:text-destructive h-8 gap-1"
-                                onClick={handleDebugReset}
-                            >
-                                <RotateCcw className="w-3 h-3" />
-                                Reset Spin (Debug)
-                            </Button>
-                        </div>
                     </div>
                 )}
                 <ReferralCard />

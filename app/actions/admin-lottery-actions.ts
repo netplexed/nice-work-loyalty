@@ -3,9 +3,17 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { executeDrawing } from '@/lib/lottery/drawing-logic'
-import { LotteryDrawing } from '@/lib/lottery/types'
+import { LotteryService } from '@/lib/lottery/service'
+import { verifyAdmin } from './admin-actions'
+
+async function assertAdminAccess() {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+}
 
 export async function getAdminLotteryDrawings(): Promise<any[]> {
+    await assertAdminAccess()
+
     try {
         const supabase = createAdminClient()
 
@@ -33,8 +41,6 @@ export async function getAdminLotteryDrawings(): Promise<any[]> {
     }
 }
 
-import { LotteryService } from '@/lib/lottery/service'
-
 export async function createLotteryDrawingAdmin({
     prizeDescription,
     prizeValue,
@@ -50,6 +56,8 @@ export async function createLotteryDrawingAdmin({
     rewardId?: string
     autoEntryConfig?: any
 }) {
+    await assertAdminAccess()
+
     const supabase = createAdminClient()
 
     // Determine start date (now) - acts as the period start
@@ -94,6 +102,8 @@ export async function createLotteryDrawingAdmin({
 }
 
 export async function cancelLotteryDrawingAdmin(drawingId: string) {
+    await assertAdminAccess()
+
     const supabase = createAdminClient()
 
     const { data, error } = await (supabase.rpc as any)('cancel_lottery_drawing', {
@@ -107,6 +117,8 @@ export async function cancelLotteryDrawingAdmin(drawingId: string) {
 }
 
 export async function executeDrawingAdmin(drawingId: string) {
+    await assertAdminAccess()
+
     try {
         await executeDrawing(drawingId)
         revalidatePath('/admin/lottery')
@@ -117,6 +129,8 @@ export async function executeDrawingAdmin(drawingId: string) {
 }
 
 export async function recalculateDrawingStats(drawingId: string) {
+    await assertAdminAccess()
+
     const supabase = createAdminClient()
     try {
         const { error } = await (supabase.rpc as any)('recalculate_lottery_stats', {
