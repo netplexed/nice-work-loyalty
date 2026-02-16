@@ -32,7 +32,7 @@ export function ReferralCard() {
             try {
                 await navigator.share({
                     title: 'join me on nice work!',
-                    text: `use my code ${code} to get 200 bonus points!`,
+                    text: `use my code ${code} to get 100 bonus points!`,
                     url: window.location.origin
                 })
             } catch (err) {
@@ -75,7 +75,7 @@ export function ReferralCard() {
                     <Users className="w-5 h-5 text-green-600" />
                     <CardTitle className="text-lg">Refer & Earn</CardTitle>
                 </div>
-                <CardDescription>Get <strong>500 points</strong> for every friend who joins and spends!</CardDescription>
+                <CardDescription>Get <strong>250 points</strong> for every friend who joins and spends!</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 {/* Your Code Section */}

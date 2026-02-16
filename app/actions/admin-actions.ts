@@ -401,7 +401,7 @@ export async function recordUserSpend(userId: string, amount: number, location: 
         .maybeSingle()
 
     if (referralRedemption) {
-        const REFERRER_BONUS = 500
+        const REFERRER_BONUS = 250
 
         // Award points to Referrer
         const { error: referrerError } = await supabase
@@ -426,7 +426,7 @@ export async function recordUserSpend(userId: string, amount: number, location: 
                 const { sendNotification } = await import('@/app/actions/messaging-actions')
                 await sendNotification(
                     referralRedemption.referrer_id,
-                    'You earned 500 Points!',
+                    'You earned 250 Points!',
                     'Your friend visited and made a purchase! Your referral bonus has been added.',
                     '/points'
                 )

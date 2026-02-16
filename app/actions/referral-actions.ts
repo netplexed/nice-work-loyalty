@@ -54,7 +54,7 @@ export async function submitReferral(code: string) {
         }
 
         // 4. Record Redemption & Award Points
-        const BONUS_POINTS = 200
+        const BONUS_POINTS = 100
 
         // A. Insert Redemption Record
         const { error: redemptionError } = await (supabaseAdmin
@@ -95,7 +95,7 @@ export async function submitReferral(code: string) {
             await sendNotification(
                 referralRecord.referrer_id,
                 'A friend just joined!',
-                'Someone used your referral code. You\'ll earn 500 bonus points as soon as they visit!',
+                'Someone used your referral code. You\'ll earn 250 bonus points as soon as they visit!',
                 '/profile'
             )
         } catch (e) {
