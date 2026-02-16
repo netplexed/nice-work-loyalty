@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
+import { useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { getReferralCode } from '@/app/actions/user-actions-extensions'
@@ -9,22 +9,37 @@ import { hasRedeemedReferralCode, submitReferral } from '@/app/actions/referral-
 import { Copy, Share2, Users, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
+import useSWR from 'swr'
+
+type ReferralCardState = {
+    code: string | null
+    hasRedeemedCode: boolean
+}
 
 export function ReferralCard() {
-    const [code, setCode] = useState<string | null>(null)
     const [inputCode, setInputCode] = useState('')
-    const [hasRedeemedCode, setHasRedeemedCode] = useState(false)
-    const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
-
-    useEffect(() => {
-        Promise.all([getReferralCode(), hasRedeemedReferralCode()])
-            .then(([nextCode, redeemed]) => {
-                setCode(nextCode)
-                setHasRedeemedCode(redeemed)
-            })
-            .finally(() => setLoading(false))
-    }, [])
+    const { data, isLoading, mutate } = useSWR<ReferralCardState>(
+        'referral-card-state',
+        async () => {
+            const [code, redeemed] = await Promise.all([
+                getReferralCode(),
+                hasRedeemedReferralCode()
+            ])
+            return {
+                code,
+                hasRedeemedCode: redeemed
+            }
+        },
+        {
+            keepPreviousData: true,
+            revalidateIfStale: false,
+            revalidateOnFocus: true,
+            dedupingInterval: 60000
+        }
+    )
+    const code = data?.code || null
+    const hasRedeemedCode = data?.hasRedeemedCode || false
 
     const handleCopy = () => {
         if (code) {
@@ -59,7 +74,10 @@ export function ReferralCard() {
             }
 
             toast.success(`Code redeemed! You earned ${response.points} points!`)
-            setHasRedeemedCode(true)
+            mutate((current) => ({
+                code: current?.code || code,
+                hasRedeemedCode: true
+            }), false)
             setInputCode('')
             confetti({
                 particleCount: 100,
@@ -73,7 +91,7 @@ export function ReferralCard() {
         }
     }
 
-    if (loading) return null
+    if (isLoading && !data) return null
 
     return (
         <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-100">

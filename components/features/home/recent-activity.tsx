@@ -1,22 +1,35 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useEffect, useState } from 'react'
+import useSWR from 'swr'
 import { getPointsHistory } from '@/app/actions/user-actions'
 import { format } from 'date-fns'
 
 export function RecentActivity() {
-    const [history, setHistory] = useState<any[]>([])
+    const { data, isLoading } = useSWR<any[]>(
+        'recent-activity-5',
+        () => getPointsHistory(5),
+        {
+            keepPreviousData: true,
+            revalidateIfStale: false,
+            revalidateOnFocus: true,
+            dedupingInterval: 30000
+        }
+    )
 
-    useEffect(() => {
-        getPointsHistory(5).then(setHistory)
-    }, [])
+    const history = data || []
 
     return (
         <div className="space-y-4">
             <h2 className="text-lg font-semibold px-1">Recent Activity</h2>
             <div className="space-y-3">
-                {history.length === 0 ? (
+                {isLoading && history.length === 0 ? (
+                    <Card className="bg-gray-50 border-dashed">
+                        <CardContent className="p-8 text-center text-muted-foreground text-sm">
+                            Loading activity...
+                        </CardContent>
+                    </Card>
+                ) : history.length === 0 ? (
                     <Card className="bg-gray-50 border-dashed">
                         <CardContent className="p-8 text-center text-muted-foreground text-sm">
                             No recent activity yet.
