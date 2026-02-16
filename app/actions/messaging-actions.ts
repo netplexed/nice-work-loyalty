@@ -7,6 +7,16 @@ import { revalidatePath } from 'next/cache'
 import { unstable_noStore as noStore } from 'next/cache'
 import { resolveTargetAudience, TargetCriteria } from './segmentation-actions'
 
+const isDev = process.env.NODE_ENV !== 'production'
+
+function debugLog(...args: any[]) {
+    if (isDev) console.log(...args)
+}
+
+function debugWarn(...args: any[]) {
+    if (isDev) console.warn(...args)
+}
+
 interface BroadcastParams {
     title: string
     body: string
@@ -35,20 +45,20 @@ export async function broadcastMessage(params: BroadcastParams) {
     if (insertError) throw new Error('Failed to create broadcast: ' + insertError.message)
 
     // 2. Resolve Audience
-    console.log(`[broadcastMessage] Resolving audience...`)
+    debugLog(`[broadcastMessage] Resolving audience...`)
     const { userIds } = await resolveTargetAudience(params.targetCriteria || {})
-    console.log(`[broadcastMessage] Resolved ${userIds.length} users`)
+    debugLog(`[broadcastMessage] Resolved ${userIds.length} users`)
 
     // Debug: Check if current admin is in the list
     const { data: { user } } = await supabase.auth.getUser()
     if (user && userIds.includes(user.id)) {
-        console.log(`[broadcastMessage] ✅ Current admin (${user.id}) IS in the target audience.`)
+        debugLog(`[broadcastMessage] ✅ Current admin (${user.id}) IS in the target audience.`)
     } else {
-        console.warn(`[broadcastMessage] ❌ Current admin (${user?.id}) is NOT in the target audience.`)
+        debugWarn(`[broadcastMessage] ❌ Current admin (${user?.id}) is NOT in the target audience.`)
     }
 
     if (userIds.length === 0) {
-        console.warn('[broadcastMessage] No users found for criteria. Aborting send.')
+        debugWarn('[broadcastMessage] No users found for criteria. Aborting send.')
         return { success: true, sent: 0, emailCount: 0 }
     }
 
@@ -176,7 +186,7 @@ export async function markNotificationRead(id: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Unauthorized')
 
-    console.log(`[markNotificationRead] user=${user.id} id=${id}`)
+    debugLog(`[markNotificationRead] user=${user.id} id=${id}`)
 
     const { data, error, count } = await supabase
         .from('notifications')
@@ -191,12 +201,14 @@ export async function markNotificationRead(id: string) {
     }
 
     if (!data || data.length === 0) {
-        console.error('[markNotificationRead] No rows updated! Check RLS or ownership.')
-        // Check if notification exists at all
-        const { data: check } = await supabase.from('notifications').select('*').eq('id', id).single()
-        console.log('[markNotificationRead] Diagnostic check:', check)
+        debugWarn('[markNotificationRead] No rows updated! Check RLS or ownership.')
+        if (isDev) {
+            // Dev-only diagnostic query, avoid extra DB read in production hot path.
+            const { data: check } = await supabase.from('notifications').select('*').eq('id', id).single()
+            debugLog('[markNotificationRead] Diagnostic check:', check)
+        }
     } else {
-        console.log('[markNotificationRead] Success:', data)
+        debugLog('[markNotificationRead] Success:', data)
     }
 
     revalidatePath('/notifications')
@@ -207,7 +219,7 @@ export async function markAllRead() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Unauthorized')
 
-    console.log(`[markAllRead] user=${user.id}`)
+    debugLog(`[markAllRead] user=${user.id}`)
 
     const { data, error } = await supabase
         .from('notifications')
@@ -216,7 +228,7 @@ export async function markAllRead() {
         .eq('is_read', false)
         .select()
 
-    console.log(`[markAllRead] Updated ${data?.length} notifications`)
+    debugLog(`[markAllRead] Updated ${data?.length} notifications`)
 
     revalidatePath('/notifications')
 }

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import useSWR from 'swr'
+import { mutate } from 'swr'
 import { useNiceTank } from '@/hooks/use-nice-tank'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -16,11 +17,38 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export default function LotteryPage() {
     const { niceState, loading: niceLoading } = useNiceTank()
+    const ensuredDrawingRef = useRef<string | null>(null)
 
     const { data: currentData, isLoading: currentLoading } = useSWR<CurrentLotteryResponse>('/api/lottery/current', fetcher)
     const { data: winnersData, isLoading: winnersLoading } = useSWR<{ winners: LotteryWinner[] }>('/api/lottery/winners', fetcher)
 
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
+
+    useEffect(() => {
+        const drawingId = currentData?.drawing?.id
+        const totalEntries = currentData?.user_entries?.total || 0
+
+        if (!drawingId || ensuredDrawingRef.current === drawingId || totalEntries > 0) {
+            return
+        }
+
+        ensuredDrawingRef.current = drawingId
+
+        const ensureBaseEntry = async () => {
+            try {
+                const res = await fetch('/api/lottery/ensure-base-entry', { method: 'POST' })
+                const payload = await res.json()
+
+                if (res.ok && payload?.granted) {
+                    await mutate('/api/lottery/current')
+                }
+            } catch {
+                // No-op: current data remains usable and can be retried on next revalidation.
+            }
+        }
+
+        ensureBaseEntry()
+    }, [currentData?.drawing?.id, currentData?.user_entries?.total])
 
     if (currentLoading || niceLoading) {
         return <div className="p-8 space-y-4">

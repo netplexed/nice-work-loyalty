@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
+const isDev = process.env.NODE_ENV !== 'production'
+
 export function NotificationNav() {
     const { data: count = 0, mutate } = useSWR('unread-notifications', getUnreadCount, {
         refreshInterval: 30000 // Poll every 30s as backup
@@ -35,7 +37,7 @@ export function NotificationNav() {
                         filter: `user_id=eq.${user.id}`
                     },
                     () => {
-                        console.log('Realtime notification INSERT, refreshing badge...')
+                        if (isDev) console.log('Realtime notification INSERT, refreshing badge...')
                         mutate()
                     }
                 )
@@ -48,7 +50,7 @@ export function NotificationNav() {
                         filter: `user_id=eq.${user.id}`
                     },
                     () => {
-                        console.log('Realtime notification UPDATE, refreshing badge...')
+                        if (isDev) console.log('Realtime notification UPDATE, refreshing badge...')
                         mutate()
                     }
                 )

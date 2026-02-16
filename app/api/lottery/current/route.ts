@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
-import { formatDistance, addMinutes } from 'date-fns'
+import { formatDistance } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +25,7 @@ export async function GET() {
         return NextResponse.json({ error: 'No active lottery drawing' }, { status: 404 })
     }
 
-    // 2. Get user entries if logged in
+    // 2. Get user entries if logged in (read-only)
     let userEntries = []
     let totalUserEntries = 0
     let breakdown = { base: 0, purchased: 0, visit: 0, checkin: 0 }
@@ -40,36 +39,6 @@ export async function GET() {
             .eq('user_id', user.id)
 
         userEntries = entries || []
-
-        // --- LAZY AUTO-ENTRY CHECK ---
-        // If drawing has auto-entry config, ensure user gets their free entry
-        if (drawing.auto_entry_config?.type === 'all' && userEntries.length === 0) {
-            const qty = drawing.auto_entry_config.quantity || 1
-
-            // Use Admin Client to bypass RLS for insertion
-            const supabaseAdmin = createAdminClient()
-
-            // Double check we haven't already awarded (though userEntries was empty)
-            // Perform insert safely
-            const { data: newEntry, error: insertError } = await (supabaseAdmin
-                .from('lottery_entries') as any)
-                .insert({
-                    drawing_id: drawing.id,
-                    user_id: user.id,
-                    entry_type: 'base',
-                    quantity: qty
-                })
-                .select()
-                .single()
-
-            if (!insertError && newEntry) {
-                // Update local state to reflect the new entry immediately
-                userEntries = [newEntry];
-
-                // Async update total stats (don't await to avoid blocking UI)
-                (supabase.rpc as any)('recalculate_lottery_stats', { p_drawing_id: drawing.id }).then(() => { })
-            }
-        }
 
         // Re-calculate derived stats
         if (userEntries.length > 0) {

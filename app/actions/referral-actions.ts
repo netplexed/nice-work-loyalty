@@ -1,7 +1,75 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+
+export async function getReferralCardState() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return {
+            code: null,
+            hasRedeemedCode: false
+        }
+    }
+
+    try {
+        const { createAdminClient } = await import('@/lib/supabase/admin')
+        const supabaseAdmin = createAdminClient()
+
+        const [{ data: referralData, error: referralError }, { data: redemptionData, error: redemptionError }] = await Promise.all([
+            (supabaseAdmin
+                .from('referrals') as any)
+                .select('referral_code')
+                .eq('referrer_id', user.id)
+                .maybeSingle(),
+            supabaseAdmin
+                .from('referral_redemptions')
+                .select('id')
+                .eq('referee_id', user.id)
+                .limit(1)
+                .maybeSingle()
+        ])
+
+        if (redemptionError) {
+            console.error('[getReferralCardState] Error fetching redemption state:', redemptionError)
+        }
+
+        let code = (referralData as any)?.referral_code || null
+        if (referralError) {
+            console.error('[getReferralCardState] Error fetching referral code:', referralError)
+        }
+
+        // Self-heal if referral code row doesn't exist yet
+        if (!code) {
+            const generatedCode = (user.id.substring(0, 4) + Math.random().toString(36).substring(2, 6)).toUpperCase()
+            const { error: insertError } = await (supabaseAdmin
+                .from('referrals') as any)
+                .insert({
+                    referrer_id: user.id,
+                    referral_code: generatedCode,
+                    status: 'pending'
+                })
+
+            if (insertError) {
+                console.error('[getReferralCardState] Error generating referral code:', insertError)
+            } else {
+                code = generatedCode
+            }
+        }
+
+        return {
+            code,
+            hasRedeemedCode: !!redemptionData
+        }
+    } catch (error) {
+        console.error('[getReferralCardState] Fatal Error:', error)
+        return {
+            code: null,
+            hasRedeemedCode: false
+        }
+    }
+}
 
 export async function submitReferral(code: string) {
     const supabase = await createClient()

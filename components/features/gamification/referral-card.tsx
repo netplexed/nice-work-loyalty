@@ -4,8 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { getReferralCode } from '@/app/actions/user-actions-extensions'
-import { hasRedeemedReferralCode, submitReferral } from '@/app/actions/referral-actions'
+import { getReferralCardState, submitReferral } from '@/app/actions/referral-actions'
 import { Copy, Share2, Users, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
@@ -21,16 +20,7 @@ export function ReferralCard() {
     const [submitting, setSubmitting] = useState(false)
     const { data, isLoading, mutate } = useSWR<ReferralCardState>(
         'referral-card-state',
-        async () => {
-            const [code, redeemed] = await Promise.all([
-                getReferralCode(),
-                hasRedeemedReferralCode()
-            ])
-            return {
-                code,
-                hasRedeemedCode: redeemed
-            }
-        },
+        getReferralCardState,
         {
             keepPreviousData: true,
             revalidateIfStale: false,

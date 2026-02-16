@@ -1,6 +1,8 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import useSWR from 'swr'
+import { mutate } from 'swr'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -11,6 +13,33 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export function LotteryHomeWidget() {
     const { data, isLoading } = useSWR<CurrentLotteryResponse>('/api/lottery/current', fetcher)
+    const ensuredDrawingRef = useRef<string | null>(null)
+
+    useEffect(() => {
+        const drawingId = data?.drawing?.id
+        const totalEntries = data?.user_entries?.total || 0
+
+        if (!drawingId || ensuredDrawingRef.current === drawingId || totalEntries > 0) {
+            return
+        }
+
+        ensuredDrawingRef.current = drawingId
+
+        const ensureBaseEntry = async () => {
+            try {
+                const res = await fetch('/api/lottery/ensure-base-entry', { method: 'POST' })
+                const payload = await res.json()
+
+                if (res.ok && payload?.granted) {
+                    await mutate('/api/lottery/current')
+                }
+            } catch {
+                // No-op: current data remains usable and can be retried on next revalidation.
+            }
+        }
+
+        ensureBaseEntry()
+    }, [data?.drawing?.id, data?.user_entries?.total])
 
     if (isLoading) {
         return (

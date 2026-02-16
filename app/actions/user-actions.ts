@@ -7,8 +7,10 @@ import { trackEvent } from '@/app/actions/marketing-event-actions'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { processAutomations } from '@/lib/automations/process-automations'
 
+const isDev = process.env.NODE_ENV !== 'production'
+
 export async function getUserProfile() {
-    console.log('[Auth] getUserProfile called')
+    if (isDev) console.log('[Auth] getUserProfile called')
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
