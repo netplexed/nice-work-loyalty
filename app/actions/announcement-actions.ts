@@ -136,7 +136,12 @@ export async function createAnnouncement(data: Partial<Announcement>) {
 export async function updateAnnouncement(id: string, data: Partial<Announcement>) {
     const supabase = await createClient()
 
-    const normalizedUpdate: Partial<Announcement> & { action_url?: string | null; action_label?: string | null } = {
+    type AnnouncementUpdatePayload = Omit<Partial<Announcement>, 'action_url' | 'action_label'> & {
+        action_url?: string | null
+        action_label?: string | null
+    }
+
+    const normalizedUpdate: AnnouncementUpdatePayload = {
         ...data
     }
 
