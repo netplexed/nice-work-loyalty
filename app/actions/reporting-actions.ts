@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { verifyAdmin } from './admin-actions'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export interface DashboardStats {
     totalRevenue: number
@@ -10,7 +11,14 @@ export interface DashboardStats {
     pointsLiability: number
     revenueTrend: { date: string; amount: number }[]
     revenueByLocation: { name: string; value: number }[]
-    recentActivity: any[]
+    recentActivity: Array<{
+        type: string
+        id: string
+        user: string
+        description: string
+        amount: number
+        timestamp: Date
+    }>
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -593,13 +601,17 @@ export async function getTierActivityStats(): Promise<TierActivityData[]> {
 
     const tierMap = new Map<number, { count: number, totalPoints: number, totalNice: number }>()
 
-    accounts.forEach((acc: any) => {
+    accounts.forEach((acc: {
+        tier_bonus: number | null
+        nice_collected_balance: number | null
+        profiles: Array<{ points_balance: number | null }> | null
+    }) => {
         const bonus = acc.tier_bonus || 1.0
         const current = tierMap.get(bonus) || { count: 0, totalPoints: 0, totalNice: 0 }
 
         current.count++
         current.totalNice += acc.nice_collected_balance || 0
-        current.totalPoints += acc.profiles?.points_balance || 0
+        current.totalPoints += acc.profiles?.[0]?.points_balance || 0
 
         tierMap.set(bonus, current)
     })
@@ -612,4 +624,176 @@ export async function getTierActivityStats(): Promise<TierActivityData[]> {
     }))
 
     return result.sort((a, b) => b.tier_bonus - a.tier_bonus)
+}
+
+export interface DailyReportData {
+    reportDate: string
+    uniqueUsersOpenedApp: number
+    rewardsRedeemed: number
+    rewardsUsed: number
+    newUsersRegistered: number
+    pointsEarned: number
+    totalSpend: number
+    niceEarned: number
+    niceUsed: number
+    totalMembersAsOfDate: number
+    activeMembersAsOfDate: number
+}
+
+function toUtcDayRange(dateIso: string) {
+    const dayStart = new Date(`${dateIso}T00:00:00.000Z`)
+    const dayEnd = new Date(`${dateIso}T23:59:59.999Z`)
+    return { dayStart, dayEnd }
+}
+
+export async function getDailyReport(dateIso?: string): Promise<DailyReportData> {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+
+    const selectedDate = dateIso || new Date().toISOString().split('T')[0]
+    const { dayStart, dayEnd } = toUtcDayRange(selectedDate)
+
+    if (Number.isNaN(dayStart.getTime()) || Number.isNaN(dayEnd.getTime())) {
+        throw new Error('Invalid date')
+    }
+
+    const activeWindowStart = new Date(dayStart)
+    activeWindowStart.setUTCMonth(activeWindowStart.getUTCMonth() - 3)
+
+    const supabase = createAdminClient()
+
+    const [
+        { data: purchasesDay },
+        { data: checkInsDay },
+        { data: redemptionsDay },
+        { count: rewardsUsedCount },
+        { data: newUsersDay },
+        { data: pointsEarnedDay },
+        { data: niceTransactionsDay },
+        { count: totalMembersAsOfDate },
+        { data: purchasesActiveWindow },
+        { data: checkInsActiveWindow }
+    ] = await Promise.all([
+        supabase
+            .from('purchases')
+            .select('user_id, amount')
+            .gte('created_at', dayStart.toISOString())
+            .lte('created_at', dayEnd.toISOString()),
+
+        supabase
+            .from('check_ins')
+            .select('user_id')
+            .gte('created_at', dayStart.toISOString())
+            .lte('created_at', dayEnd.toISOString()),
+
+        supabase
+            .from('redemptions')
+            .select('user_id')
+            .gte('created_at', dayStart.toISOString())
+            .lte('created_at', dayEnd.toISOString()),
+
+        supabase
+            .from('redemptions')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'redeemed')
+            .gte('redeemed_at', dayStart.toISOString())
+            .lte('redeemed_at', dayEnd.toISOString()),
+
+        supabase
+            .from('profiles')
+            .select('id')
+            .gte('created_at', dayStart.toISOString())
+            .lte('created_at', dayEnd.toISOString()),
+
+        supabase
+            .from('points_transactions')
+            .select('user_id, points')
+            .in('transaction_type', [
+                'earned_purchase',
+                'earned_bonus',
+                'earned_referral',
+                'earned_social',
+                'earned_spin',
+                'earned_lottery'
+            ])
+            .gt('points', 0)
+            .gte('created_at', dayStart.toISOString())
+            .lte('created_at', dayEnd.toISOString()),
+
+        supabase
+            .from('nice_transactions')
+            .select('user_id, nice_amount')
+            .gte('created_at', dayStart.toISOString())
+            .lte('created_at', dayEnd.toISOString()),
+
+        supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .lte('created_at', dayEnd.toISOString()),
+
+        supabase
+            .from('purchases')
+            .select('user_id')
+            .gte('created_at', activeWindowStart.toISOString())
+            .lte('created_at', dayEnd.toISOString()),
+
+        supabase
+            .from('check_ins')
+            .select('user_id')
+            .gte('created_at', activeWindowStart.toISOString())
+            .lte('created_at', dayEnd.toISOString())
+    ])
+
+    const uniqueOpenedUsers = new Set<string>()
+    const addUsersToSet = (
+        target: Set<string>,
+        rows?: Array<{ user_id?: string | null }>
+    ) => {
+        rows?.forEach(row => {
+            if (row.user_id) target.add(row.user_id)
+        })
+    }
+
+    addUsersToSet(uniqueOpenedUsers, purchasesDay as Array<{ user_id?: string | null }>)
+    addUsersToSet(uniqueOpenedUsers, checkInsDay as Array<{ user_id?: string | null }>)
+    addUsersToSet(uniqueOpenedUsers, redemptionsDay as Array<{ user_id?: string | null }>)
+    addUsersToSet(uniqueOpenedUsers, pointsEarnedDay as Array<{ user_id?: string | null }>)
+    addUsersToSet(uniqueOpenedUsers, niceTransactionsDay as Array<{ user_id?: string | null }>)
+    newUsersDay?.forEach((row: { id: string }) => uniqueOpenedUsers.add(row.id))
+
+    const pointsEarned = pointsEarnedDay?.reduce((sum, row: { points: number | null }) => {
+        return sum + (row.points || 0)
+    }, 0) || 0
+
+    const totalSpend = purchasesDay?.reduce((sum, row: { amount: number | null }) => {
+        return sum + Number(row.amount || 0)
+    }, 0) || 0
+
+    const niceEarned = niceTransactionsDay?.reduce((sum, row: { nice_amount: number | null }) => {
+        const amount = row.nice_amount || 0
+        return amount > 0 ? sum + amount : sum
+    }, 0) || 0
+
+    const niceUsed = niceTransactionsDay?.reduce((sum, row: { nice_amount: number | null }) => {
+        const amount = row.nice_amount || 0
+        return amount < 0 ? sum + Math.abs(amount) : sum
+    }, 0) || 0
+
+    const activeMembersSet = new Set<string>()
+    addUsersToSet(activeMembersSet, purchasesActiveWindow as Array<{ user_id?: string | null }>)
+    addUsersToSet(activeMembersSet, checkInsActiveWindow as Array<{ user_id?: string | null }>)
+
+    return {
+        reportDate: selectedDate,
+        uniqueUsersOpenedApp: uniqueOpenedUsers.size,
+        rewardsRedeemed: redemptionsDay?.length || 0,
+        rewardsUsed: rewardsUsedCount || 0,
+        newUsersRegistered: newUsersDay?.length || 0,
+        pointsEarned,
+        totalSpend,
+        niceEarned,
+        niceUsed,
+        totalMembersAsOfDate: totalMembersAsOfDate || 0,
+        activeMembersAsOfDate: activeMembersSet.size
+    }
 }

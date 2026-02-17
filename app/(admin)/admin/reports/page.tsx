@@ -1,5 +1,5 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users } from "lucide-react"
+import { Users, CalendarDays } from "lucide-react"
 import Link from "next/link"
 
 export default function ReportsPage() {
@@ -22,6 +22,20 @@ export default function ReportsPage() {
                             </CardTitle>
                             <CardDescription>
                                 Analyze user retention and spending behavior over time.
+                            </CardDescription>
+                        </CardHeader>
+                    </Card>
+                </Link>
+
+                <Link href="/admin/reports/daily-report">
+                    <Card className="hover:bg-slate-50 transition-colors cursor-pointer h-full">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <CalendarDays className="h-5 w-5" />
+                                Daily Report
+                            </CardTitle>
+                            <CardDescription>
+                                One-day KPI snapshot across users, rewards, points, spend, and Nice.
                             </CardDescription>
                         </CardHeader>
                     </Card>
