@@ -1,15 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useSWRConfig } from 'swr'
 import { useUserProfile } from '@/hooks/use-user-profile'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { useRouter } from 'next/navigation'
-import { LogOut, Mail, Phone, Cake } from 'lucide-react'
+import { ExternalLink, LogOut, Mail, Phone, Cake } from 'lucide-react'
 import { NotificationsToggle } from '@/components/pwa/notifications-toggle'
 import { MarketingConsentToggle } from '@/components/features/profile/marketing-consent-toggle'
 import { VoucherQR } from '@/components/features/rewards/voucher-qr'
@@ -18,7 +16,7 @@ import { DeleteAccountDialog } from '@/components/features/profile/delete-accoun
 import { AvatarUpload } from '@/components/features/profile/avatar-upload'
 
 export default function ProfilePage() {
-    const { profile, loading } = useUserProfile()
+    const { profile } = useUserProfile()
     const router = useRouter()
     const supabase = createClient()
 
@@ -119,6 +117,21 @@ export default function ProfilePage() {
                         <span className="text-sm font-medium">Marketing Emails</span>
                         <MarketingConsentToggle initialConsent={profile.marketing_consent} />
                     </div>
+                    <Separator />
+                    <Button
+                        variant="ghost"
+                        asChild
+                        className="w-full justify-start text-muted-foreground"
+                    >
+                        <a
+                            href="/legal/NiceWork_PrivacyPolicy.docx"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Privacy Policy
+                        </a>
+                    </Button>
                     <Separator />
                     <Separator />
                     <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50" onClick={handleSignOut}>
