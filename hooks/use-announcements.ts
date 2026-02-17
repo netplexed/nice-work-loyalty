@@ -8,9 +8,13 @@ export function useAnnouncements() {
         'active-announcements',
         getActiveAnnouncements,
         {
-            revalidateOnFocus: false, // News doesn't change essential state, so less aggressive
-            revalidateIfStale: false,
-            dedupingInterval: 60000, // 1 minute cache
+            // This key is persisted in localStorage via SWR provider.
+            // Always revalidate so admin edits/deletes are reflected after refresh.
+            revalidateOnMount: true,
+            revalidateOnFocus: true,
+            revalidateOnReconnect: true,
+            revalidateIfStale: true,
+            dedupingInterval: 10000,
             keepPreviousData: true
         }
     )

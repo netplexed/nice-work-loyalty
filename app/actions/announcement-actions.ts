@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendBroadcastToAll } from '@/lib/push/send-push'
+import { normalizeActionUrl } from '@/lib/action-url'
 
 export type Announcement = {
     id: string
@@ -82,8 +83,12 @@ export async function createAnnouncement(data: Partial<Announcement>) {
     // Simple Admin Check (Assuming you have verifyAdmin or similar, logic inline for now for speed)
     // Ideally use your existing 'verifyAdmin' helper if available.
 
+    const normalizedActionUrl = normalizeActionUrl(data.action_url)
+
     const { error } = await supabase.from('announcements').insert({
         ...data,
+        action_url: normalizedActionUrl || null,
+        action_label: data.action_label?.trim() || null,
         created_by: user.id
     })
 
@@ -110,14 +115,14 @@ export async function createAnnouncement(data: Partial<Announcement>) {
         console.log('[createAnnouncement] Triggering sendBroadcastToAll with:', {
             title: data.title || 'Announcement',
             body: plainBody.substring(0, 50) + '...',
-            url: data.action_url || '/'
+            url: normalizedActionUrl || '/'
         })
 
         // Fire and forget (don't await to block UI)
         sendBroadcastToAll(
             data.title || 'Announcement',
             plainBody,
-            data.action_url || '/'
+            normalizedActionUrl || '/'
         ).catch(err => console.error('[createAnnouncement] Failed to send broadcast push:', err))
     } else {
         console.log('[createAnnouncement] Skipping push notification - not active or scheduled for later')
@@ -131,9 +136,21 @@ export async function createAnnouncement(data: Partial<Announcement>) {
 export async function updateAnnouncement(id: string, data: Partial<Announcement>) {
     const supabase = await createClient()
 
+    const normalizedUpdate: Partial<Announcement> & { action_url?: string | null; action_label?: string | null } = {
+        ...data
+    }
+
+    if (Object.prototype.hasOwnProperty.call(data, 'action_url')) {
+        normalizedUpdate.action_url = normalizeActionUrl(data.action_url) || null
+    }
+
+    if (Object.prototype.hasOwnProperty.call(data, 'action_label')) {
+        normalizedUpdate.action_label = data.action_label?.trim() || null
+    }
+
     const { error } = await supabase
         .from('announcements')
-        .update(data)
+        .update(normalizedUpdate)
         .eq('id', id)
 
     if (error) throw new Error(error.message)

@@ -9,6 +9,7 @@ import { markNotificationRead, getUnreadCount } from '@/app/actions/messaging-ac
 import { useRouter } from 'next/navigation'
 import { mutate } from 'swr'
 import { createClient } from '@/lib/supabase/client'
+import { isExternalActionUrl, normalizeActionUrl } from '@/lib/action-url'
 
 export function NativePushListener() {
     const router = useRouter()
@@ -17,8 +18,6 @@ export function NativePushListener() {
         if (!Capacitor.isNativePlatform()) return
 
         const supabase = createClient()
-        let unsubscribeAuth: (() => void) | undefined
-
         // Helper to sync badge
         const syncBadge = async () => {
             try {
@@ -62,15 +61,16 @@ export function NativePushListener() {
                         } else {
                             console.error('Failed to save native subscription:', saveResult.error)
                         }
-                    } catch (tokenError: any) {
-                        if (tokenError.message?.includes('No APNS token')) {
+                    } catch (tokenError: unknown) {
+                        const message = tokenError instanceof Error ? tokenError.message : String(tokenError)
+                        if (message.includes('No APNS token')) {
                             console.warn('FCM Token skipped (Simulator/No APNS). This is expected on Simulator.')
                         } else {
                             console.error('Failed to get FCM token:', tokenError)
                         }
                     }
                 }
-            } catch (e: any) {
+            } catch (e: unknown) {
                 console.error('Push init error:', e)
             }
         }
@@ -86,14 +86,14 @@ export function NativePushListener() {
             })
 
             // Notification received
-            await FirebaseMessaging.addListener('notificationReceived', async event => {
+            await FirebaseMessaging.addListener('notificationReceived', async () => {
                 mutate('unread-notifications')
                 await syncBadge()
             })
 
             // Notification tapped
             await FirebaseMessaging.addListener('notificationActionPerformed', async event => {
-                const data = event.notification.data as any
+                const data = (event.notification.data ?? {}) as { notificationId?: string; url?: string }
 
                 // Mark as read if we have an ID
                 if (data?.notificationId) {
@@ -108,7 +108,15 @@ export function NativePushListener() {
 
                 await syncBadge()
 
-                if (data?.url) router.push(data.url)
+                const actionUrl = normalizeActionUrl(data?.url)
+                if (!actionUrl) return
+
+                if (isExternalActionUrl(actionUrl)) {
+                    window.location.assign(actionUrl)
+                    return
+                }
+
+                router.push(actionUrl)
             })
         }
 
@@ -124,11 +132,10 @@ export function NativePushListener() {
                 initPush()
             }
         })
-        unsubscribeAuth = () => subscription.unsubscribe()
 
         return () => {
             FirebaseMessaging.removeAllListeners()
-            if (unsubscribeAuth) unsubscribeAuth()
+            subscription.unsubscribe()
         }
     }, [router])
 
