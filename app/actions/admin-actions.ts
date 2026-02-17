@@ -1,8 +1,12 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { trackEvent } from '@/app/actions/marketing-event-actions'
+
+type MemberTier = 'bronze' | 'silver' | 'gold' | 'platinum'
+const VALID_MEMBER_TIERS: MemberTier[] = ['bronze', 'silver', 'gold', 'platinum']
 
 export async function verifyAdmin() {
     const supabase = await createClient()
@@ -83,6 +87,136 @@ export async function getAllUsers(page = 1, limit = 20, query = '') {
     if (error) throw error
 
     return { users: data, total: count || 0 }
+}
+
+export async function adminDeleteUser(targetUserId: string) {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+
+    if (!currentUser) throw new Error('Unauthorized')
+    if (targetUserId === currentUser.id) {
+        throw new Error('You cannot delete your own account from this page')
+    }
+
+    const adminSupabase = createAdminClient()
+
+    // Prevent deleting active admin accounts from this user-management screen.
+    const { count: activeAdminCount, error: activeAdminError } = await adminSupabase
+        .from('admin_users')
+        .select('*', { count: 'exact', head: true })
+        .eq('id', targetUserId)
+        .eq('active', true)
+
+    if (activeAdminError) throw new Error(activeAdminError.message)
+    if ((activeAdminCount || 0) > 0) {
+        throw new Error('Cannot delete an active admin account from this page')
+    }
+
+    const { count: targetProfileCount, error: profileLookupError } = await adminSupabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('id', targetUserId)
+
+    if (profileLookupError) throw new Error(profileLookupError.message)
+    if ((targetProfileCount || 0) === 0) throw new Error('User not found')
+
+    // Best-effort cleanup of related records.
+    await adminSupabase.from('push_subscriptions').delete().eq('user_id', targetUserId)
+    await adminSupabase.from('nice_transactions').delete().eq('user_id', targetUserId)
+    await adminSupabase.from('check_ins').delete().eq('user_id', targetUserId)
+    await adminSupabase.from('spins').delete().eq('user_id', targetUserId)
+    await adminSupabase.from('purchases').delete().eq('user_id', targetUserId)
+    await adminSupabase.from('redemptions').delete().eq('user_id', targetUserId)
+    await adminSupabase.from('points_transactions').delete().eq('user_id', targetUserId)
+    await adminSupabase.from('lottery_entries').delete().eq('user_id', targetUserId)
+    await adminSupabase.from('lottery_winners').delete().eq('user_id', targetUserId)
+    await (adminSupabase.from('workflow_enrollments') as unknown as { delete: () => { eq: (col: string, val: string) => Promise<unknown> } })
+        .delete()
+        .eq('user_id', targetUserId)
+    await (adminSupabase.from('automation_logs') as unknown as { delete: () => { eq: (col: string, val: string) => Promise<unknown> } })
+        .delete()
+        .eq('user_id', targetUserId)
+    await (adminSupabase.from('notifications') as unknown as { delete: () => { eq: (col: string, val: string) => Promise<unknown> } })
+        .delete()
+        .eq('user_id', targetUserId)
+
+    const { error: referralsError } = await adminSupabase
+        .from('referrals')
+        .delete()
+        .or(`referrer_id.eq.${targetUserId},referee_id.eq.${targetUserId}`)
+    if (referralsError) throw new Error(referralsError.message)
+
+    const { error: referralRedemptionsError } = await adminSupabase
+        .from('referral_redemptions')
+        .delete()
+        .or(`referrer_id.eq.${targetUserId},referee_id.eq.${targetUserId}`)
+    if (referralRedemptionsError) throw new Error(referralRedemptionsError.message)
+
+    // Remove admin mapping (if any inactive record exists), then profile and auth user.
+    await adminSupabase.from('admin_users').delete().eq('id', targetUserId)
+
+    const { error: niceAccountError } = await adminSupabase
+        .from('nice_accounts')
+        .delete()
+        .eq('user_id', targetUserId)
+    if (niceAccountError) throw new Error(niceAccountError.message)
+
+    const { error: profileDeleteError } = await adminSupabase
+        .from('profiles')
+        .delete()
+        .eq('id', targetUserId)
+    if (profileDeleteError) throw new Error(profileDeleteError.message)
+
+    const { error: authDeleteError } = await adminSupabase.auth.admin.deleteUser(targetUserId)
+    if (authDeleteError) throw new Error(authDeleteError.message)
+
+    revalidatePath('/admin/users')
+    revalidatePath('/admin')
+    return { success: true }
+}
+
+export async function adjustUserTier(userId: string, tier: string) {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+
+    const normalizedTier = tier.trim().toLowerCase()
+    if (!VALID_MEMBER_TIERS.includes(normalizedTier as MemberTier)) {
+        throw new Error('Invalid tier value')
+    }
+
+    const adminSupabase = createAdminClient()
+
+    const { count: profileCount, error: profileLookupError } = await adminSupabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('id', userId)
+
+    if (profileLookupError) throw new Error(profileLookupError.message)
+    if ((profileCount || 0) === 0) throw new Error('User not found')
+
+    const { error: updateError } = await (adminSupabase.from('profiles') as unknown as {
+        update: (values: { tier: string, updated_at: string }) => {
+            eq: (column: string, value: string) => Promise<{ error: { message: string } | null }>
+        }
+    })
+        .update({
+            tier: normalizedTier,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+
+    if (updateError) throw new Error(updateError.message)
+
+    revalidatePath('/admin/users')
+    revalidatePath('/admin')
+
+    return {
+        success: true,
+        tier: normalizedTier
+    }
 }
 
 export async function adjustPoints(userId: string, amount: number, reason: string, location?: string) {
@@ -337,23 +471,129 @@ export async function recordUserSpend(userId: string, amount: number, location: 
     const isAdmin = await verifyAdmin()
     if (!isAdmin) throw new Error('Unauthorized')
 
+    if (!Number.isFinite(amount) || amount <= 0) {
+        throw new Error('Amount must be greater than 0')
+    }
+
+    const normalizedLocation = location.trim().toLowerCase()
+    const allowedLocations = ['tanuki_raw', 'standing_sushi_bar']
+    if (!allowedLocations.includes(normalizedLocation)) {
+        throw new Error('Invalid location')
+    }
+
     const supabase = await createClient()
+    const adminSupabase = createAdminClient()
     const { data: { user } } = await supabase.auth.getUser() // Admin ID
+    if (!user) throw new Error('Unauthorized')
+
+    const now = new Date()
+    const nowIso = now.toISOString()
 
     // 1. Calculate points
     const POINTS_PER_DOLLAR = 5
-    const pointsToEarn = Math.floor(amount * POINTS_PER_DOLLAR)
+    const purchaseAmount = Number(amount.toFixed(2))
+
+    const [
+        { data: profile, error: profileError },
+        { data: account, error: accountError },
+        { data: campaigns, error: campaignsError }
+    ] = await Promise.all([
+        adminSupabase
+            .from('profiles')
+            .select('tier')
+            .eq('id', userId)
+            .maybeSingle(),
+        adminSupabase
+            .from('nice_accounts')
+            .select('current_multiplier, multiplier_expires_at')
+            .eq('user_id', userId)
+            .maybeSingle(),
+        adminSupabase
+            .from('campaigns')
+            .select('campaign_type, multiplier, bonus_points, locations, target_tiers')
+            .eq('active', true)
+            .lte('start_date', nowIso)
+            .gte('end_date', nowIso)
+    ])
+
+    if (profileError) throw new Error('Failed to read member profile: ' + profileError.message)
+    const profileData = profile as unknown as { tier: string | null } | null
+    if (!profileData) throw new Error('User not found')
+
+    if (accountError) throw new Error('Failed to read member accelerator state: ' + accountError.message)
+    const accountData = account as unknown as {
+        current_multiplier: number | null
+        multiplier_expires_at: string | null
+    } | null
+
+    if (campaignsError) throw new Error('Failed to read active campaigns: ' + campaignsError.message)
+    const activeCampaigns = (campaigns as unknown as Array<{
+        campaign_type: string | null
+        multiplier: number | null
+        bonus_points: number | null
+        locations: string[] | null
+        target_tiers: string[] | null
+    }> | null) || []
+
+    const memberTierRaw = typeof profileData.tier === 'string' ? profileData.tier.trim().toLowerCase() : 'bronze'
+    const memberTier: MemberTier = VALID_MEMBER_TIERS.includes(memberTierRaw as MemberTier)
+        ? (memberTierRaw as MemberTier)
+        : 'bronze'
+
+    let visitMultiplier = 1
+    if (accountData?.multiplier_expires_at && new Date(accountData.multiplier_expires_at) > now) {
+        visitMultiplier = Math.max(1, Number(accountData.current_multiplier || 1))
+    }
+
+    let campaignMultiplier = 1
+    let campaignBonusPoints = 0
+
+    for (const campaign of activeCampaigns) {
+        const campaignLocations = Array.isArray(campaign.locations)
+            ? campaign.locations.map((value) => String(value).toLowerCase())
+            : []
+        const campaignTargetTiers = Array.isArray(campaign.target_tiers)
+            ? campaign.target_tiers.map((value) => String(value).toLowerCase())
+            : []
+
+        const locationMatches = campaignLocations.length === 0 || campaignLocations.includes(normalizedLocation)
+        const tierMatches = campaignTargetTiers.length === 0 || campaignTargetTiers.includes(memberTier)
+        if (!locationMatches || !tierMatches) continue
+
+        if (campaign.campaign_type === 'multiplier' && typeof campaign.multiplier === 'number') {
+            campaignMultiplier = Math.max(campaignMultiplier, Number(campaign.multiplier))
+        }
+
+        if (campaign.campaign_type === 'bonus_points' && typeof campaign.bonus_points === 'number') {
+            campaignBonusPoints += Math.max(0, Math.floor(Number(campaign.bonus_points)))
+        }
+    }
+
+    const multiplierApplied = Math.max(1, visitMultiplier, campaignMultiplier)
+    const basePoints = Math.floor(purchaseAmount * POINTS_PER_DOLLAR)
+    const multiplierBonusPoints = Math.floor(basePoints * (multiplierApplied - 1))
+    const pointsToEarn = basePoints + multiplierBonusPoints + campaignBonusPoints
+
+    const acceleratorSources: string[] = []
+    if (visitMultiplier > 1) acceleratorSources.push('visit_multiplier')
+    if (campaignMultiplier > 1) acceleratorSources.push('campaign_multiplier')
+    if (campaignBonusPoints > 0) acceleratorSources.push('campaign_bonus_points')
+
+    const descriptionExtras: string[] = []
+    if (multiplierApplied > 1) descriptionExtras.push(`${multiplierApplied}x accelerator`)
+    if (campaignBonusPoints > 0) descriptionExtras.push(`+${campaignBonusPoints} bonus`)
+    const descriptionSuffix = descriptionExtras.length > 0 ? ` (${descriptionExtras.join(', ')})` : ''
 
     // 2. Record Purchase
     const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
         .insert({
             user_id: userId,
-            location: location,
-            amount: amount,
+            location: normalizedLocation,
+            amount: purchaseAmount,
             points_earned: pointsToEarn,
             staff_id: user?.id,
-            multiplier_applied: 1.0
+            multiplier_applied: multiplierApplied
         })
         .select()
         .single()
@@ -372,9 +612,17 @@ export async function recordUserSpend(userId: string, amount: number, location: 
             staff_id: user?.id,
             transaction_type: 'earned_purchase',
             points: pointsToEarn,
-            location: location,
-            description: `Purchase of $${amount}`,
-            metadata: { purchase_id: purchase.id }
+            multiplier: multiplierApplied,
+            location: normalizedLocation,
+            description: `Purchase of $${purchaseAmount.toFixed(2)}${descriptionSuffix}`,
+            metadata: {
+                purchase_id: purchase.id,
+                base_points: basePoints,
+                multiplier_applied: multiplierApplied,
+                multiplier_bonus_points: multiplierBonusPoints,
+                campaign_bonus_points: campaignBonusPoints,
+                accelerator_sources: acceleratorSources
+            }
         })
 
     if (pointsError) {
@@ -439,19 +687,23 @@ export async function recordUserSpend(userId: string, amount: number, location: 
     }
 
     revalidatePath('/admin')
+    revalidatePath('/admin/users')
+    revalidatePath('/admin/pos')
     revalidatePath(`/admin/users/${userId}`)
 
     // Trigger Marketing Workflow (Order Completed)
     await trackEvent(userId, 'order.completed', {
-        value: amount,
+        value: purchaseAmount,
         points_earned: pointsToEarn,
-        location
+        location: normalizedLocation
     })
 
     return {
         success: true,
         pointsEarned: pointsToEarn,
-        purchaseId: purchase.id
+        purchaseId: purchase.id,
+        multiplierApplied,
+        bonusPoints: campaignBonusPoints
     }
 }
 

@@ -10,10 +10,25 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { PointsAdjustmentDialog } from '@/components/admin/users/points-adjustment-dialog'
 import { NiceAdjustmentDialog } from '@/components/admin/users/nice-adjustment-dialog'
+import { SpendAdjustmentDialog } from '@/components/admin/users/spend-adjustment-dialog'
+import { TierAdjustmentDialog } from '@/components/admin/users/tier-adjustment-dialog'
 import { GiveRewardDialog } from '@/components/admin/give-reward-dialog'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DeleteUserButton } from '@/components/admin/users/delete-user-button'
+import { Card, CardContent } from '@/components/ui/card'
 
 import { UserSearch } from '@/components/admin/users/user-search'
+
+type AdminUserRow = {
+    id: string
+    full_name: string | null
+    email: string | null
+    tier: string
+    points_balance: number
+    total_spent: number | null
+    nice_accounts?: {
+        nice_collected_balance?: number | null
+    } | null
+}
 
 export default async function UsersPage(props: {
     searchParams: Promise<{
@@ -52,8 +67,11 @@ export default async function UsersPage(props: {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {users.map((user: any) => (
-                                <TableRow key={user.id}>
+                            {users.map((user: AdminUserRow) => {
+                                const userLabel = user.full_name || user.email || user.id
+
+                                return (
+                                    <TableRow key={user.id}>
                                     <TableCell className="font-medium">
                                         {user.full_name || 'Unnamed User'}
                                     </TableCell>
@@ -75,27 +93,43 @@ export default async function UsersPage(props: {
                                     <TableCell className="text-right">
                                         ${user.total_spent}
                                     </TableCell>
-                                    <TableCell className="text-right flex justify-end gap-2">
-                                        <PointsAdjustmentDialog
-                                            userId={user.id}
-                                            userName={user.full_name || user.email}
-                                            currentBalance={user.points_balance}
-                                        />
-                                        <NiceAdjustmentDialog
-                                            userId={user.id}
-                                            userName={user.full_name || user.email}
-                                            currentBalance={user.nice_accounts?.nice_collected_balance || 0}
-                                        />
-                                        <GiveRewardDialog
-                                            userId={user.id}
-                                            userName={user.full_name || user.email}
-                                        />
+                                    <TableCell className="text-right">
+                                        <div className="flex flex-wrap justify-end gap-2">
+                                            <SpendAdjustmentDialog
+                                                userId={user.id}
+                                                userName={userLabel}
+                                            />
+                                            <PointsAdjustmentDialog
+                                                userId={user.id}
+                                                userName={userLabel}
+                                                currentBalance={user.points_balance}
+                                            />
+                                            <NiceAdjustmentDialog
+                                                userId={user.id}
+                                                userName={userLabel}
+                                                currentBalance={user.nice_accounts?.nice_collected_balance || 0}
+                                            />
+                                            <TierAdjustmentDialog
+                                                userId={user.id}
+                                                userName={userLabel}
+                                                currentTier={user.tier}
+                                            />
+                                            <GiveRewardDialog
+                                                userId={user.id}
+                                                userName={userLabel}
+                                            />
+                                            <DeleteUserButton
+                                                userId={user.id}
+                                                userLabel={userLabel}
+                                            />
+                                        </div>
                                     </TableCell>
-                                </TableRow>
-                            ))}
+                                    </TableRow>
+                                )
+                            })}
                             {users.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                                         No users found
                                     </TableCell>
                                 </TableRow>
