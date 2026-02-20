@@ -1,4 +1,4 @@
-import { getAdminRewards, toggleRewardStatus } from '@/app/actions/admin-actions'
+import { getAdminRewards } from '@/app/actions/admin-actions'
 import {
     Table,
     TableBody,
@@ -33,6 +33,7 @@ export default async function AdminRewardsPage() {
                                 <TableHead>Image</TableHead>
                                 <TableHead>Name</TableHead>
                                 <TableHead>Category</TableHead>
+                                <TableHead className="text-right">Order</TableHead>
                                 <TableHead className="text-right">Cost</TableHead>
                                 <TableHead className="text-center">Inventory</TableHead>
                                 <TableHead className="text-center">Redemptions</TableHead>
@@ -55,6 +56,9 @@ export default async function AdminRewardsPage() {
                                         {reward.name}
                                     </TableCell>
                                     <TableCell className="capitalize">{reward.category}</TableCell>
+                                    <TableCell className="text-right font-mono">
+                                        {reward.display_order ?? 0}
+                                    </TableCell>
                                     <TableCell className="text-right font-mono font-bold">
                                         {reward.points_cost}
                                     </TableCell>
@@ -99,7 +103,7 @@ export default async function AdminRewardsPage() {
                             ))}
                             {rewards.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                                         No rewards found. Create one!
                                     </TableCell>
                                 </TableRow>

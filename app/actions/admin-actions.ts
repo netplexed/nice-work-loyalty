@@ -323,9 +323,22 @@ export async function getAdminRewards() {
     const { data: rewards, error } = await supabase
         .from('rewards')
         .select('*, redemptions(count)')
+        .order('display_order', { ascending: true })
         .order('created_at', { ascending: false })
 
-    if (error) throw error
+    if (error) {
+        if (error.code === '42703') {
+            const { data: fallbackRewards, error: fallbackError } = await supabase
+                .from('rewards')
+                .select('*, redemptions(count)')
+                .order('created_at', { ascending: false })
+
+            if (fallbackError) throw fallbackError
+            return fallbackRewards || []
+        }
+
+        throw error
+    }
 
     return rewards || []
 }
@@ -341,20 +354,32 @@ export async function createReward(data: {
     inventory_remaining?: number
     locations?: string[]
     expires_at?: string
+    display_order?: number
 }) {
     const isAdmin = await verifyAdmin()
     if (!isAdmin) throw new Error('Unauthorized')
 
     const supabase = await createClient()
 
-    const { error } = await supabase
+    const insertPayload = {
+        ...data,
+        active: data.active ?? true,
+        reward_type: 'voucher', // Default for now
+        locations: data.locations || null,
+        display_order: data.display_order ?? 0
+    }
+
+    let { error } = await supabase
         .from('rewards')
-        .insert({
-            ...data,
-            active: data.active ?? true,
-            reward_type: 'voucher', // Default for now
-            locations: data.locations || null
-        })
+        .insert(insertPayload)
+
+    if (error?.code === '42703') {
+        const { display_order: _displayOrder, ...legacyPayload } = insertPayload
+        const { error: fallbackError } = await supabase
+            .from('rewards')
+            .insert(legacyPayload)
+        error = fallbackError
+    }
 
     if (error) throw error
 
@@ -374,16 +399,31 @@ export async function updateReward(id: string, data: {
     inventory_remaining?: number
     locations?: string[]
     expires_at?: string
+    display_order?: number
 }) {
     const isAdmin = await verifyAdmin()
     if (!isAdmin) throw new Error('Unauthorized')
 
     const supabase = await createClient()
 
-    const { error } = await supabase
+    const updatePayload = {
+        ...data,
+        ...(Object.prototype.hasOwnProperty.call(data, 'locations') ? { locations: data.locations || null } : {})
+    }
+
+    let { error } = await supabase
         .from('rewards')
-        .update(data)
+        .update(updatePayload)
         .eq('id', id)
+
+    if (error?.code === '42703') {
+        const { display_order: _displayOrder, ...legacyPayload } = updatePayload
+        const { error: fallbackError } = await supabase
+            .from('rewards')
+            .update(legacyPayload)
+            .eq('id', id)
+        error = fallbackError
+    }
 
     if (error) throw error
 

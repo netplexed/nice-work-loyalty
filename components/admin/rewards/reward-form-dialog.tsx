@@ -30,6 +30,7 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
     const [imageUrl, setImageUrl] = useState('')
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [inventory, setInventory] = useState('')
+    const [displayOrder, setDisplayOrder] = useState('0')
     const [selectedLocations, setSelectedLocations] = useState<string[]>([])
     const [isHidden, setIsHidden] = useState(false)
     const [expiresAt, setExpiresAt] = useState('')
@@ -50,6 +51,7 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
             setCategory(reward.category || 'food')
             setImageUrl(reward.image_url || '')
             setInventory(reward.inventory_remaining ? reward.inventory_remaining.toString() : '')
+            setDisplayOrder((reward.display_order ?? 0).toString())
             setSelectedLocations(reward.locations || [])
             setIsHidden(reward.is_hidden || false)
             setExpiresAt(reward.expires_at ? new Date(reward.expires_at).toISOString().slice(0, 16) : '')
@@ -62,6 +64,7 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
             setImageUrl('')
             setImageFile(null)
             setInventory('')
+            setDisplayOrder('0')
             setSelectedLocations([])
             setIsHidden(false)
             setExpiresAt('')
@@ -98,6 +101,7 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
                 category,
                 image_url: finalImageUrl,
                 inventory_remaining: inventory ? parseInt(inventory) : undefined,
+                display_order: displayOrder ? parseInt(displayOrder) : 0,
                 locations: selectedLocations.length > 0 ? selectedLocations : undefined,
                 is_hidden: isHidden,
                 expires_at: expiresAt ? new Date(expiresAt).toISOString() : undefined
@@ -210,6 +214,20 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
                                 min="1"
                             />
                         </div>
+                        <div className="space-y-2">
+                            <Label>Display Order</Label>
+                            <Input
+                                type="number"
+                                placeholder="0"
+                                value={displayOrder}
+                                onChange={e => setDisplayOrder(e.target.value)}
+                                min="0"
+                            />
+                            <p className="text-xs text-muted-foreground">Lower numbers appear first.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-2">
                             <Label>Category</Label>
                             <Select value={category} onValueChange={setCategory}>

@@ -98,7 +98,7 @@ export function NewsCarousel() {
                                                 <CardContent className="p-4 space-y-2">
                                                     <h3 className="font-bold text-gray-900 line-clamp-1">{item.title}</h3>
                                                     <div
-                                                        className="text-sm text-gray-500 line-clamp-2 min-h-[2.5rem] prose prose-sm max-w-none prose-p:m-0 prose-p:leading-tight"
+                                                        className="text-sm text-gray-500 line-clamp-2 h-[2.5rem] overflow-hidden prose prose-sm max-w-none prose-p:m-0 prose-p:leading-tight"
                                                         dangerouslySetInnerHTML={{ __html: item.content }}
                                                     />
                                                 </CardContent>

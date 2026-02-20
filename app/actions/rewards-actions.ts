@@ -6,27 +6,55 @@ import { revalidatePath } from 'next/cache'
 export async function getAvailableRewards() {
     const supabase = await createClient()
 
-    // Try fetching with expiration filter
+    const nowIso = new Date().toISOString()
+
+    // Prefer manual display order when the column is available.
     const { data, error } = await supabase
         .from('rewards')
         .select('*')
         .eq('active', true)
         .eq('is_hidden', false)
-        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+        .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+        .order('display_order', { ascending: true })
         .order('points_cost', { ascending: true })
+        .order('created_at', { ascending: false })
 
     if (error) {
-        // If column doesn't exist (migration not run), fall back to basic query
+        // If newer columns don't exist yet (migration not run), fall back safely.
         // Postgres error 42703: undefined_column
         if (error.code === '42703') {
-            const { data: fallbackData } = await supabase
+            const { data: fallbackOrderedData, error: fallbackOrderedError } = await supabase
                 .from('rewards')
                 .select('*')
                 .eq('active', true)
                 .eq('is_hidden', false)
+                .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
                 .order('points_cost', { ascending: true })
+                .order('created_at', { ascending: false })
 
-            return fallbackData || []
+            if (!fallbackOrderedError) {
+                return fallbackOrderedData || []
+            }
+
+            if (fallbackOrderedError.code === '42703') {
+                const { data: fallbackData, error: fallbackError } = await supabase
+                    .from('rewards')
+                    .select('*')
+                    .eq('active', true)
+                    .eq('is_hidden', false)
+                    .order('points_cost', { ascending: true })
+                    .order('created_at', { ascending: false })
+
+                if (fallbackError) {
+                    console.error('Error fetching rewards fallback:', fallbackError)
+                    return []
+                }
+
+                return fallbackData || []
+            }
+
+            console.error('Error fetching rewards fallback:', fallbackOrderedError)
+            return []
         }
 
         console.error('Error fetching rewards:', error)

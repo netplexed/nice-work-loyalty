@@ -71,27 +71,27 @@ export function LotteryHomeWidget() {
 
                 <CardContent className="p-4 relative">
                     <div className="flex justify-between items-start">
-                        <div>
+                        <div className="flex-1 min-w-0 pr-4">
                             <p className="text-xs font-medium opacity-90 uppercase tracking-wider mb-1">Weekly Lottery</p>
-                            <h3 className="text-xl font-bold leading-tight">{drawing.prize_description}</h3>
+                            <h3 className="text-xl font-bold leading-tight break-words">{drawing.prize_description}</h3>
                             <p className="text-[10px] opacity-80 mt-1 font-medium">
                                 Enable push notifications to be eligible
                             </p>
                         </div>
-                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm flex-shrink-0">
                             <Ticket className="w-6 h-6 text-white" />
                         </div>
                     </div>
 
                     <div className="mt-4 flex justify-between items-end">
-                        <div>
+                        <div className="flex-1 min-w-0 pr-2">
                             <p className="text-xs opacity-80 flex items-center gap-1">
                                 Your Entries
                             </p>
                             <p className="text-2xl font-bold">{user_entries.total}</p>
                         </div>
 
-                        <div className="bg-black/20 px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-md">
+                        <div className="bg-black/20 px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-md flex-shrink-0">
                             <Clock className="w-3.5 h-3.5" />
                             <span className="text-xs font-medium whitespace-nowrap">{time_until_draw}</span>
                         </div>
