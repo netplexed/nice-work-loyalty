@@ -29,6 +29,7 @@ export default function NewAnnouncementPage() {
                 image_url: imageUrl, // Use state
                 action_url: formData.get('action_url') as string,
                 action_label: formData.get('action_label') as string,
+                        send_push: formData.get('send_push') === 'on',
                 active: formData.get('active') === 'on',
                 priority: parseInt(formData.get('priority') as string) || 0,
                 start_date: formData.get('start_date') ? new Date(formData.get('start_date') as string).toISOString() : new Date().toISOString(),
@@ -112,6 +113,16 @@ export default function NewAnnouncementPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="end_date">End Date (Optional)</Label>
                                 <Input id="end_date" name="end_date" type="datetime-local" />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="send_push">Push Notification</Label>
+                                <div className="flex items-center gap-2 h-10 border rounded-md px-3">
+                                    <Switch id="send_push" name="send_push" defaultChecked />
+                                    <Label htmlFor="send_push" className="cursor-pointer">Send push notification</Label>
+                                </div>
                             </div>
                         </div>
 

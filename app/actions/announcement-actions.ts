@@ -12,6 +12,7 @@ export type Announcement = {
     image_url?: string
     action_url?: string
     action_label?: string
+    send_push?: boolean
     active: boolean
     start_date: string
     end_date?: string
@@ -89,6 +90,7 @@ export async function createAnnouncement(data: Partial<Announcement>) {
         ...data,
         action_url: normalizedActionUrl || null,
         action_label: data.action_label?.trim() || null,
+        send_push: typeof data.send_push === 'boolean' ? data.send_push : true,
         created_by: user.id
     })
 
@@ -108,7 +110,10 @@ export async function createAnnouncement(data: Partial<Announcement>) {
         willSendPush: data.active && isStartingNow
     })
 
-    if (data.active && isStartingNow) {
+    // Only send push if announcement is active, starting now, and send_push isn't explicitly false
+    const shouldSendPush = (typeof data.send_push === 'boolean' ? data.send_push : true)
+
+    if (data.active && isStartingNow && shouldSendPush) {
         // Strip HTML from content
         const plainBody = data.content?.replace(/<[^>]*>?/gm, '') || 'New Announcement!'
 
@@ -125,7 +130,7 @@ export async function createAnnouncement(data: Partial<Announcement>) {
             normalizedActionUrl || '/'
         ).catch(err => console.error('[createAnnouncement] Failed to send broadcast push:', err))
     } else {
-        console.log('[createAnnouncement] Skipping push notification - not active or scheduled for later')
+        console.log('[createAnnouncement] Skipping push notification - not active, scheduled for later, or send_push disabled')
     }
 
     revalidatePath('/')
@@ -139,6 +144,7 @@ export async function updateAnnouncement(id: string, data: Partial<Announcement>
     type AnnouncementUpdatePayload = Omit<Partial<Announcement>, 'action_url' | 'action_label'> & {
         action_url?: string | null
         action_label?: string | null
+        send_push?: boolean
     }
 
     const normalizedUpdate: AnnouncementUpdatePayload = {

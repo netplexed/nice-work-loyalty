@@ -50,6 +50,7 @@ export default function EditAnnouncementPage({ params }: { params: Promise<{ id:
                 image_url: imageUrl,
                 action_url: formData.get('action_url') as string,
                 action_label: formData.get('action_label') as string,
+                send_push: formData.get('send_push') === 'on',
                 active: formData.get('active') === 'on',
                 priority: parseInt(formData.get('priority') as string) || 0,
                 start_date: formData.get('start_date') ? new Date(formData.get('start_date') as string).toISOString() : new Date().toISOString(),
@@ -141,6 +142,16 @@ export default function EditAnnouncementPage({ params }: { params: Promise<{ id:
                                     type="datetime-local"
                                     defaultValue={data.end_date ? new Date(data.end_date).toISOString().slice(0, 16) : ''}
                                 />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="send_push">Push Notification</Label>
+                                <div className="flex items-center gap-2 h-10 border rounded-md px-3">
+                                    <Switch id="send_push" name="send_push" defaultChecked={data.send_push ?? true} />
+                                    <Label htmlFor="send_push" className="cursor-pointer">Send push notification</Label>
+                                </div>
                             </div>
                         </div>
 
