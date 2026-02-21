@@ -805,7 +805,7 @@ export async function adminCreateUser(data: {
 
     if (authError) {
         console.error('Error creating user:', authError)
-        throw new Error(Failed to create user: )
+        throw new Error(`Failed to create user: ${authError.message}`)
     }
 
     if (!authData.user) {
@@ -836,11 +836,10 @@ export async function adminCreateUser(data: {
         // If unique constraint violation (code 23505), it means a trigger already created the profile
         if (profileError.code !== '23505') {
             console.error('Error creating profile for new user:', profileError)
-            throw new Error(User created but profile creation failed: )
+            throw new Error(`User created but profile creation failed: ${profileError.message}`)
         } else {
             // A trigger created it. Let's update it with the additional data (tier, full_name)
-            await adminSupabase
-                .from('profiles')
+            await (adminSupabase.from('profiles') as any)
                 .update({ tier: data.tier || 'bronze', full_name: data.fullName || null })
                 .eq('id', userId)
         }
@@ -848,6 +847,6 @@ export async function adminCreateUser(data: {
 
     revalidatePath('/admin/users')
     revalidatePath('/admin')
-    
+
     return { success: true, user: authData.user }
 }

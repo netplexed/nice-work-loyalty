@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { UserPlus, Loader2 } from 'lucide-react'
 import { adminCreateUser } from '@/app/actions/admin-actions'
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from 'sonner'
 
 export function CreateUserDialog() {
     const [open, setOpen] = useState(false)
@@ -24,15 +24,10 @@ export function CreateUserDialog() {
     const [fullName, setFullName] = useState('')
     const [tier, setTier] = useState('bronze')
     const [password, setPassword] = useState('')
-    const { toast } = useToast()
 
     const handleCreate = async () => {
         if (!email) {
-            toast({
-                title: "Error",
-                description: "Email is required",
-                variant: "destructive"
-            })
+            toast.error("Email is required")
             return
         }
 
@@ -44,10 +39,7 @@ export function CreateUserDialog() {
                 tier,
                 password: password || undefined
             })
-            toast({
-                title: "User Created",
-                description: `Successfully created user ${email}`,
-            })
+            toast.success(`Successfully created user ${email}`)
             setOpen(false)
             // Reset form
             setEmail('')
@@ -55,11 +47,7 @@ export function CreateUserDialog() {
             setTier('bronze')
             setPassword('')
         } catch (error: any) {
-            toast({
-                title: "Failed to create user",
-                description: error.message || "An unknown error occurred",
-                variant: "destructive"
-            })
+            toast.error(error.message || "Failed to create user")
         } finally {
             setLoading(false)
         }
