@@ -17,6 +17,7 @@ import { DeleteUserButton } from '@/components/admin/users/delete-user-button'
 import { Card, CardContent } from '@/components/ui/card'
 
 import { UserSearch } from '@/components/admin/users/user-search'
+import { CreateUserDialog } from '@/components/admin/users/create-user-dialog'
 
 type AdminUserRow = {
     id: string
@@ -49,7 +50,10 @@ export default async function UsersPage(props: {
                     <h1 className="text-3xl font-bold tracking-tight">Users</h1>
                     <p className="text-muted-foreground">Manage your customer base ({total} total)</p>
                 </div>
-                <UserSearch />
+                <div className="flex items-center gap-4">
+                    <UserSearch />
+                    <CreateUserDialog />
+                </div>
             </div>
 
             <Card>
@@ -72,58 +76,58 @@ export default async function UsersPage(props: {
 
                                 return (
                                     <TableRow key={user.id}>
-                                    <TableCell className="font-medium">
-                                        {user.full_name || 'Unnamed User'}
-                                    </TableCell>
-                                    <TableCell>{user.email}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={
-                                            user.tier === 'platinum' ? 'default' :
-                                                user.tier === 'gold' ? 'secondary' : 'outline'
-                                        } className="capitalize">
-                                            {user.tier}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right font-mono font-bold">
-                                        {user.points_balance}
-                                    </TableCell>
-                                    <TableCell className="text-right font-mono font-bold text-amber-600">
-                                        {user.nice_accounts?.nice_collected_balance || 0}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        ${user.total_spent}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex flex-wrap justify-end gap-2">
-                                            <SpendAdjustmentDialog
-                                                userId={user.id}
-                                                userName={userLabel}
-                                            />
-                                            <PointsAdjustmentDialog
-                                                userId={user.id}
-                                                userName={userLabel}
-                                                currentBalance={user.points_balance}
-                                            />
-                                            <NiceAdjustmentDialog
-                                                userId={user.id}
-                                                userName={userLabel}
-                                                currentBalance={user.nice_accounts?.nice_collected_balance || 0}
-                                            />
-                                            <TierAdjustmentDialog
-                                                userId={user.id}
-                                                userName={userLabel}
-                                                currentTier={user.tier}
-                                            />
-                                            <GiveRewardDialog
-                                                userId={user.id}
-                                                userName={userLabel}
-                                            />
-                                            <DeleteUserButton
-                                                userId={user.id}
-                                                userLabel={userLabel}
-                                            />
-                                        </div>
-                                    </TableCell>
+                                        <TableCell className="font-medium">
+                                            {user.full_name || 'Unnamed User'}
+                                        </TableCell>
+                                        <TableCell>{user.email}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={
+                                                user.tier === 'platinum' ? 'default' :
+                                                    user.tier === 'gold' ? 'secondary' : 'outline'
+                                            } className="capitalize">
+                                                {user.tier}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right font-mono font-bold">
+                                            {user.points_balance}
+                                        </TableCell>
+                                        <TableCell className="text-right font-mono font-bold text-amber-600">
+                                            {user.nice_accounts?.nice_collected_balance || 0}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            ${user.total_spent}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex flex-wrap justify-end gap-2">
+                                                <SpendAdjustmentDialog
+                                                    userId={user.id}
+                                                    userName={userLabel}
+                                                />
+                                                <PointsAdjustmentDialog
+                                                    userId={user.id}
+                                                    userName={userLabel}
+                                                    currentBalance={user.points_balance}
+                                                />
+                                                <NiceAdjustmentDialog
+                                                    userId={user.id}
+                                                    userName={userLabel}
+                                                    currentBalance={user.nice_accounts?.nice_collected_balance || 0}
+                                                />
+                                                <TierAdjustmentDialog
+                                                    userId={user.id}
+                                                    userName={userLabel}
+                                                    currentTier={user.tier}
+                                                />
+                                                <GiveRewardDialog
+                                                    userId={user.id}
+                                                    userName={userLabel}
+                                                />
+                                                <DeleteUserButton
+                                                    userId={user.id}
+                                                    userLabel={userLabel}
+                                                />
+                                            </div>
+                                        </TableCell>
                                     </TableRow>
                                 )
                             })}

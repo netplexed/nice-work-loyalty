@@ -781,3 +781,73 @@ export async function searchCustomer(query: string) {
 
     return data
 }
+
+export async function adminCreateUser(data: {
+    email: string
+    fullName?: string
+    tier?: string
+    password?: string
+}) {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+
+    const adminSupabase = createAdminClient()
+
+    // 1. Create Auth User
+    const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
+        email: data.email,
+        email_confirm: true,
+        password: data.password || undefined,
+        user_metadata: {
+            full_name: data.fullName
+        }
+    })
+
+    if (authError) {
+        console.error('Error creating user:', authError)
+        throw new Error(Failed to create user: )
+    }
+
+    if (!authData.user) {
+        throw new Error('User creation succeeded but no user returned')
+    }
+
+    const userId = authData.user.id
+
+    // 2. Attempt to manually create profile. 
+    // Sometimes there are existing triggers that do this. If it fails due to unique constraint, we ignore.
+    const newProfile = {
+        id: userId,
+        email: data.email,
+        full_name: data.fullName || null,
+        tier: data.tier || 'bronze',
+        points_balance: 0,
+        total_spent: 0,
+        total_visits: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+    }
+
+    const { error: profileError } = await adminSupabase
+        .from('profiles')
+        .insert(newProfile as any)
+
+    if (profileError) {
+        // If unique constraint violation (code 23505), it means a trigger already created the profile
+        if (profileError.code !== '23505') {
+            console.error('Error creating profile for new user:', profileError)
+            throw new Error(User created but profile creation failed: )
+        } else {
+            // A trigger created it. Let's update it with the additional data (tier, full_name)
+            await adminSupabase
+                .from('profiles')
+                .update({ tier: data.tier || 'bronze', full_name: data.fullName || null })
+                .eq('id', userId)
+        }
+    }
+
+    revalidatePath('/admin/users')
+    revalidatePath('/admin')
+    
+    return { success: true, user: authData.user }
+}

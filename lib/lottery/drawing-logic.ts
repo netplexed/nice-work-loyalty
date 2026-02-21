@@ -126,6 +126,17 @@ export async function executeDrawing(drawingId: string) {
                 if (niceTxError) {
                     console.error('Failed to log lottery nice transaction:', niceTxError)
                 }
+
+                // Add to Points Activity Log (0 points) for visibility in Recent Activity
+                await (supabase
+                    .from('points_transactions') as any)
+                    .insert({
+                        user_id: winnerEntry.userId,
+                        transaction_type: 'earned_lottery',
+                        points: 0,
+                        description: `Won ${nicePrize} Nice from Lottery`,
+                        reference_id: drawingId
+                    })
             }
         }
     } else if (drawing.prize_type === 'points' && drawing.prize_value > 0) {
@@ -142,6 +153,17 @@ export async function executeDrawing(drawingId: string) {
         if (pointsError) {
             console.error('Failed to award regular points:', pointsError)
         }
+    } else if (drawing.prize_type === 'reward') {
+        // Add to Points Activity Log (0 points) for visibility in Recent Activity
+        await (supabase
+            .from('points_transactions') as any)
+            .insert({
+                user_id: winnerEntry.userId,
+                transaction_type: 'earned_lottery',
+                points: 0,
+                description: `Won Prize: ${drawing.prize_description}`,
+                reference_id: drawingId
+            })
     }
 
     // Insert winner record
