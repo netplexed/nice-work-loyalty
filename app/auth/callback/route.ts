@@ -21,7 +21,7 @@ export async function GET(request: Request) {
                 full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
                 updated_at: new Date().toISOString(),
                 // these defaults match the onboarding process
-                points_balance: 10,
+                points_balance: 50,
                 tier: 'bronze',
                 total_visits: 0,
                 total_spent: 0
