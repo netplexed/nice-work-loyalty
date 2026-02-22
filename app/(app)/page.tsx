@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { PointsBalanceBranded as PointsBalance } from '@/components/features/home/points-balance-branded'
 import { NewsCarousel } from '@/components/features/home/news-carousel'
-import { QuickActions } from '@/components/features/home/quick-actions'
 import { NiceTank } from '@/components/nice/nice-tank'
 import { NiceBalance } from '@/components/nice/nice-balance'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -44,20 +43,6 @@ export default function Dashboard() {
         }, false) // false = update local data immediately, don't re-fetch from server yet
     }
 
-    const handleCheckInSuccess = (visitCount: number, multiplier: number) => {
-        setRefreshTrigger(prev => prev + 1)
-
-        if (niceState) {
-            mutate({
-                ...niceState,
-                currentMultiplier: multiplier
-            }, false)
-        }
-
-        // Re-validate in background
-        mutate()
-    }
-
     const handleSwapSuccess = (pointsGained: number) => {
         setRefreshTrigger(prev => prev + 1)
 
@@ -81,12 +66,14 @@ export default function Dashboard() {
             <div className="space-y-6">
                 <PointsBalance refreshTrigger={refreshTrigger} />
 
+                <NewsCarousel />
+
                 {/* Nice Currency Section */}
                 <div className="space-y-4">
                     {loading ? (
                         <div className="space-y-4">
-                            <Skeleton className="h-24 w-full rounded-xl" />
                             <Skeleton className="h-64 w-full rounded-2xl" />
+                            <Skeleton className="h-24 w-full rounded-xl" />
                         </div>
                     ) : error ? (
                         <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm text-center border border-red-100">
@@ -94,21 +81,17 @@ export default function Dashboard() {
                         </div>
                     ) : niceState ? (
                         <>
+                            <NiceTank initialState={niceState} onCollect={handleCollect} />
                             <NiceBalance
                                 balance={niceState.collectedBalance}
                                 onSwapSuccess={handleSwapSuccess}
                             />
-                            <NiceTank initialState={niceState} onCollect={handleCollect} />
                         </>
                     ) : null}
                 </div>
 
                 {/* Weighted slightly higher than news, below balanced/tank */}
                 <LotteryHomeWidget />
-
-                <NewsCarousel />
-
-                <QuickActions onCheckInSuccess={handleCheckInSuccess} />
 
                 {spinConfig.length > 0 && (
                     <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800">
