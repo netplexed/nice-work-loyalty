@@ -57,7 +57,7 @@ export default function OnboardingPage() {
                     phone: values.phone || null,
                     updated_at: new Date().toISOString(),
                     // Default values for new profiles
-                    points_balance: 10,
+                    points_balance: 50,
                     tier: 'bronze',
                     total_visits: 0,
                     total_spent: 0

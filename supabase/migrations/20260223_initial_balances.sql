@@ -5,14 +5,16 @@
 ALTER TABLE public.nice_accounts ALTER COLUMN nice_collected_balance TYPE numeric(10,2);
 ALTER TABLE public.nice_transactions ALTER COLUMN nice_amount TYPE numeric(10,2);
 
--- 2. Update the signup trigger to grant initial Nice balance
+-- 2. Update the signup trigger to pre-fill the tank by backdating tank_last_collected_at
 CREATE OR REPLACE FUNCTION public.create_nice_account_on_signup()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  INSERT INTO public.nice_accounts (user_id, nice_collected_balance)
-  VALUES (NEW.id, 23.75);
+  -- Insert a nice account with 0 collected balance, but backdate the tank_last_collected_at by 11.875 hours.
+  -- Since base_rate is 2.0 / hour, this equals exactly 23.75 Nice in the generator.
+  INSERT INTO public.nice_accounts (user_id, nice_collected_balance, tank_last_collected_at)
+  VALUES (NEW.id, 0, now() - interval '11 hours 52 minutes 30 seconds');
   RETURN NEW;
 END;
 $$;
