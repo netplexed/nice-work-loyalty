@@ -25,11 +25,11 @@ export function NiceBalance({ balance, onSwapSuccess }: NiceBalanceProps) {
     }, [balance, spring])
 
     return (
-        <div className="bg-slate-900 text-white rounded-[var(--card-radius)] p-[var(--card-padding)] shadow-[var(--card-shadow)] relative min-h-[140px] flex items-center justify-between">
+        <div className="bg-slate-900 text-white rounded-[var(--card-radius)] p-[var(--card-padding)] shadow-[var(--card-shadow)] relative min-h-[100px] flex items-center justify-between">
             <div>
-                <div className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] leading-[var(--line-height-normal)] tracking-[0.5px] text-slate-400 opacity-[0.7] mb-2">Your Balance</div>
+                <div className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] leading-[var(--line-height-normal)] tracking-[0.5px] text-slate-400 opacity-[0.7] mb-2">Your Nice Balance</div>
                 <div className="text-[length:var(--font-size-display)] font-[var(--font-weight-bold)] leading-[var(--line-height-tight)] font-mono text-amber-400">
-                    <motion.span>{display}</motion.span> <span className="text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] leading-[var(--line-height-relaxed)] text-slate-400 font-sans opacity-[0.7]">nice</span>
+                    <motion.span>{display}</motion.span>
                 </div>
             </div>
 

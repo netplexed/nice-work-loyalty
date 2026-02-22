@@ -8,6 +8,8 @@ import { NiceBalance } from '@/components/nice/nice-balance'
 import { Skeleton } from '@/components/ui/skeleton'
 import confetti from 'canvas-confetti'
 import { useNiceTank } from '@/hooks/use-nice-tank'
+import { motion, useScroll, useTransform } from 'framer-motion'
+import { ChevronDown } from 'lucide-react'
 
 // Lazy load below-the-fold components
 import dynamic from 'next/dynamic'
@@ -31,6 +33,9 @@ export default function Dashboard() {
     const { prizes: spinConfig, nextSpinTime, mutateStatus } = useSpinWheel()
 
     const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+    const { scrollY } = useScroll()
+    const chevronOpacity = useTransform(scrollY, [0, 100], [1, 0])
 
     const handleCollect = (amount: number) => {
         if (!niceState) return
@@ -109,6 +114,24 @@ export default function Dashboard() {
                 <ReferralCard />
             </div>
             <RecentActivity />
+
+            {/* Scroll Indicator Chevron */}
+            <motion.div
+                className="fixed bottom-24 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center gap-1"
+                style={{ opacity: chevronOpacity }}
+                initial={{ y: -10 }}
+                animate={{ y: 0 }}
+                transition={{
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    duration: 1,
+                    ease: "easeInOut"
+                }}
+            >
+                <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm p-2 rounded-full shadow-md text-amber-500 border border-gray-100 dark:border-zinc-800">
+                    <ChevronDown size={24} />
+                </div>
+            </motion.div>
         </div>
     )
 }
