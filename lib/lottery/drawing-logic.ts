@@ -281,7 +281,7 @@ async function notifyLotteryWinner(userId: string, drawing: any, voucherCode: st
     if (!user || !user.email) return
 
     const title = '🎉 You won the lottery!'
-    const body = `Congratulations! You won the ${drawing.prize_description} in our weekly lottery. Your voucher code is ${voucherCode}.`
+    const body = `Congratulations! You won the ${drawing.prize_description} in our weekly lottery.`
 
     // 2. Create In-App Notification (for Alerts page)
     try {
@@ -316,10 +316,10 @@ async function notifyLotteryWinner(userId: string, drawing: any, voucherCode: st
                     <p>Hi ${user.full_name || 'Lucky Winner'},</p>
                     <p>We are excited to inform you that you have won this week's lottery drawing!</p>
                     <div style="background: #fffbeb; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #fef3c7;">
-                        <h2 style="margin-top: 0;">Prize: ${drawing.prize_description}</h2>
-                        <p style="font-size: 18px;">Your Voucher Code: <strong>${voucherCode}</strong></p>
+                        <h2 style="margin-top: 0; margin-bottom: 0;">Prize: ${drawing.prize_description}</h2>
                     </div>
-                    <p>To claim your prize, simply present this voucher code during your next visit.</p>
+                    <p>If you won Nice or points, they have been automatically added to your balance.</p>
+                    <p>For all other prizes, your reward can be found in the "My Rewards" section of the app.</p>
                     <p>Thank you for being a part of our community!</p>
                     <br/>
                     <p>Best regards,<br/>the nice work team</p>
