@@ -38,10 +38,10 @@ export default function RewardsPage() {
 
 
 
-            <Tabs defaultValue="catalog" className="w-full">
+            <Tabs defaultValue="my-rewards" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger value="catalog">Reward Catalog</TabsTrigger>
                     <TabsTrigger value="my-rewards">My Rewards</TabsTrigger>
+                    <TabsTrigger value="catalog">Reward Catalog</TabsTrigger>
                 </TabsList>
 
                 {/* Catalog Tab */}

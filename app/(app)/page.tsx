@@ -66,8 +66,6 @@ export default function Dashboard() {
             <div className="space-y-6">
                 <PointsBalance refreshTrigger={refreshTrigger} />
 
-                <NewsCarousel />
-
                 {/* Nice Currency Section */}
                 <div className="space-y-4">
                     {loading ? (
@@ -89,6 +87,8 @@ export default function Dashboard() {
                         </>
                     ) : null}
                 </div>
+
+                <NewsCarousel />
 
                 {/* Weighted slightly higher than news, below balanced/tank */}
                 <LotteryHomeWidget />

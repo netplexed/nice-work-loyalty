@@ -30,7 +30,7 @@ export function PointsBalanceBranded({ refreshTrigger = 0 }: PointsBalanceProps)
     const progress = Math.min((profile.total_spent / 1500) * 100, 100)
 
     return (
-        <Card className="bg-gradient-to-br from-orange-600 to-red-700 text-white border-none shadow-[var(--card-shadow)] rounded-[var(--card-radius)] overflow-hidden relative min-h-[220px]">
+        <Card className="bg-gradient-to-br from-orange-600 to-red-700 text-white border-none shadow-[var(--card-shadow)] rounded-[var(--card-radius)] overflow-hidden relative min-h-[160px]">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -42,9 +42,25 @@ export function PointsBalanceBranded({ refreshTrigger = 0 }: PointsBalanceProps)
                     backgroundSize: '24px 24px'
                 }}></div>
 
-                {/* Nice Work Text - Watermark */}
-                <div className="absolute top-6 right-6 opacity-30 pointer-events-none z-0">
-                    <span className="text-xl font-medium tracking-tight text-white font-brand">nice work</span>
+                {/* Top Right Branding & Logos */}
+                <div className="absolute top-6 right-6 flex flex-col items-end gap-2 z-10 pointer-events-none">
+                    <span className="text-xl font-medium tracking-tight text-white/40 font-brand">nice work</span>
+                    <div className="flex items-center gap-1.5 pointer-events-auto mt-1">
+                        <div className="bg-white p-1 rounded-md shadow-sm transform hover:scale-105 transition-transform duration-200">
+                            <img
+                                src="/images/logos/tanuki-raw-logo.png"
+                                alt="Tanuki Raw"
+                                className="h-4 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-300 opacity-80 hover:opacity-100"
+                            />
+                        </div>
+                        <div className="bg-white p-1 rounded-md shadow-sm transform hover:scale-105 transition-transform duration-200">
+                            <img
+                                src="/images/logos/standing-sushi-bar-logo.png"
+                                alt="Standing Sushi Bar"
+                                className="h-4 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-300 opacity-80 hover:opacity-100"
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 <CardHeader className="pb-2 relative z-10 px-[var(--card-padding)] pt-[var(--card-padding)]">
@@ -67,26 +83,6 @@ export function PointsBalanceBranded({ refreshTrigger = 0 }: PointsBalanceProps)
                         <Progress value={progress} className="h-3 bg-black/20" indicatorClassName="bg-white" />
                     </div>
 
-                    {/* Restaurant Logos */}
-                    <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-4">
-                        <span className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] tracking-[0.5px] opacity-[0.7]">Participating Outlets</span>
-                        <div className="flex items-center gap-3">
-                            <div className="bg-white p-1.5 rounded-lg shadow-sm transform hover:scale-105 transition-transform duration-200">
-                                <img
-                                    src="/images/logos/tanuki-raw-logo.png"
-                                    alt="Tanuki Raw"
-                                    className="h-6 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-300 opacity-80 hover:opacity-100"
-                                />
-                            </div>
-                            <div className="bg-white p-1.5 rounded-lg shadow-sm transform hover:scale-105 transition-transform duration-200">
-                                <img
-                                    src="/images/logos/standing-sushi-bar-logo.png"
-                                    alt="Standing Sushi Bar"
-                                    className="h-6 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-300 opacity-80 hover:opacity-100"
-                                />
-                            </div>
-                        </div>
-                    </div>
                 </CardContent>
 
                 {/* Decorative background circles */}
@@ -99,7 +95,7 @@ export function PointsBalanceBranded({ refreshTrigger = 0 }: PointsBalanceProps)
 
 function PointsSkeleton() {
     return (
-        <Card className="bg-gradient-to-br from-orange-600 to-red-700 border-none shadow-lg h-[200px] animate-pulse">
+        <Card className="bg-gradient-to-br from-orange-600 to-red-700 border-none shadow-lg h-[160px] animate-pulse">
             <CardContent className="h-full flex items-center justify-center">
                 <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
             </CardContent>
