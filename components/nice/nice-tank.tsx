@@ -146,8 +146,8 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
                         <div
                             className="absolute inset-0 bg-gradient-to-t from-[#FFB347] to-[#FFCC5C]"
                             style={{
-                                maskImage: 'url(/images/tanuki-nice.jpg)',
-                                WebkitMaskImage: 'url(/images/tanuki-nice.jpg)',
+                                maskImage: 'url(/images/tanuki-nice-mask.png)',
+                                WebkitMaskImage: 'url(/images/tanuki-nice-mask.png)',
                                 maskSize: 'contain',
                                 WebkitMaskSize: 'contain',
                                 maskPosition: 'center',
