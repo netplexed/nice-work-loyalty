@@ -32,7 +32,7 @@ export async function getUserProfile() {
             id: user.id,
             email: user.email,
             phone: null,
-            points_balance: 0,
+            points_balance: 50,
             tier: 'bronze',
             total_visits: 0,
             total_spent: 0,
