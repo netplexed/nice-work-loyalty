@@ -49,6 +49,32 @@
 }
 
 :root {
+  /* Spacing */
+  --card-gap: 16px;
+  --card-padding: 20px;
+  --card-grid-gap: 12px;
+  --screen-margin: 16px;
+
+  /* Typography */
+  --font-size-display-large: 56px;
+  --font-size-display: 48px;
+  --font-size-button: 15px;
+  --font-size-body: 14px;
+  --font-size-header: 12px;
+  --font-size-small: 12px;
+
+  --font-weight-bold: 700;
+  --font-weight-semibold: 600;
+  --font-weight-regular: 400;
+
+  --line-height-tight: 1.1;
+  --line-height-normal: 1.4;
+  --line-height-relaxed: 1.5;
+
+  /* Effects */
+  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --card-radius: 16px;
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -58,11 +84,11 @@
   --popover-foreground: oklch(0.145 0 0);
   /* --primary: oklch(0.45 0.19 265);  Blue (Original) */
   /* --primary-foreground: oklch(0.985 0 0); */
-  
+
   /* Brand Theme (Warm/Orange) */
   --primary: oklch(0.58 0.23 35);
   --primary-foreground: oklch(0.985 0 0);
-  
+
   --secondary: oklch(0.75 0.18 70);
   --secondary-foreground: oklch(0.145 0 0);
   --muted: oklch(0.97 0 0);
@@ -72,7 +98,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  
+
   /* --ring: oklch(0.708 0 0); Original */
   --ring: oklch(0.65 0.2 35);
   --chart-1: oklch(0.646 0.222 41.116);
@@ -128,10 +154,14 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
-    overscroll-behavior-y: none; /* Prevent pull-to-refresh bounce */
-    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
-    touch-action: manipulation; /* Improve touch response */
+    overscroll-behavior-y: none;
+    /* Prevent pull-to-refresh bounce */
+    -webkit-tap-highlight-color: transparent;
+    /* Remove tap highlight on iOS */
+    touch-action: manipulation;
+    /* Improve touch response */
   }
 }

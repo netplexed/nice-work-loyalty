@@ -64,17 +64,17 @@ export function LotteryHomeWidget() {
 
     return (
         <Link href="/lottery">
-            <Card className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer overflow-hidden relative">
+            <Card className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-[var(--card-shadow)] rounded-[var(--card-radius)] hover:shadow-xl transition-shadow cursor-pointer overflow-hidden relative">
                 {/* Background decoration */}
                 <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl pointer-events-none" />
                 <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-black/10 rounded-full blur-xl pointer-events-none" />
 
-                <CardContent className="p-4 relative">
+                <CardContent className="p-[var(--card-padding)] relative">
                     <div className="flex justify-between items-start">
                         <div className="flex-1 min-w-0 pr-4">
-                            <p className="text-xs font-medium opacity-90 uppercase tracking-wider mb-1">Weekly Lottery</p>
-                            <h3 className="text-xl font-bold leading-tight break-words">{drawing.prize_description}</h3>
-                            <p className="text-[10px] opacity-80 mt-1 font-medium">
+                            <p className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] opacity-[0.7] tracking-[0.5px] mb-1">Weekly Lottery</p>
+                            <h3 className="text-xl font-[var(--font-weight-bold)] leading-[var(--line-height-tight)] break-words">{drawing.prize_description}</h3>
+                            <p className="text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] opacity-[0.7] mt-1">
                                 Enable push notifications to be eligible
                             </p>
                         </div>
@@ -85,10 +85,10 @@ export function LotteryHomeWidget() {
 
                     <div className="mt-4 flex justify-between items-end">
                         <div className="flex-1 min-w-0 pr-2">
-                            <p className="text-xs opacity-80 flex items-center gap-1">
+                            <p className="text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] opacity-[0.7] flex items-center gap-1">
                                 Your Entries
                             </p>
-                            <p className="text-2xl font-bold">{user_entries.total}</p>
+                            <p className="text-2xl font-[var(--font-weight-bold)]">{user_entries.total}</p>
                         </div>
 
                         <div className="bg-black/20 px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-md flex-shrink-0">

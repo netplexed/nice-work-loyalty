@@ -40,7 +40,7 @@ export function PointsBalance({ refreshTrigger = 0 }: PointsBalanceProps) {
     const progress = Math.min((profile.total_spent / 1500) * 100, 100)
 
     return (
-        <Card className="bg-gradient-to-br from-blue-700 to-blue-900 text-white border-none shadow-lg overflow-hidden relative min-h-[220px]">
+        <Card className="bg-gradient-to-br from-blue-700 to-blue-900 text-white border-none shadow-[var(--card-shadow)] rounded-[var(--card-radius)] overflow-hidden relative min-h-[220px]">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -51,20 +51,20 @@ export function PointsBalance({ refreshTrigger = 0 }: PointsBalanceProps) {
                     <span className="text-xl font-medium tracking-tight text-white font-brand">nice work</span>
                 </div>
 
-                <CardHeader className="pb-2 relative z-10">
-                    <CardTitle className="text-lg font-medium opacity-90">Points Balance</CardTitle>
+                <CardHeader className="pb-2 relative z-10 px-[var(--card-padding)] pt-[var(--card-padding)]">
+                    <CardTitle className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] tracking-[0.5px] opacity-[0.7]">Points Balance</CardTitle>
                 </CardHeader>
-                <CardContent className="relative z-10">
-                    <div className="text-5xl font-bold tracking-tight">
+                <CardContent className="relative z-10 px-[var(--card-padding)] pb-[var(--card-padding)]">
+                    <div className="text-[length:var(--font-size-display)] font-[var(--font-weight-bold)] leading-[var(--line-height-tight)]">
                         {profile.points_balance.toLocaleString()}
                     </div>
-                    <div className="mt-2 flex justify-between items-center text-sm opacity-80">
+                    <div className="mt-2 flex justify-between items-center text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] opacity-[0.7]">
                         <span className="capitalize">{profile.tier} Tier</span>
                         <span>${profile.total_spent} spent</span>
                     </div>
                     <div className="mt-4">
                         <Progress value={progress} className="h-2 bg-blue-950/30" indicatorClassName="bg-yellow-400" />
-                        <p className="text-xs mt-1 text-right opacity-70">
+                        <p className="text-[length:var(--font-size-small)] mt-1 text-right opacity-[0.7]">
                             {1500 - profile.total_spent > 0
                                 ? `$${1500 - profile.total_spent} to Silver`
                                 : 'Tier Maxed!'}
@@ -73,7 +73,7 @@ export function PointsBalance({ refreshTrigger = 0 }: PointsBalanceProps) {
 
                     {/* Restaurant Logos */}
                     <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-4 opacity-100">
-                        <span className="text-[10px] text-blue-200 uppercase tracking-wider font-semibold">Participating Outlets</span>
+                        <span className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] tracking-[0.5px] opacity-[0.7]">Participating Outlets</span>
                         <div className="flex items-center gap-3">
                             <div className="bg-white p-1 rounded-md shadow-sm">
                                 <img

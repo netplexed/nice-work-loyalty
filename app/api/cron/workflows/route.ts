@@ -167,7 +167,7 @@ async function sendWorkflowEmail(supabase: any, userId: string, templateId: stri
     // 4. Send
     await sendEmail({
         to: user.email,
-        subject: subjectOverride || template.subject || 'Notification from Nice Work',
+        subject: subjectOverride || template.subject || 'Notification from nice work',
         html: body
     })
 }

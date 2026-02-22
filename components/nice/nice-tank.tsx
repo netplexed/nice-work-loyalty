@@ -100,7 +100,7 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
             }
             lastUpdateRef.current = Date.now()
 
-            toast.success(`Collected ${result.niceCollected} Nice!`, {
+            toast.success(`Collected ${result.niceCollected} nice!`, {
                 description: "Added to your main balance."
             })
 
@@ -126,29 +126,59 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
     }
 
     return (
-        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-xl p-6">
-            {/* Background decoration */}
-            <div className="absolute top-6 right-6 pointer-events-none opacity-[0.3]">
+        <div className="relative overflow-hidden rounded-[var(--card-radius)] bg-white border border-slate-200 shadow-[var(--card-shadow)] p-[var(--card-padding)]">
+            {/* Background decoration with Vertical Fill Meter */}
+            <div className="absolute top-6 right-6 pointer-events-none w-24">
+                {/* 1. Empty State */}
                 <img
                     src="/images/tanuki-nice.jpg"
-                    alt="Tanuki Character"
-                    className="w-24 h-auto object-contain grayscale"
+                    alt="Tanuki Empty"
+                    className="w-24 h-auto object-contain grayscale opacity-[0.3]"
                 />
+
+                {/* 2. Fill State Overlay */}
+                <div
+                    className="absolute inset-0 transition-all duration-500 ease-linear"
+                    style={{ clipPath: `inset(${100 - Math.min(fillPercentage, 100)}% 0 0 0)` }}
+                >
+                    <div className="relative w-full h-full">
+                        {/* Gradient base masked to image shape */}
+                        <div
+                            className="absolute inset-0 bg-gradient-to-t from-[#FFB347] to-[#FFCC5C]"
+                            style={{
+                                maskImage: 'url(/images/tanuki-nice.jpg)',
+                                WebkitMaskImage: 'url(/images/tanuki-nice.jpg)',
+                                maskSize: 'contain',
+                                WebkitMaskSize: 'contain',
+                                maskPosition: 'center',
+                                WebkitMaskPosition: 'center',
+                                maskRepeat: 'no-repeat',
+                                WebkitMaskRepeat: 'no-repeat'
+                            }}
+                        />
+                        {/* Outline & details using multiply */}
+                        <img
+                            src="/images/tanuki-nice.jpg"
+                            alt="Tanuki Filled"
+                            className="absolute inset-0 w-full h-full object-contain mix-blend-multiply"
+                        />
+                    </div>
+                </div>
             </div>
 
             <div className="flex flex-col gap-6 relative z-10">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                        <h3 className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] text-slate-500 tracking-[0.5px] leading-[var(--line-height-normal)] mb-1 opacity-[0.7]">
                             Nice Generator
                         </h3>
                         <div className="flex items-baseline gap-1">
-                            <span className="text-5xl font-mono font-bold text-slate-800 tracking-tighter tabular-nums">
+                            <span className="text-[length:var(--font-size-display-large)] font-[var(--font-weight-bold)] font-mono text-slate-800 tracking-tighter tabular-nums leading-[var(--line-height-tight)]">
                                 {tankNice.toFixed(5)}
                             </span>
-                            <span className="text-sm text-slate-400 font-medium">nice</span>
+                            <span className="text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] text-slate-500 leading-[var(--line-height-relaxed)]">nice</span>
                         </div>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                        <div className="flex items-center gap-2 mt-1 text-[length:var(--font-size-small)] text-slate-500 leading-[var(--line-height-normal)] opacity-[0.7]">
                             <span className="bg-slate-100 px-2 py-0.5 rounded-full font-mono">
                                 +{initialState.nicePerSecond.toFixed(4)}/sec
                             </span>
@@ -171,10 +201,10 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
                 </div>
 
                 {/* Tank Visualization */}
-                <div className="space-y-2">
-                    <div className="flex justify-between text-xs font-medium text-slate-500">
+                <div className="space-y-2 mt-2">
+                    <div className="flex justify-between text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] text-slate-500 leading-[var(--line-height-relaxed)]">
                         <span>Fill Level</span>
-                        <span className={isFull ? 'text-red-500 animate-pulse font-bold' : ''}>
+                        <span className={isFull ? 'text-red-500 animate-pulse font-[var(--font-weight-semibold)]' : 'font-[var(--font-weight-semibold)]'}>
                             {Math.min(fillPercentage, 100).toFixed(0)}%
                         </span>
                     </div>
@@ -190,7 +220,7 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
                         {/* 50% Marker */}
                         <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/50 z-10" />
                     </div>
-                    <div className="flex justify-between text-[10px] text-slate-400 uppercase tracking-widest">
+                    <div className="flex justify-between text-[10px] text-slate-400 tracking-widest">
                         <span>0</span>
                         <span>50% (Collect)</span>
                         <span>{stateRef.current.tankCapacity}</span>
@@ -200,7 +230,7 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
                 {/* Collection Button */}
                 <Button
                     size="lg"
-                    className={`w-full font-bold shadow-lg transition-all 
+                    className={`w-full font-[var(--font-weight-semibold)] text-[length:var(--font-size-button)] shadow-lg transition-all 
                 ${canCollect
                             ? 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white transform hover:scale-[1.02]'
                             : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
@@ -215,7 +245,7 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
                     ) : canCollect ? (
                         <span className="flex items-center gap-2">
                             <Sparkles className="fill-white/20" />
-                            COLLECT {Math.floor(tankNice)} NICE
+                            Collect {Math.floor(tankNice)} nice
                         </span>
                     ) : (
                         <span>Wait for 50% to Collect</span>

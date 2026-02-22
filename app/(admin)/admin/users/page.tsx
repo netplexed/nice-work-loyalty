@@ -18,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card'
 
 import { UserSearch } from '@/components/admin/users/user-search'
 import { CreateUserDialog } from '@/components/admin/users/create-user-dialog'
+import { ViewProfileButton } from '@/components/admin/users/view-profile-button'
 
 type AdminUserRow = {
     id: string
@@ -77,7 +78,7 @@ export default async function UsersPage(props: {
                                 return (
                                     <TableRow key={user.id}>
                                         <TableCell className="font-medium">
-                                            {user.full_name || 'Unnamed User'}
+                                            <ViewProfileButton userId={user.id} userName={user.full_name || 'Unnamed User'} />
                                         </TableCell>
                                         <TableCell>{user.email}</TableCell>
                                         <TableCell>

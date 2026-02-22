@@ -37,7 +37,7 @@ async function runManual() {
         const { data, error: emailError } = await resend.emails.send({
             from: 'nice work <admin@nicework.sg>',
             to: email,
-            subject: 'Welcome to Nice Work (Manual Test)',
+            subject: 'Welcome to nice work (Manual Test)',
             html: '<h1>Welcome!</h1><p>This is a manual test from local script with lowercase branding.</p>'
         })
 

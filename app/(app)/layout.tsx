@@ -36,9 +36,17 @@ function NavItem({ href, icon: Icon, label }: { href: string; icon: any; label: 
     const pathname = usePathname()
     const isActive = pathname === href
 
+    const handleClick = (e: React.MouseEvent) => {
+        if (isActive && typeof window !== 'undefined') {
+            e.preventDefault()
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+    }
+
     return (
         <Link
             href={href}
+            onClick={handleClick}
             className={cn(
                 "flex flex-col items-center justify-center w-16 h-full space-y-1 transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground hover:text-gray-900"

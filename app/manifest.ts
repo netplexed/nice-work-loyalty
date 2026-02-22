@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
     return {
         name: 'nice work',
         short_name: 'nice work',
-        description: 'Loyalty program for Nice Work restaurants',
+        description: 'Loyalty program for nice work restaurants',
         start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',

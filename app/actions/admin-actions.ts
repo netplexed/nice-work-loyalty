@@ -850,3 +850,34 @@ export async function adminCreateUser(data: {
 
     return { success: true, user: authData.user }
 }
+
+export async function getUserProfile(userId: string) {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+
+    const [
+        { data: profile, error: profileError },
+        { data: niceAccount },
+        { data: purchases },
+        { data: redemptions },
+        { data: pointsTransactions }
+    ] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', userId).single(),
+        supabase.from('nice_accounts').select('*').eq('user_id', userId).single(),
+        supabase.from('purchases').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+        supabase.from('redemptions').select('id, created_at, status, points_spent, rewards(name)').eq('user_id', userId).order('created_at', { ascending: false }),
+        supabase.from('points_transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+    ])
+
+    if (profileError) throw new Error('Failed to fetch user profile')
+
+    return {
+        profile,
+        niceAccount,
+        purchases: purchases || [],
+        redemptions: redemptions || [],
+        pointsTransactions: pointsTransactions || []
+    }
+}

@@ -25,11 +25,11 @@ export function NiceBalance({ balance, onSwapSuccess }: NiceBalanceProps) {
     }, [balance, spring])
 
     return (
-        <div className="bg-slate-900 text-white rounded-xl p-4 flex items-center justify-between shadow-lg">
+        <div className="bg-slate-900 text-white rounded-[var(--card-radius)] p-[var(--card-padding)] shadow-[var(--card-shadow)] relative min-h-[140px] flex items-center justify-between">
             <div>
-                <div className="text-slate-400 text-xs uppercase tracking-wider font-semibold">Your Balance</div>
-                <div className="text-2xl font-bold font-mono text-amber-400">
-                    <motion.span>{display}</motion.span> <span className="text-sm text-slate-400 font-sans font-normal">nice</span>
+                <div className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] leading-[var(--line-height-normal)] tracking-[0.5px] text-slate-400 opacity-[0.7] mb-2">Your Balance</div>
+                <div className="text-[length:var(--font-size-display)] font-[var(--font-weight-bold)] leading-[var(--line-height-tight)] font-mono text-amber-400">
+                    <motion.span>{display}</motion.span> <span className="text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] leading-[var(--line-height-relaxed)] text-slate-400 font-sans opacity-[0.7]">nice</span>
                 </div>
             </div>
 
@@ -39,7 +39,7 @@ export function NiceBalance({ balance, onSwapSuccess }: NiceBalanceProps) {
                 className="bg-white/10 border-white/10 hover:bg-white/20 text-white border-0"
                 onClick={() => setShowConversion(true)}
             >
-                <ArrowLeftRight className="mr-2" size={14} /> Swap for points
+                <ArrowLeftRight className="mr-2" size={14} /> Swap for Points
             </Button>
 
             <ConversionDialog

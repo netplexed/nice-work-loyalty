@@ -3,8 +3,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-    title: 'Privacy Policy | Nice Work',
-    description: 'Nice Work Loyalty Program Privacy Policy'
+    title: 'Privacy Policy | nice work',
+    description: 'nice work Loyalty Program Privacy Policy'
 }
 
 export default function PrivacyPolicyPage() {
@@ -21,7 +21,7 @@ export default function PrivacyPolicyPage() {
 
                 <div className="rounded-lg border bg-white p-6 shadow-sm md:p-8">
                     <h1 className="text-2xl font-bold">Privacy Policy</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">Nice Work Loyalty Program</p>
+                    <p className="mt-1 text-sm text-muted-foreground">nice work Loyalty Program</p>
                     <p className="text-sm text-muted-foreground">Operated by Crown Empire Pte. Limited</p>
                     <p className="mt-2 text-sm">
                         <strong>Effective Date:</strong> February 17, 2026 | <strong>Last Updated:</strong> February 17, 2026
@@ -37,17 +37,17 @@ export default function PrivacyPolicyPage() {
                     <section className="mt-6 space-y-3 text-sm leading-6">
                         <h2 className="text-base font-semibold">1. Introduction</h2>
                         <p>
-                            Welcome to Nice Work, the loyalty program operated by Crown Empire Pte. Limited (collectively referred to as
-                            &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). Nice Work is a rewards and engagement platform for customers of our restaurant brands,
+                            Welcome to nice work, the loyalty program operated by Crown Empire Pte. Limited (collectively referred to as
+                            &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). nice work is a rewards and engagement platform for customers of our restaurant brands,
                             including Tanuki Raw and Standing Sushi Bar.
                         </p>
                         <p>
                             This Privacy Policy explains how we collect, use, disclose, and safeguard your personal data when you use the
-                            Nice Work mobile application (&quot;App&quot;) and related services. It also describes your rights under Singapore&apos;s
+                            nice work mobile application (&quot;App&quot;) and related services. It also describes your rights under Singapore&apos;s
                             Personal Data Protection Act 2012 (&quot;PDPA&quot;).
                         </p>
                         <p>
-                            By downloading, registering for, or using the Nice Work App, you acknowledge that you have read and understood
+                            By downloading, registering for, or using the nice work App, you acknowledge that you have read and understood
                             this Privacy Policy and consent to the collection and use of your personal data as described herein.
                         </p>
                     </section>
@@ -89,7 +89,7 @@ export default function PrivacyPolicyPage() {
                         <p>We use your personal data for the following purposes:</p>
                         <h3 className="font-semibold">3.1 Program Operation</h3>
                         <ul className="list-disc space-y-1 pl-5">
-                            <li>Creating and managing your Nice Work account</li>
+                            <li>Creating and managing your nice work account</li>
                             <li>Calculating and crediting Points earned from qualifying purchases</li>
                             <li>Generating and managing your Nice currency balance based on time-based accrual and tier multipliers</li>
                             <li>Processing reward redemptions and issuing vouchers</li>
@@ -137,7 +137,7 @@ export default function PrivacyPolicyPage() {
                                 into marketing communications.
                             </li>
                             <li>
-                                <strong>Contractual Necessity:</strong> Processing required to fulfill the Nice Work loyalty program membership
+                                <strong>Contractual Necessity:</strong> Processing required to fulfill the nice work loyalty program membership
                                 agreement with you.
                             </li>
                             <li>
@@ -210,7 +210,7 @@ export default function PrivacyPolicyPage() {
                         </ul>
                         <p>
                             You may withdraw consent for push notifications at any time through your device settings (iOS: Settings &gt;
-                            Notifications &gt; Nice Work; Android: Settings &gt; Apps &gt; Nice Work &gt; Notifications) or within the App
+                            Notifications &gt; nice work; Android: Settings &gt; Apps &gt; nice work &gt; Notifications) or within the App
                             settings. Disabling push notifications will remove your automatic lottery entry entitlement but will not affect your
                             earned Points, Nice balance, or loyalty tier.
                         </p>
@@ -238,7 +238,7 @@ export default function PrivacyPolicyPage() {
                         <p>You may request a copy of your personal data in a structured, commonly used, machine-readable format.</p>
                         <h3 className="font-semibold">8.5 Account Deletion</h3>
                         <p>
-                            You may request deletion of your Nice Work account at any time. Upon deletion, your Points and Nice balances will be
+                            You may request deletion of your nice work account at any time. Upon deletion, your Points and Nice balances will be
                             forfeited and cannot be recovered. We will retain certain records as required by law (see Section 6).
                         </p>
                         <p>
@@ -268,7 +268,7 @@ export default function PrivacyPolicyPage() {
                     <section className="mt-6 space-y-3 text-sm leading-6">
                         <h2 className="text-base font-semibold">10. Children&apos;s Privacy</h2>
                         <p>
-                            The Nice Work App is intended for users aged 18 and above. We do not knowingly collect personal data from
+                            The nice work App is intended for users aged 18 and above. We do not knowingly collect personal data from
                             individuals under the age of 18. If you are under 18, please do not register for or use the App.
                         </p>
                         <p>
@@ -334,7 +334,7 @@ export default function PrivacyPolicyPage() {
                     </section>
 
                     <p className="mt-8 border-t pt-4 text-xs text-muted-foreground">
-                        Nice Work Loyalty Program | Crown Empire Pte. Limited
+                        nice work Loyalty Program | Crown Empire Pte. Limited
                         <br />
                         Effective: February 17, 2026
                     </p>

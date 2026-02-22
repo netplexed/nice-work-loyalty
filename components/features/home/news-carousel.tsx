@@ -68,17 +68,17 @@ export function NewsCarousel() {
     return (
         <div className="space-y-4">
             <div className="overflow-hidden" ref={emblaRef}>
-                <div className="flex touch-pan-y touch-pinch-zoom -ml-4">
+                <div className="flex touch-pan-y touch-pinch-zoom ml-[calc(var(--card-grid-gap)*-1)]">
                     {announcements.map((item) => {
                         const actionHref = normalizeActionUrl(item.action_url)
                         const isExternalAction = actionHref ? isExternalActionUrl(actionHref) : false
 
                         return (
-                            <div className="flex-[0_0_85%] min-w-0 pl-4 sm:flex-[0_0_50%]" key={item.id}>
+                            <div className="flex-[0_0_85%] min-w-0 pl-[var(--card-grid-gap)] sm:flex-[0_0_50%]" key={item.id}>
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <div className="cursor-pointer h-full">
-                                            <Card className="overflow-hidden h-full border-0 shadow-sm bg-white hover:shadow-md transition-shadow">
+                                            <Card className="overflow-hidden h-full border-0 shadow-[var(--card-shadow)] rounded-[var(--card-radius)] bg-white hover:shadow-md transition-shadow">
                                                 <div className="relative h-32 bg-gray-100">
                                                     {item.image_url ? (
                                                         <Image
@@ -95,10 +95,10 @@ export function NewsCarousel() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <CardContent className="p-4 space-y-2">
-                                                    <h3 className="font-bold text-gray-900 line-clamp-1">{item.title}</h3>
+                                                <CardContent className="p-[var(--card-padding)] space-y-2">
+                                                    <h3 className="font-[var(--font-weight-semibold)] text-[length:var(--font-size-button)] text-gray-900 line-clamp-1">{item.title}</h3>
                                                     <div
-                                                        className="text-sm text-gray-500 line-clamp-2 h-[2.5rem] overflow-hidden prose prose-sm max-w-none prose-p:m-0 prose-p:leading-tight"
+                                                        className="text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] leading-[var(--line-height-relaxed)] text-gray-500 line-clamp-2 h-[2.5rem] overflow-hidden prose prose-sm max-w-none prose-p:m-0"
                                                         dangerouslySetInnerHTML={{ __html: item.content }}
                                                     />
                                                 </CardContent>
