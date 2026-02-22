@@ -18,17 +18,29 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
     const [tankNice, setTankNice] = useState(initialState.tankNice)
     const [isCollecting, setIsCollecting] = useState(false)
 
-    // Use ref to track calculating value without triggering re-renders for every micro-update
-    // but we DO want to render the number frequently, so state is appropriate here.
-    // We use the ref to calculate the delta accurately.
+    // Use refs to track calculating value without triggering re-renders for every micro-update.
     const lastUpdateRef = useRef(Date.now())
     const stateRef = useRef(initialState)
+    const serverSnapshotRef = useRef({
+        tankNice: initialState.tankNice,
+        time: Date.now()
+    })
 
     // Update ref when initial state changes (e.g. after collection or revalidation)
     useEffect(() => {
         stateRef.current = initialState
-        setTankNice(initialState.tankNice)
-        lastUpdateRef.current = Date.now()
+
+        // When optimistic collection happens, the amount is precisely 0
+        if (initialState.tankNice === 0) {
+            setTankNice(0)
+        }
+
+        // We DO NOT instantly jump tankNice to initialState.tankNice (except on collect).
+        // Instead, we record the server snapshot to smoothly catch up to it visually.
+        serverSnapshotRef.current = {
+            tankNice: initialState.tankNice,
+            time: Date.now()
+        }
     }, [initialState])
 
     useEffect(() => {
@@ -41,8 +53,32 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
 
             const { nicePerSecond, tankCapacity } = stateRef.current
 
+            // Calculate exactly where the server expects the value to be right now
+            const timeSinceSnapshot = (now - serverSnapshotRef.current.time) / 1000
+            const projectedServerNice = serverSnapshotRef.current.tankNice + (nicePerSecond * timeSinceSnapshot)
+
             setTankNice(prev => {
-                const nextValue = prev + (nicePerSecond * deltaSeconds)
+                let nextValue = prev + (nicePerSecond * deltaSeconds)
+
+                // Gap between our current animated value and the true projected server value
+                const gap = projectedServerNice - nextValue
+
+                // If local is behind the server (e.g. background data fetched), catch up smoothly
+                if (gap > 0.001) {
+                    // Close the gap by a percentage plus a minimum speed so it finishes
+                    const catchUpSpeed = Math.max(gap * 3, 2)
+                    const catchUp = catchUpSpeed * deltaSeconds
+                    nextValue += catchUp
+
+                    // Don't overshoot the true value
+                    if (nextValue > projectedServerNice) {
+                        nextValue = projectedServerNice
+                    }
+                } else if (gap < -0.5) {
+                    // If we are significantly ahead (client predicted too much or user collected elsewhere), snap to truth
+                    nextValue = projectedServerNice
+                }
+
                 return Math.min(nextValue, tankCapacity)
             })
 

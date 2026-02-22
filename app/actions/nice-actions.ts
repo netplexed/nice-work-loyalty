@@ -173,11 +173,11 @@ export async function collectNice(): Promise<CollectionResult> {
     console.log('Attemping collection. State:', { tankFill: state.tankFillPercentage, tankNice: state.tankNice })
 
     // TEMPORARY: Allow collection at > 0% for testing (was 50%)
-    if (state.tankNice < 1) {
-        throw new Error('Nothing to collect yet (minimum 1 nice)')
+    if (state.tankNice < 0.01) {
+        throw new Error('Nothing to collect yet (minimum 0.01 nice)')
     }
 
-    const niceToCollect = Math.floor(state.tankNice)
+    const niceToCollect = Math.floor(state.tankNice * 100) / 100
     console.log('Nice to collect:', niceToCollect)
 
     const { data, error } = await supabase.rpc('collect_nice_transaction', {
