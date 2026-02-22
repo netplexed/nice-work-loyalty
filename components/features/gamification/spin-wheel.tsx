@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { motion, useAnimation } from 'framer-motion'
+import { useState } from 'react'
+import { motion, useMotionValue, animate } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { SpinPrize, spin } from '@/app/actions/spin-actions'
 import { Button } from '@/components/ui/button'
@@ -22,8 +22,7 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
     const [spinning, setSpinning] = useState(false)
     const [result, setResult] = useState<SpinPrize | null>(null)
     const [showResult, setShowResult] = useState(false)
-    const controls = useAnimation()
-    const currentRotation = useRef(0)
+    const rotate = useMotionValue(0)
 
     // Check if locked
     const isLocked = nextSpinTime && new Date(nextSpinTime) > new Date()
@@ -32,16 +31,19 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
         if (spinning) return
         setSpinning(true)
 
-        try {
-            // Start spinning animation (indefinite or fast) visually first?
-            // Actually, best to get result first for deterministic stop, 
-            // but we can animate a "loading" spin if needed. 
-            // For now, let's just do the action.
+        // Start immediate spinning animation while fetching result
+        const spinAnimation = animate(rotate, rotate.get() + 360, {
+            duration: 0.5,
+            ease: "linear",
+            repeat: Infinity
+        })
 
+        try {
             const response = await spin()
 
             if (!response.success || !response.prize) {
                 toast.error(response.error || 'Failed to spin. Please try again.')
+                spinAnimation.stop()
                 setSpinning(false)
                 return
             }
@@ -49,78 +51,46 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
             const winningPrize = response.prize
             setResult(winningPrize)
 
-            // Calculate angle
             const prizeIndex = prizes.findIndex(p => p.id === winningPrize.id)
             if (prizeIndex === -1) {
-                // Should not happen if config is synced, but fallback
                 toast.error('Error finding prize segment.')
+                spinAnimation.stop()
                 setSpinning(false)
                 return
             }
 
             const segmentAngle = 360 / prizes.length
-            // We want the pointer (top, usually 270 or -90 deg in SVG) to land on the center of the segment.
-            // If we start at 0, segment 0 is usually 0-X degrees. 
-            // Let's assume standard unit circle, 0 is right.
-            // Adjust calculations for "Pointer at Top" (270 deg).
-
-            // Random jitter within the segment to look natural (+/- 40% of segment width)
             const jitter = (Math.random() - 0.5) * segmentAngle * 0.8
-
-            // To land on index i, we need to rotate such that that segment is at the pointer.
-            // Pointer is at -90deg (top).
-            // Segment i center is at: i * segmentAngle + segmentAngle/2
-            // We need: Rotation + (i * segmentAngle + segmentAngle/2) = -90 (mod 360)
-            // So: Rotation = -90 - (i * segmentAngle + segmentAngle/2)
-
-            // Additive Rotation Logic
-            const baseSpins = 5 // 5 full rotations minimum
-
-            // Current position in 0-360 range (normalized)
-            const currentAngle = currentRotation.current % 360
-
-            // Target angle (where we want to end up, 0-360)
-            // Original logic: -90 - (index * segment + segment/2)
-            // We need to match this coordinate system.
-            // Let's simplify:
-            // We want pointer (-90deg relative to wheel 0) to point to center of segment.
-            // Segment center is at (index * segmentAngle + segmentAngle/2).
-            // So we need to rotate wheel by R such that:
-            // (-90 - R) % 360 = SegmentCenter
-            // => -R = SegmentCenter + 90
-            // => R = - (SegmentCenter + 90)
-
             const segmentCenter = (prizeIndex * segmentAngle) + (segmentAngle / 2)
             const desiredRotationDisplay = - (segmentCenter + 90) + jitter
 
-            // Calculate how much we need to add to currentRotation.current
-            // We want (currentRotation.current + delta) % 360 ~= desiredRotationDisplay % 360
+            // Stop the initial infinite spin
+            spinAnimation.stop()
 
-            // Let's work with raw deltas to ensure forward spin
-            // We want to land on 'desiredRotationDisplay'. 
-            // It might be negative, let's make it positive mod 360 for calculation:
             let targetMod = desiredRotationDisplay % 360
             if (targetMod < 0) targetMod += 360
 
-            let currentMod = currentRotation.current % 360
+            // Get current angle to calculate a smooth finish
+            const currentAngle = rotate.get()
+            let currentMod = currentAngle % 360
             if (currentMod < 0) currentMod += 360
 
             // Calculate forward distance to target
             let distance = targetMod - currentMod
-            if (distance <= 0) distance += 360 // Ensure we go forward
+            if (distance <= 0) distance += 360
 
-            // Add base full spins
+            // Add base full spins for extra excitement when finishing
+            const baseSpins = 4
             const totalRotationDelta = (baseSpins * 360) + distance
 
-            const newRotation = currentRotation.current + totalRotationDelta
-            currentRotation.current = newRotation
+            const newRotation = currentAngle + totalRotationDelta
 
-            await controls.start({
-                rotate: newRotation,
-                transition: {
-                    duration: 4, // Slightly faster feel
-                    ease: [0.25, 0.1, 0.25, 1], // Custom Bezier for nicer spin up/down
-                }
+            await new Promise<void>((resolve) => {
+                animate(rotate, newRotation, {
+                    duration: 4,
+                    ease: [0.25, 0.1, 0.25, 1], // Custom Bezier for nicer spin down
+                    onComplete: () => resolve()
+                })
             })
 
             // Success handling
@@ -138,10 +108,9 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
         } catch (e) {
             console.error(e)
             toast.error('Something went wrong.')
+            spinAnimation.stop()
         } finally {
             setSpinning(false)
-            // Reset rotation visually after a delay if needed, 
-            // but keeping it there is fine until closed
         }
     }
 
@@ -180,9 +149,9 @@ export function SpinWheel({ prizes, onSpinComplete, nextSpinTime }: SpinWheelPro
 
                 {/* Wheel */}
                 <motion.div
-                    animate={controls}
                     className="relative w-[300px] h-[300px] rounded-full shadow-2xl border-4 border-white overflow-hidden"
                     style={{
+                        rotate,
                         boxShadow: '0 0 20px rgba(0,0,0,0.2)'
                     }}
                 >
