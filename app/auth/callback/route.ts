@@ -8,8 +8,25 @@ export async function GET(request: Request) {
 
     if (code) {
         const supabase = await createClient()
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
-        if (!error) {
+        const { error, data } = await supabase.auth.exchangeCodeForSession(code)
+
+        if (!error && data?.session?.user) {
+            const user = data.session.user
+
+            // Automatically provision the public profile if this is a new OAuth user
+            // Upsert will gracefully ignore if the profile already exists.
+            await supabase.from('profiles').upsert({
+                id: user.id,
+                email: user.email,
+                full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+                updated_at: new Date().toISOString(),
+                // these defaults match the onboarding process
+                points_balance: 10,
+                tier: 'bronze',
+                total_visits: 0,
+                total_spent: 0
+            }, { onConflict: 'id' }).select()
+
             const forwardedHost = request.headers.get('x-forwarded-host')
             const isLocalEnv = process.env.NODE_ENV === 'development'
             if (isLocalEnv) {
