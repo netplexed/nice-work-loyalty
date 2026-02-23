@@ -52,7 +52,7 @@ function RewardItem({ redemption }: { redemption: RedemptionWithReward }) {
                 )}
                 <div className="absolute top-2 right-2">
                     <Badge variant={status === 'redeemed' ? 'secondary' : 'default'} className="capitalize bg-white/90 text-black hover:bg-white shadow-sm">
-                        {status === 'pending' ? 'Available' : status}
+                        {(status === 'pending' || status === 'approved') ? 'Available' : status}
                     </Badge>
                 </div>
             </div>
