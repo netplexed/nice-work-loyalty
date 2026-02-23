@@ -130,7 +130,7 @@ export async function getNiceState(): Promise<NiceState> {
 
         console.log('Nice account missing for user, creating default...')
         const adminSupabase = createAdminClient()
-        const backdate = new Date(Date.now() - 11.875 * 60 * 60 * 1000)
+        const backdate = new Date(Date.now() - 11.9945 * 60 * 60 * 1000)
         const { data: newAccount, error: createError } = await (adminSupabase
             .from('nice_accounts') as any)
             .insert({

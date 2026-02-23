@@ -241,7 +241,7 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
                     <div className="flex justify-between text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] text-slate-500 leading-[var(--line-height-relaxed)]">
                         <span>Fill Level</span>
                         <span className={isFull ? 'text-red-500 animate-pulse font-[var(--font-weight-semibold)]' : 'font-[var(--font-weight-semibold)]'}>
-                            {Math.min(fillPercentage, 100).toFixed(0)}%
+                            {Math.min(fillPercentage, 100).toFixed(2)}%
                         </span>
                     </div>
                     <div className="h-4 bg-slate-100 rounded-full overflow-hidden relative">
