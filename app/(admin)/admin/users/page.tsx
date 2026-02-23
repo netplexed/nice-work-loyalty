@@ -86,7 +86,7 @@ export default async function UsersPage(props: {
                                                 user.tier === 'platinum' ? 'default' :
                                                     user.tier === 'gold' ? 'secondary' : 'outline'
                                             } className="capitalize">
-                                                {user.tier}
+                                                {{ 'bronze': 'Hi My Name Is', 'silver': 'Good to See You', 'gold': 'Local Legend', 'platinum': 'Platinum' }[user.tier] || user.tier}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right font-mono font-bold">

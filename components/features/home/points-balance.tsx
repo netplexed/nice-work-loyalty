@@ -10,6 +10,13 @@ interface PointsBalanceProps {
     refreshTrigger?: number
 }
 
+const TIER_NAMES: Record<string, string> = {
+    'bronze': 'Hi My Name Is',
+    'silver': 'Good to See You',
+    'gold': 'Local Legend',
+    'platinum': 'Platinum'
+}
+
 export function PointsBalance({ refreshTrigger = 0 }: PointsBalanceProps) {
     const [profile, setProfile] = useState<any>(null)
 
@@ -59,14 +66,14 @@ export function PointsBalance({ refreshTrigger = 0 }: PointsBalanceProps) {
                         {profile.points_balance.toLocaleString()}
                     </div>
                     <div className="mt-2 flex justify-between items-center text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] opacity-[0.7]">
-                        <span className="capitalize">{profile.tier} Tier</span>
+                        <span className="capitalize">{TIER_NAMES[profile.tier] || profile.tier} Tier</span>
                         <span>${profile.total_spent} spent</span>
                     </div>
                     <div className="mt-4">
                         <Progress value={progress} className="h-2 bg-blue-950/30" indicatorClassName="bg-yellow-400" />
                         <p className="text-[length:var(--font-size-small)] mt-1 text-right opacity-[0.7]">
                             {1500 - profile.total_spent > 0
-                                ? `$${1500 - profile.total_spent} to Silver`
+                                ? `$${1500 - profile.total_spent} to Good to See You`
                                 : 'Tier Maxed!'}
                         </p>
                     </div>

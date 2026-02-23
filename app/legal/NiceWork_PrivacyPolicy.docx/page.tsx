@@ -69,7 +69,7 @@ export default function PrivacyPolicyPage() {
                             <li>Transaction and purchase records at our restaurant locations</li>
                             <li>Visit history and check-in records (based on recorded spend)</li>
                             <li>Points balance, Nice currency balance, and transaction ledger</li>
-                            <li>Loyalty tier status (Bronze, Silver, Gold, Platinum)</li>
+                            <li>Loyalty tier status (Hi My Name Is, Good to See You, Local Legend, Platinum)</li>
                             <li>Spin wheel participation records</li>
                             <li>Lottery draw entry records and prize history</li>
                             <li>Referral activity (codes issued and used)</li>

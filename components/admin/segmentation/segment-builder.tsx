@@ -16,7 +16,12 @@ export function SegmentBuilder({ value, onChange }: { value: TargetCriteria, onC
     const [count, setCount] = useState<number | null>(null)
 
     // Tiers
-    const availableTiers = ['Bronze', 'Silver', 'Gold', 'Platinum']
+    const availableTiers = [
+        { value: 'bronze', label: 'Hi My Name Is' },
+        { value: 'silver', label: 'Good to See You' },
+        { value: 'gold', label: 'Local Legend' },
+        { value: 'platinum', label: 'Platinum' }
+    ]
 
     // Effect to estimate size when criteria changes
     useEffect(() => {
@@ -66,13 +71,13 @@ export function SegmentBuilder({ value, onChange }: { value: TargetCriteria, onC
                 <Label className="text-xs">Membership Tiers</Label>
                 <div className="flex flex-wrap gap-4">
                     {availableTiers.map(tier => (
-                        <div key={tier} className="flex items-center space-x-2">
+                        <div key={tier.value} className="flex items-center space-x-2">
                             <Checkbox
-                                id={`tier-${tier}`}
-                                checked={value.tiers?.includes(tier)}
-                                onCheckedChange={(c) => updateTier(tier, c as boolean)}
+                                id={`tier-${tier.value}`}
+                                checked={value.tiers?.includes(tier.value)}
+                                onCheckedChange={(c) => updateTier(tier.value, c as boolean)}
                             />
-                            <Label htmlFor={`tier-${tier}`} className="text-sm font-normal">{tier}</Label>
+                            <Label htmlFor={`tier-${tier.value}`} className="text-sm font-normal">{tier.label}</Label>
                         </div>
                     ))}
                 </div>

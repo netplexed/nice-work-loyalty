@@ -78,7 +78,7 @@ export function UserProfileDrawer({ userId, onClose }: UserProfileDrawerProps) {
                                         data.profile.tier === 'platinum' ? 'default' :
                                             data.profile.tier === 'gold' ? 'secondary' : 'outline'
                                     } className="capitalize">
-                                        {data.profile.tier}
+                                        {{ 'bronze': 'Hi My Name Is', 'silver': 'Good to See You', 'gold': 'Local Legend', 'platinum': 'Platinum' }[data.profile.tier as string] || data.profile.tier}
                                     </Badge>
                                     <span className="text-xs text-muted-foreground whitespace-nowrap">
                                         Joined {data.profile.created_at ? new Date(data.profile.created_at).toLocaleDateString() : 'Unknown'}

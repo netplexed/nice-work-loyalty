@@ -116,9 +116,9 @@ export function CreateUserDialog() {
                                 <SelectValue placeholder="Select tier" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="bronze">Bronze</SelectItem>
-                                <SelectItem value="silver">Silver</SelectItem>
-                                <SelectItem value="gold">Gold</SelectItem>
+                                <SelectItem value="bronze">Hi My Name Is</SelectItem>
+                                <SelectItem value="silver">Good to See You</SelectItem>
+                                <SelectItem value="gold">Local Legend</SelectItem>
                                 <SelectItem value="platinum">Platinum</SelectItem>
                             </SelectContent>
                         </Select>

@@ -17,9 +17,9 @@ type TierAdjustmentDialogProps = {
 }
 
 const TIERS = [
-    { value: 'bronze', label: 'Bronze' },
-    { value: 'silver', label: 'Silver' },
-    { value: 'gold', label: 'Gold' },
+    { value: 'bronze', label: 'Hi My Name Is' },
+    { value: 'silver', label: 'Good to See You' },
+    { value: 'gold', label: 'Local Legend' },
     { value: 'platinum', label: 'Platinum' }
 ]
 
@@ -71,7 +71,7 @@ export function TierAdjustmentDialog({ userId, userName, currentTier, trigger }:
                 <DialogHeader>
                     <DialogTitle>Adjust Tier for {userName}</DialogTitle>
                     <DialogDescription>
-                        Current Tier: <span className="capitalize">{defaultTier}</span>
+                        Current Tier: <span className="capitalize">{TIERS.find(t => t.value === defaultTier)?.label || defaultTier}</span>
                     </DialogDescription>
                 </DialogHeader>
 

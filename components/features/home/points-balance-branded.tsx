@@ -10,6 +10,13 @@ interface PointsBalanceProps {
     refreshTrigger?: number
 }
 
+const TIER_NAMES: Record<string, string> = {
+    'bronze': 'Hi My Name Is',
+    'silver': 'Good to See You',
+    'gold': 'Local Legend',
+    'platinum': 'Platinum'
+}
+
 export function PointsBalanceBranded({ refreshTrigger = 0 }: PointsBalanceProps) {
     const { profile, loading, mutate } = useUserProfile()
 
@@ -72,12 +79,12 @@ export function PointsBalanceBranded({ refreshTrigger = 0 }: PointsBalanceProps)
                     </div>
                     <div className="mt-2 flex justify-between items-center text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] opacity-[0.7]">
                         <span className="capitalize font-medium px-2 py-0.5 bg-white/20 rounded-full text-xs border border-white/10">
-                            {profile.tier} Member
+                            {TIER_NAMES[profile.tier] || profile.tier} Member
                         </span>
                     </div>
                     <div className="mt-6">
                         <div className="flex justify-between text-[length:var(--font-size-small)] font-[var(--font-weight-semibold)] mb-1 opacity-[0.7]">
-                            <span>Progress to Silver</span>
+                            <span>Progress to Good to See You</span>
                             <span>{Math.round(progress)}%</span>
                         </div>
                         <Progress value={progress} className="h-3 bg-black/20" indicatorClassName="bg-white" />
