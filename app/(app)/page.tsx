@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { mutate as globalMutate } from 'swr'
 import { PointsBalanceBranded as PointsBalance } from '@/components/features/home/points-balance-branded'
 import { NewsCarousel } from '@/components/features/home/news-carousel'
 import { NiceTank } from '@/components/nice/nice-tank'
@@ -64,6 +65,9 @@ export default function Dashboard() {
                 collectedBalance: niceState.collectedBalance - (pointsGained * 20), // Approx
             }) // Validate with server immediately to get exact new balance
         }
+
+        // Global cache invalidation for Recent Activity
+        globalMutate('recent-activity-5')
     }
 
     return (
@@ -107,6 +111,7 @@ export default function Dashboard() {
                             onSpinComplete={() => {
                                 setRefreshTrigger(prev => prev + 1)
                                 mutateStatus() // Revalidate spin status
+                                globalMutate('recent-activity-5') // Revalidate activity feed
                             }}
                         />
                     </div>
