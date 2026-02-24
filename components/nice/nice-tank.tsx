@@ -75,7 +75,9 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
                         nextValue = projectedServerNice
                     }
                 } else if (gap < -0.5) {
-                    // If we are significantly ahead (client predicted too much or user collected elsewhere), snap to truth
+                    // If we are significantly ahead (like when collecting and the server state resets to ~0
+                    // while our local state was just at ~50), we must snap instantly rather than slow drain.
+                    // A gap < -0.5 means local `nextValue` is at least 0.5 HIGHER than `projectedServerNice`
                     nextValue = projectedServerNice
                 }
 
