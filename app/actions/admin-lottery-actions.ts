@@ -24,7 +24,9 @@ export async function getAdminLotteryDrawings(): Promise<any[]> {
                 lottery_winners (
                     user_id,
                     profiles (
-                        full_name
+                        full_name,
+                        email,
+                        phone
                     )
                 )
             `)

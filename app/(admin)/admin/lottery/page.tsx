@@ -56,7 +56,8 @@ export default async function AdminLotteryPage() {
                             ) : (
                                 drawings?.map((drawing) => {
                                     const winner = drawing.lottery_winners?.[0]
-                                    const winnerName = winner?.profiles?.full_name || '-'
+                                    const profile = winner?.profiles
+                                    const winnerName = profile ? (profile.full_name || profile.email || profile.phone || 'Unnamed User') : (winner ? 'Deleted User' : '-')
 
                                     return (
                                         <TableRow key={drawing.id}>

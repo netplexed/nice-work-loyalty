@@ -25,16 +25,24 @@ export async function GET(request: Request) {
                 tier: 'bronze',
                 total_visits: 0,
                 total_spent: 0
-            }, { onConflict: 'id', ignoreDuplicates: true }).select()
+            }, { onConflict: 'id', ignoreDuplicates: true })
+
+            // Fetch the profile to check if birthday is missing
+            const { data: profile } = await supabase.from('profiles').select('birthday').eq('id', user.id).maybeSingle()
+
+            let redirectUrl = next
+            if (!profile?.birthday) {
+                redirectUrl = '/onboarding'
+            }
 
             const forwardedHost = request.headers.get('x-forwarded-host')
             const isLocalEnv = process.env.NODE_ENV === 'development'
             if (isLocalEnv) {
-                return NextResponse.redirect(new URL(next, request.url))
+                return NextResponse.redirect(new URL(redirectUrl, request.url))
             } else if (forwardedHost) {
-                return NextResponse.redirect(`https://${forwardedHost}${next}`)
+                return NextResponse.redirect(`https://${forwardedHost}${redirectUrl}`)
             } else {
-                return NextResponse.redirect(new URL(next, request.url))
+                return NextResponse.redirect(new URL(redirectUrl, request.url))
             }
         }
     }
