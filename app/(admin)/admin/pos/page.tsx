@@ -136,7 +136,9 @@ export default function AdminPOSPage() {
                                 <div>
                                     <h3 className="font-bold text-lg">{customer.full_name}</h3>
                                     <p className="text-muted-foreground text-sm">{customer.email}</p>
-                                    <p className="text-xs uppercase font-bold mt-1 text-primary">{customer.tier} Member</p>
+                                    <p className="text-xs uppercase font-bold mt-1 text-primary">
+                                        {{ 'bronze': 'Hi My Name Is', 'silver': 'Good to See You', 'gold': 'Local Legend', 'platinum': 'Platinum' }[customer.tier as string] || customer.tier}
+                                    </p>
                                 </div>
                                 <Button variant="ghost" size="sm" onClick={() => setCustomer(null)}>
                                     Change
