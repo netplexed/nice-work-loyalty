@@ -5,9 +5,9 @@ import useSWR from 'swr'
 import { getPointsHistory } from '@/app/actions/user-actions'
 import { format } from 'date-fns'
 
-export function RecentActivity() {
-    const { data, isLoading } = useSWR<any[]>(
-        'recent-activity-5',
+export function RecentActivity({ data: initialData }: { data?: any[] } = {}) {
+    const { data: swrData, isLoading } = useSWR<any[]>(
+        initialData ? null : 'recent-activity-5',
         () => getPointsHistory(5),
         {
             keepPreviousData: true,
@@ -17,7 +17,7 @@ export function RecentActivity() {
         }
     )
 
-    const history = data || []
+    const history = initialData || swrData || []
 
     return (
         <div className="space-y-4">

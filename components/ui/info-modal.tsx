@@ -15,8 +15,13 @@ interface InfoModalProps {
 export function InfoModal({ title, description, className }: InfoModalProps) {
     return (
         <div
-            onClick={e => e.stopPropagation()}
-            onPointerDown={e => e.stopPropagation()}
+            onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+            }}
+            onPointerDown={e => {
+                e.stopPropagation();
+            }}
             className="inline-flex cursor-pointer touch-none"
         >
             <Dialog>

@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { getUserProfile } from '@/app/actions/admin-actions'
+import { RecentActivity } from '@/components/features/home/recent-activity'
 
 type UserProfileDrawerProps = {
     userId: string | null
@@ -100,6 +101,9 @@ export function UserProfileDrawer({ userId, onClose }: UserProfileDrawerProps) {
                                 </p>
                             </div>
                         </div>
+
+                        {/* Recent Activity */}
+                        <RecentActivity data={data.pointsTransactions?.slice(0, 5)} />
 
                         {/* Tabs */}
                         <Tabs defaultValue="spending" className="w-full">
