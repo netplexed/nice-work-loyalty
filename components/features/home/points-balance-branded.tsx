@@ -79,7 +79,7 @@ export function PointsBalanceBranded({ refreshTrigger = 0 }: PointsBalanceProps)
                     </div>
                     <div className="mt-2 flex justify-between items-center text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] opacity-[0.7]">
                         <span className="capitalize font-medium px-2 py-0.5 bg-white/20 rounded-full text-xs border border-white/10">
-                            {TIER_NAMES[profile.tier] || profile.tier} Member
+                            {TIER_NAMES[profile.tier] || profile.tier}
                         </span>
                     </div>
                     <div className="mt-6">

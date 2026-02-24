@@ -66,7 +66,7 @@ export function PointsBalance({ refreshTrigger = 0 }: PointsBalanceProps) {
                         {profile.points_balance.toLocaleString()}
                     </div>
                     <div className="mt-2 flex justify-between items-center text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] opacity-[0.7]">
-                        <span className="capitalize">{TIER_NAMES[profile.tier] || profile.tier} Tier</span>
+                        <span className="capitalize">{TIER_NAMES[profile.tier] || profile.tier}</span>
                         <span>${profile.total_spent} spent</span>
                     </div>
                     <div className="mt-4">

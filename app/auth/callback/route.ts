@@ -25,7 +25,7 @@ export async function GET(request: Request) {
                 tier: 'bronze',
                 total_visits: 0,
                 total_spent: 0
-            }, { onConflict: 'id' }).select()
+            }, { onConflict: 'id', ignoreDuplicates: true }).select()
 
             const forwardedHost = request.headers.get('x-forwarded-host')
             const isLocalEnv = process.env.NODE_ENV === 'development'

@@ -47,21 +47,41 @@ export default function OnboardingPage() {
                 throw new Error('No user found')
             }
 
-            // Upsert profile for the new user
-            const { error } = await supabase
+            // Profile update logic to prevent resetting points/progress
+            const { data: existingProfile } = await supabase
                 .from('profiles')
-                .upsert({
-                    id: user.id,
-                    email: user.email, // Ensure email is synced from Auth user
-                    full_name: values.full_name,
-                    phone: values.phone || null,
-                    updated_at: new Date().toISOString(),
-                    // Default values for new profiles
-                    points_balance: 50,
-                    tier: 'bronze',
-                    total_visits: 0,
-                    total_spent: 0
-                })
+                .select('id')
+                .eq('id', user.id)
+                .maybeSingle()
+
+            let error;
+            if (existingProfile) {
+                const { error: updateErr } = await supabase
+                    .from('profiles')
+                    .update({
+                        full_name: values.full_name,
+                        phone: values.phone || null,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', user.id)
+                error = updateErr;
+            } else {
+                const { error: insertErr } = await supabase
+                    .from('profiles')
+                    .insert({
+                        id: user.id,
+                        email: user.email, // Ensure email is synced from Auth user
+                        full_name: values.full_name,
+                        phone: values.phone || null,
+                        updated_at: new Date().toISOString(),
+                        // Default values for new profiles
+                        points_balance: 50,
+                        tier: 'bronze',
+                        total_visits: 0,
+                        total_spent: 0
+                    })
+                error = insertErr;
+            }
 
             if (error) throw error
 
