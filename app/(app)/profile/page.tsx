@@ -14,6 +14,12 @@ import { VoucherQR } from '@/components/features/rewards/voucher-qr'
 import { EditProfileDialog } from '@/components/features/profile/edit-profile-dialog'
 import { DeleteAccountDialog } from '@/components/features/profile/delete-account-dialog'
 import { AvatarUpload } from '@/components/features/profile/avatar-upload'
+const TIER_NAMES: Record<string, string> = {
+    'bronze': 'Hi My Name Is',
+    'silver': 'Good to See You',
+    'gold': 'Local Legend',
+    'platinum': 'Platinum'
+}
 
 export default function ProfilePage() {
     const { profile } = useUserProfile()
@@ -47,7 +53,7 @@ export default function ProfilePage() {
                 <AvatarUpload profile={profile} />
                 <div className="text-center">
                     <h1 className="text-2xl font-bold">{profile.full_name}</h1>
-                    <p className="text-muted-foreground capitalize">{profile.tier} Member</p>
+                    <p className="text-muted-foreground capitalize">{TIER_NAMES[profile.tier] || profile.tier}</p>
                 </div>
             </div>
 
@@ -139,7 +145,7 @@ export default function ProfilePage() {
                         Sign Out
                     </Button>
                     <Separator />
-                    
+
                     <div className="pt-2">
                         <DeleteAccountDialog />
                     </div>
