@@ -28,6 +28,7 @@ const RecentActivity = dynamic(() => import('@/components/features/home/recent-a
 })
 import { useSpinWheel } from '@/hooks/use-spin-wheel'
 import { LotteryHomeWidget } from '@/components/lottery/LotteryHomeWidget'
+import { InfoModal } from '@/components/ui/info-modal'
 
 export default function Dashboard() {
     const { niceState, loading, error, mutate } = useNiceTank()
@@ -104,7 +105,14 @@ export default function Dashboard() {
 
                 {spinConfig.length > 0 && (
                     <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800">
-                        <h3 className="font-semibold mb-4 text-center">Daily Spin</h3>
+                        <div className="flex justify-center items-center mb-4 ml-8"> {/* ml-8 to offset the modal button and truly center */}
+                            <h3 className="font-semibold text-center m-0 p-0">Daily Spin</h3>
+                            <InfoModal
+                                title="Daily Spin"
+                                description="Spin the wheel once every day for a chance to win instant prizes like vouchers and bonus points. Make it part of your daily routine and see what you score today!"
+                                className="ml-1 -mr-9" // adjust to keep the text centered
+                            />
+                        </div>
                         <SpinWheel
                             prizes={spinConfig}
                             nextSpinTime={nextSpinTime}

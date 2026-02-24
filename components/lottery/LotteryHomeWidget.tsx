@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Clock, Ticket } from 'lucide-react'
 import { CurrentLotteryResponse } from '@/lib/lottery/types'
+import { InfoModal } from '@/components/ui/info-modal'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -72,7 +73,14 @@ export function LotteryHomeWidget() {
                 <CardContent className="p-[var(--card-padding)] relative">
                     <div className="flex justify-between items-start">
                         <div className="flex-1 min-w-0 pr-4">
-                            <p className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] opacity-[0.7] tracking-[0.5px] mb-1">Weekly Lottery</p>
+                            <div className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] mb-1 flex items-center">
+                                <span className="opacity-[0.9]">Weekly Lottery</span>
+                                <InfoModal
+                                    title="Weekly Lottery"
+                                    description="Every week we give away amazing prizes! Use your nice currency to enter for a chance to win. The more you engage with the app, the more entries you can make. Winners are announced weekly."
+                                    className="text-white/70 hover:text-white"
+                                />
+                            </div>
                             <h3 className="text-xl font-[var(--font-weight-bold)] leading-[var(--line-height-tight)] break-words">{drawing.prize_description}</h3>
                             <p className="text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] opacity-[0.7] mt-1">
                                 Enable push notifications to be eligible

@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 import { collectNice, NiceState } from '@/app/actions/nice-actions'
+import { InfoModal } from '@/components/ui/info-modal'
 
 interface NiceTankProps {
     initialState: NiceState
@@ -207,16 +208,20 @@ export function NiceTank({ initialState, onCollect }: NiceTankProps) {
             <div className="flex flex-col gap-6 relative z-10">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h3 className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] text-slate-500 tracking-[0.5px] leading-[var(--line-height-normal)] mb-1 opacity-[0.7]">
-                            Nice Generator
+                        <h3 className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] text-slate-500 tracking-[0.5px] leading-[var(--line-height-normal)] mb-1 flex items-center">
+                            <span className="opacity-[0.7]">Nice Tank</span>
+                            <InfoModal
+                                title="Nice Tank"
+                                description="Your nice tank automatically generates nice currency 24/7, even when you're not dining with us. Pop into the app regularly to collect your nice before the tank fills up. Higher membership tiers generate nice faster!"
+                            />
                         </h3>
                         <div className="flex items-baseline gap-1">
                             <span className="text-[length:var(--font-size-display-large)] font-[var(--font-weight-bold)] font-mono text-slate-800 tracking-tighter tabular-nums leading-[var(--line-height-tight)]">
                                 {tankNice.toFixed(5)}
                             </span>
-                            <span className="text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] text-slate-500 leading-[var(--line-height-relaxed)]">nice</span>
                         </div>
                         <div className="flex items-center gap-2 mt-1 text-[length:var(--font-size-small)] text-slate-500 leading-[var(--line-height-normal)] opacity-[0.7]">
+                            <span className="text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] text-slate-500 leading-[var(--line-height-relaxed)]">nice</span>
                             <span className="bg-slate-100 px-2 py-0.5 rounded-full font-mono">
                                 +{initialState.nicePerSecond.toFixed(4)}/sec
                             </span>

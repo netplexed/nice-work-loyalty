@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { getUserProfile } from '@/app/actions/user-actions'
+import { InfoModal } from '@/components/ui/info-modal'
 
 interface PointsBalanceProps {
     refreshTrigger?: number
@@ -59,15 +60,29 @@ export function PointsBalance({ refreshTrigger = 0 }: PointsBalanceProps) {
                 </div>
 
                 <CardHeader className="pb-2 relative z-10 px-[var(--card-padding)] pt-[var(--card-padding)]">
-                    <CardTitle className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] tracking-[0.5px] opacity-[0.7]">Points Balance</CardTitle>
+                    <CardTitle className="text-[length:var(--font-size-header)] font-[var(--font-weight-semibold)] tracking-[0.5px] opacity-[0.9] flex items-center text-white">
+                        <span className="opacity-90">Points Balance</span>
+                        <InfoModal
+                            title="Points Balance"
+                            description="Earn 5 points for every dollar you spend at Tanuki Raw and Standing Sushi Bar. Points can be redeemed for rewards whenever you're ready. The more you dine, the more you earn!"
+                            className="text-white/70 hover:text-white"
+                        />
+                    </CardTitle>
                 </CardHeader>
                 <CardContent className="relative z-10 px-[var(--card-padding)] pb-[var(--card-padding)]">
                     <div className="text-[length:var(--font-size-display)] font-[var(--font-weight-bold)] leading-[var(--line-height-tight)]">
                         {profile.points_balance.toLocaleString()}
                     </div>
-                    <div className="mt-2 flex justify-between items-center text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] opacity-[0.7]">
-                        <span className="capitalize">{TIER_NAMES[profile.tier] || profile.tier}</span>
-                        <span>${profile.total_spent} spent</span>
+                    <div className="mt-2 flex justify-between items-center text-[length:var(--font-size-body)] font-[var(--font-weight-regular)] opacity-[0.9] text-white">
+                        <span className="capitalize flex items-center opacity-90">
+                            {TIER_NAMES[profile.tier] || profile.tier}
+                            <InfoModal
+                                title="Membership Tiers"
+                                description="Progress through three tiers as you dine with us: Hi My Name Is → Good to See You → Local Legend. Higher tiers unlock faster nice generation, so you earn rewards quicker just for being a loyal friend of ours."
+                                className="text-white/70 hover:text-white ml-0 -mr-2"
+                            />
+                        </span>
+                        <span className="opacity-90">${profile.total_spent} spent</span>
                     </div>
                     <div className="mt-4">
                         <Progress value={progress} className="h-2 bg-blue-950/30" indicatorClassName="bg-yellow-400" />
