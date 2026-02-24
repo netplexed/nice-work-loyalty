@@ -117,11 +117,13 @@ export function EmailLogin() {
 
             if (error) {
                 toast.error(error.message)
+                setOauthLoading(false)
             }
+            // Do NOT setOauthLoading(false) here on success. 
+            // The browser is about to redirect to Google. 
+            // If we set it to false, the spinner vanishes and the UI jumps before the redirect happens.
         } catch (error) {
             toast.error('Failed to sign in with Google')
-        } finally {
-            // Note: usually the page will redirect before this runs.
             setOauthLoading(false)
         }
     }
