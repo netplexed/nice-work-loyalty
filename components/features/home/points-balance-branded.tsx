@@ -91,7 +91,7 @@ export function PointsBalanceBranded({ refreshTrigger = 0 }: PointsBalanceProps)
                             <InfoModal
                                 title="Membership Tiers"
                                 description="Progress through three tiers as you dine with us: Hi My Name Is → Good to See You → Local Legend. Higher tiers unlock faster nice generation, so you earn rewards quicker just for being a loyal friend of ours."
-                                className="text-white/70 hover:text-white w-5 h-5 -mr-1 ml-0"
+                                className="text-white/70 hover:text-white w-5 h-5 -mr-1 ml-1.5"
                             />
                         </span>
                     </div>
