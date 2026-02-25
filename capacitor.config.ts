@@ -7,6 +7,10 @@ const config: CapacitorConfig = {
   server: {
     // TODO: Replace with your production URL (e.g., https://nice-work-loyalty.vercel.app)
     url: 'https://makenice.nicework.sg',
+    allowNavigation: [
+      'makenice.nicework.sg',
+      '*.nicework.sg'
+    ],
     // Ensure cookies and headers are handled correctly
     androidScheme: 'https',
     iosScheme: 'https'
