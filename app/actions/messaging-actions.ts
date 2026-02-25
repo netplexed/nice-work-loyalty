@@ -72,15 +72,21 @@ export async function broadcastMessage(params: BroadcastParams) {
         is_read: false
     }))
 
-    const { data: insertedNotifications, error: notifError } = await supabase
-        .from('notifications')
+    // Use admin client (service role) for inserting notifications for other users
+    const adminSupabase = createAdminClient()
+
+    const { data: insertedNotifications, error: notifError } = await (adminSupabase
+        .from('notifications') as any)
         .insert(notifications)
         .select()
 
-    if (notifError) throw new Error('Failed to send notifications')
+    if (notifError) {
+        console.error('[broadcastMessage] Notification insert error:', notifError)
+        throw new Error('Failed to send notifications: ' + notifError.message)
+    }
 
     // 4. Update sent count
-    await supabase.from('admin_broadcasts').update({ sent_count: notifications.length }).eq('id', broadcast.id)
+    await (adminSupabase.from('admin_broadcasts') as any).update({ sent_count: notifications.length }).eq('id', broadcast.id)
 
     // 5. Send Push (Background attempt)
     try {
