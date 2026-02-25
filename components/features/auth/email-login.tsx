@@ -54,7 +54,7 @@ export function EmailLogin() {
                 const { App } = await import('@capacitor/app')
                 const { Browser } = await import('@capacitor/browser')
 
-                const handle = await App.addListener('appUrlOpen', async (event) => {
+                const handle = await App.addListener('appUrlOpen', async (event: any) => {
                     // event.url e.g. "com.niceworkloyalty.app://auth/callback?code=xxx"
                     const url = new URL(event.url)
                     const code = url.searchParams.get('code')
@@ -165,7 +165,8 @@ export function EmailLogin() {
         setOauthLoading(true)
         try {
             const { Capacitor } = await import('@capacitor/core')
-            const isNative = Capacitor.isNativePlatform()
+            const platform = Capacitor.getPlatform()
+            const isNative = platform === 'ios' || platform === 'android'
 
             if (isNative) {
                 // --- Android / iOS native path ---
