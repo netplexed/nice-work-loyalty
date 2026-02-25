@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -18,6 +18,8 @@ import { Input } from '@/components/ui/input'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import type { EmailOtpType } from '@supabase/supabase-js'
+import Link from 'next/link'
 
 const updatePasswordSchema = z.object({
     password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -29,8 +31,70 @@ const updatePasswordSchema = z.object({
 
 export default function UpdatePasswordPage() {
     const [loading, setLoading] = useState(false)
+    const [initializing, setInitializing] = useState(true)
+    const [sessionReady, setSessionReady] = useState(false)
     const router = useRouter()
-    const supabase = createClient()
+    const supabase = useMemo(() => createClient(), [])
+
+    useEffect(() => {
+        let cancelled = false
+
+        async function initializeRecoverySession() {
+            try {
+                const searchParams = new URLSearchParams(window.location.search)
+                const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+
+                const code = searchParams.get('code')
+                const tokenHash = searchParams.get('token_hash')
+                const type = searchParams.get('type')
+
+                if (code) {
+                    const { error } = await supabase.auth.exchangeCodeForSession(code)
+                    if (error) throw error
+                } else if (tokenHash && type) {
+                    const { error } = await supabase.auth.verifyOtp({
+                        token_hash: tokenHash,
+                        type: type as EmailOtpType,
+                    })
+                    if (error) throw error
+                } else {
+                    const accessToken = hashParams.get('access_token')
+                    const refreshToken = hashParams.get('refresh_token')
+                    if (accessToken && refreshToken) {
+                        const { error } = await supabase.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken,
+                        })
+                        if (error) throw error
+                    }
+                }
+
+                const { data: { session } } = await supabase.auth.getSession()
+                if (!session) {
+                    throw new Error('Reset link is invalid or expired. Request a new one.')
+                }
+
+                if (!cancelled) {
+                    setSessionReady(true)
+                }
+            } catch (error: unknown) {
+                if (!cancelled) {
+                    setSessionReady(false)
+                    toast.error(error instanceof Error ? error.message : 'Could not verify reset link')
+                }
+            } finally {
+                if (!cancelled) {
+                    setInitializing(false)
+                }
+            }
+        }
+
+        initializeRecoverySession()
+
+        return () => {
+            cancelled = true
+        }
+    }, [supabase])
 
     const form = useForm<z.infer<typeof updatePasswordSchema>>({
         resolver: zodResolver(updatePasswordSchema),
@@ -85,6 +149,21 @@ export default function UpdatePasswordPage() {
                     </p>
                 </div>
 
+                {initializing ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <p className="mt-3 text-sm">Verifying reset link...</p>
+                    </div>
+                ) : !sessionReady ? (
+                    <div className="space-y-4 text-center">
+                        <p className="text-sm text-muted-foreground">
+                            This reset link is no longer valid.
+                        </p>
+                        <Link href="/forgot-password" className="inline-block">
+                            <Button variant="outline">Request New Reset Link</Button>
+                        </Link>
+                    </div>
+                ) : (
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <FormField
@@ -121,6 +200,7 @@ export default function UpdatePasswordPage() {
                         </div>
                     </form>
                 </Form>
+                )}
             </div>
         </div>
     )
