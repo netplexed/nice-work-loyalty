@@ -9,8 +9,9 @@ import {
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { AdminSidebar } from './admin-sidebar'
+import type { AdminRole } from '@/lib/admin/permissions'
 
-export function AdminMobileNav() {
+export function AdminMobileNav({ adminRole }: { adminRole: AdminRole }) {
     return (
         <div className="flex items-center justify-between p-4 border-b bg-slate-900 border-slate-800 md:hidden">
             <div className="font-bold text-white font-brand">nice work admin</div>
@@ -33,7 +34,7 @@ export function AdminMobileNav() {
                Actually AdminSidebar has `w-64` class. We might want to make it flexible?
                Or just render it as is, since SheetContent is also width constrained.
            */}
-                    <AdminSidebar />
+                    <AdminSidebar adminRole={adminRole} />
                 </SheetContent>
             </Sheet>
         </div>

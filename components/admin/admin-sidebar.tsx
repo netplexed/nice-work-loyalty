@@ -3,33 +3,34 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, Gift, Settings, LogOut, Scan, QrCode, DollarSign, BarChart3, MessageSquare, Mail, Workflow, LayoutTemplate, GitBranch, Megaphone, Trophy, Sparkles } from 'lucide-react'
+import { LayoutDashboard, Users, Gift, Settings, LogOut, Scan, DollarSign, BarChart3, MessageSquare, Mail, Workflow, LayoutTemplate, GitBranch, Megaphone, Trophy, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { hasMinimumRole, type AdminRole } from '@/lib/admin/permissions'
 
-export function AdminSidebar() {
+export function AdminSidebar({ adminRole }: { adminRole: AdminRole }) {
     const pathname = usePathname()
     const router = useRouter()
     const supabase = createClient()
 
     const links = [
-        { href: '/admin', icon: LayoutDashboard, label: 'Overview' },
-        { href: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
-        { href: '/admin/users', icon: Users, label: 'Users' },
-        { href: '/admin/rewards', icon: Gift, label: 'Rewards' },
-        { href: '/admin/lottery', icon: Sparkles, label: 'Lottery' },
-        { href: '/admin/rewards/spin-wheel', icon: Trophy, label: 'Spin Wheel' },
-        { href: '/admin/redeem', icon: Scan, label: 'Redeem' },
-        { href: '/admin/pos', icon: DollarSign, label: 'POS / Record' },
-        { href: '/admin/settings', icon: Settings, label: 'Settings' },
-        { href: '/admin/reports', icon: BarChart3, label: 'Reports' },
-        { href: '/admin/messaging', icon: MessageSquare, label: 'Messaging' },
-        { href: '/admin/emails', icon: Mail, label: 'Campaigns' },
-        { href: '/admin/automations', icon: Workflow, label: 'Automations' },
-        { href: '/admin/marketing/templates', icon: LayoutTemplate, label: 'Templates' },
-        { href: '/admin/marketing/workflows', icon: GitBranch, label: 'Workflows' },
-    ]
+        { href: '/admin', icon: LayoutDashboard, label: 'Overview', minimumRole: 'staff' as AdminRole },
+        { href: '/admin/announcements', icon: Megaphone, label: 'Announcements', minimumRole: 'manager' as AdminRole },
+        { href: '/admin/users', icon: Users, label: 'Users', minimumRole: 'manager' as AdminRole },
+        { href: '/admin/rewards', icon: Gift, label: 'Rewards', minimumRole: 'manager' as AdminRole },
+        { href: '/admin/lottery', icon: Sparkles, label: 'Lottery', minimumRole: 'manager' as AdminRole },
+        { href: '/admin/rewards/spin-wheel', icon: Trophy, label: 'Spin Wheel', minimumRole: 'manager' as AdminRole },
+        { href: '/admin/redeem', icon: Scan, label: 'Redeem', minimumRole: 'staff' as AdminRole },
+        { href: '/admin/pos', icon: DollarSign, label: 'POS / Record', minimumRole: 'staff' as AdminRole },
+        { href: '/admin/settings', icon: Settings, label: 'Settings', minimumRole: 'super_admin' as AdminRole },
+        { href: '/admin/reports', icon: BarChart3, label: 'Reports', minimumRole: 'manager' as AdminRole },
+        { href: '/admin/messaging', icon: MessageSquare, label: 'Messaging', minimumRole: 'manager' as AdminRole },
+        { href: '/admin/emails', icon: Mail, label: 'Campaigns', minimumRole: 'manager' as AdminRole },
+        { href: '/admin/automations', icon: Workflow, label: 'Automations', minimumRole: 'super_admin' as AdminRole },
+        { href: '/admin/marketing/templates', icon: LayoutTemplate, label: 'Templates', minimumRole: 'super_admin' as AdminRole },
+        { href: '/admin/marketing/workflows', icon: GitBranch, label: 'Workflows', minimumRole: 'super_admin' as AdminRole },
+    ].filter((link) => hasMinimumRole(adminRole, link.minimumRole))
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
