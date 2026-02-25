@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -19,10 +19,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+
 const passwordSchema = z.object({
     email: z.string().email('Please enter a valid email address'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
 })
+
+// Custom scheme registered in AndroidManifest.xml that brings the user back into the app
+const ANDROID_OAUTH_REDIRECT = 'com.niceworkloyalty.app://auth/callback'
 
 export function EmailLogin() {
     const [loading, setLoading] = useState(false)
@@ -35,6 +39,58 @@ export function EmailLogin() {
         resolver: zodResolver(passwordSchema),
         defaultValues: { email: '', password: '' },
     })
+
+    // Handle deep-link callback on Android after Google OAuth
+    // The App plugin fires 'appUrlOpen' when the custom scheme URL is intercepted by the OS.
+    useEffect(() => {
+        let cleanup: (() => void) | undefined
+
+        const setupDeepLinkListener = async () => {
+            // Only set up the listener if we're running inside a Capacitor native app
+            try {
+                const { Capacitor } = await import('@capacitor/core')
+                if (!Capacitor.isNativePlatform()) return
+
+                const { App } = await import('@capacitor/app')
+                const { Browser } = await import('@capacitor/browser')
+
+                const handle = await App.addListener('appUrlOpen', async (event) => {
+                    // event.url e.g. "com.niceworkloyalty.app://auth/callback?code=xxx"
+                    const url = new URL(event.url)
+                    const code = url.searchParams.get('code')
+
+                    if (code) {
+                        setOauthLoading(true)
+                        try {
+                            // Close the in-app browser first
+                            await Browser.close()
+
+                            const { error } = await supabase.auth.exchangeCodeForSession(code)
+                            if (error) {
+                                toast.error('Sign in failed: ' + error.message)
+                                return
+                            }
+
+                            toast.success('Successfully signed in with Google!')
+                            router.push('/')
+                            router.refresh()
+                        } catch (err) {
+                            toast.error('Failed to complete sign in')
+                        } finally {
+                            setOauthLoading(false)
+                        }
+                    }
+                })
+
+                cleanup = () => handle.remove()
+            } catch {
+                // Not in a Capacitor environment — no-op
+            }
+        }
+
+        setupDeepLinkListener()
+        return () => cleanup?.()
+    }, [supabase, router])
 
     async function onPasswordSignIn(values: z.infer<typeof passwordSchema>) {
         setLoading(true)
@@ -108,20 +164,55 @@ export function EmailLogin() {
     async function onGoogleSignIn() {
         setOauthLoading(true)
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                },
-            })
+            const { Capacitor } = await import('@capacitor/core')
+            const isNative = Capacitor.isNativePlatform()
 
-            if (error) {
-                toast.error(error.message)
-                setOauthLoading(false)
+            if (isNative) {
+                // --- Android / iOS native path ---
+                // Get the OAuth URL from Supabase without letting it auto-navigate.
+                // We pass skipBrowserRedirect: true so signInWithOAuth returns the URL
+                // instead of triggering window.location — we then open it ourselves
+                // via the Capacitor Browser plugin (in-app Custom Tab).
+                const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: ANDROID_OAUTH_REDIRECT,
+                        skipBrowserRedirect: true,
+                    },
+                })
+
+                if (error) {
+                    toast.error(error.message)
+                    setOauthLoading(false)
+                    return
+                }
+
+                if (data?.url) {
+                    const { Browser } = await import('@capacitor/browser')
+                    await Browser.open({
+                        url: data.url,
+                        presentationStyle: 'popover',
+                    })
+                    // The appUrlOpen listener (set up in useEffect) will handle
+                    // the callback and exchange the code for a session.
+                }
+            } else {
+                // --- Web path (unchanged) ---
+                const { error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: `${window.location.origin}/auth/callback`,
+                    },
+                })
+
+                if (error) {
+                    toast.error(error.message)
+                    setOauthLoading(false)
+                }
+                // Do NOT setOauthLoading(false) here on success.
+                // The browser is about to redirect to Google.
+                // If we set it to false, the spinner vanishes and the UI jumps before the redirect happens.
             }
-            // Do NOT setOauthLoading(false) here on success. 
-            // The browser is about to redirect to Google. 
-            // If we set it to false, the spinner vanishes and the UI jumps before the redirect happens.
         } catch (error) {
             toast.error('Failed to sign in with Google')
             setOauthLoading(false)
