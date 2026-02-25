@@ -69,36 +69,24 @@ async function selectAdminUsersRaw(queryBuilder: {
         .order('created_at', { ascending: false })
 }
 
+async function getAdminQueryClient() {
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        return createAdminClient()
+    }
+    return createClient()
+}
+
 export async function getCurrentAdminUser(): Promise<AdminUserRecord | null> {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
     const adminUser = await getAdminUserById(user.id)
-    if (!adminUser || adminUser.status !== 'active') return adminUser
-
-    const now = Date.now()
-    const lastLoginAt = adminUser.last_login_at ? new Date(adminUser.last_login_at).getTime() : 0
-    const shouldRefreshLastLogin = !lastLoginAt || Number.isNaN(lastLoginAt) || (now - lastLoginAt) > (15 * 60 * 1000)
-
-    if (shouldRefreshLastLogin) {
-        const nowIso = new Date(now).toISOString()
-        await (createAdminClient().from('admin_users') as unknown as {
-            update: (values: { last_login_at: string }) => {
-                eq: (column: string, value: string) => Promise<{ error: QueryError }>
-            }
-        })
-            .update({ last_login_at: nowIso })
-            .eq('id', adminUser.id)
-
-        adminUser.last_login_at = nowIso
-    }
-
     return adminUser
 }
 
 export async function getAdminUserById(userId: string): Promise<AdminUserRecord | null> {
-    const adminSupabase = createAdminClient()
+    const adminSupabase = await getAdminQueryClient()
 
     const primaryQuery = await (adminSupabase.from('admin_users') as unknown as {
         select: (columns: string) => SelectSingleQuery
@@ -126,7 +114,7 @@ export async function getAdminUserById(userId: string): Promise<AdminUserRecord 
 }
 
 export async function listAdminUsers(): Promise<AdminUserRecord[]> {
-    const adminSupabase = createAdminClient()
+    const adminSupabase = await getAdminQueryClient()
     const result = await selectAdminUsersRaw(
         adminSupabase.from('admin_users') as unknown as { select: (columns: string) => SelectListQuery }
     )
@@ -137,7 +125,7 @@ export async function listAdminUsers(): Promise<AdminUserRecord[]> {
 }
 
 async function countSuperAdminsByStatus(statusColumn: 'status' | 'active', excludingId?: string) {
-    const adminSupabase = createAdminClient()
+    const adminSupabase = await getAdminQueryClient()
     let query = (adminSupabase.from('admin_users') as unknown as {
         select: (columns: string, options: { count: 'exact', head: true }) => CountQuery
     })
