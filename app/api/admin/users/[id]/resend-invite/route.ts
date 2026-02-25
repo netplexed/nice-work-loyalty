@@ -5,8 +5,24 @@ import { getAdminUserById } from '@/lib/admin/admin-users'
 
 type QueryError = { message: string } | null
 
+function buildInviteRedirectTo(req: Request) {
+    const origin = req.headers.get('origin')
+    if (origin) {
+        return new URL('/auth/callback?next=/update-password', origin).toString()
+    }
+
+    const forwardedHost = req.headers.get('x-forwarded-host') || req.headers.get('host')
+    if (forwardedHost) {
+        const protocol = req.headers.get('x-forwarded-proto') || 'https'
+        return `${protocol}://${forwardedHost}/auth/callback?next=/update-password`
+    }
+
+    const fallback = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    return new URL('/auth/callback?next=/update-password', fallback).toString()
+}
+
 export async function POST(
-    _req: Request,
+    req: Request,
     context: { params: Promise<{ id: string }> }
 ) {
     const guard = await requireAdminApiContext({ minimumRole: 'super_admin' })
@@ -27,7 +43,9 @@ export async function POST(
     }
 
     const adminSupabase = createAdminClient()
+    const inviteRedirectTo = buildInviteRedirectTo(req)
     const { error: inviteError } = await adminSupabase.auth.admin.inviteUserByEmail(targetAdmin.email, {
+        redirectTo: inviteRedirectTo,
         data: {
             role: targetAdmin.role,
             full_name: targetAdmin.full_name,

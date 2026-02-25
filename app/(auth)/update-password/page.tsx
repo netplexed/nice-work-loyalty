@@ -50,7 +50,24 @@ export default function UpdatePasswordPage() {
             }
 
             toast.success('Password updated successfully')
-            router.push('/login?step=sign-in')
+
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) {
+                router.push('/login?step=sign-in')
+                return
+            }
+
+            const adminProbe = await supabase
+                .from('admin_users')
+                .select('id')
+                .eq('id', user.id)
+                .maybeSingle()
+
+            if (adminProbe.data) {
+                router.push('/admin-login?step=sign-in')
+            } else {
+                router.push('/login?step=sign-in')
+            }
         } catch (error) {
             toast.error('Failed to update password')
         } finally {

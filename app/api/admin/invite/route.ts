@@ -19,6 +19,22 @@ function normalizeEmail(email: string) {
     return email.trim().toLowerCase()
 }
 
+function buildInviteRedirectTo(req: Request) {
+    const origin = req.headers.get('origin')
+    if (origin) {
+        return new URL('/auth/callback?next=/update-password', origin).toString()
+    }
+
+    const forwardedHost = req.headers.get('x-forwarded-host') || req.headers.get('host')
+    if (forwardedHost) {
+        const protocol = req.headers.get('x-forwarded-proto') || 'https'
+        return `${protocol}://${forwardedHost}/auth/callback?next=/update-password`
+    }
+
+    const fallback = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    return new URL('/auth/callback?next=/update-password', fallback).toString()
+}
+
 export async function POST(req: Request) {
     const guard = await requireAdminApiContext({ minimumRole: 'super_admin' })
     if (!guard.ok) return guard.response
@@ -59,7 +75,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'email already exists' }, { status: 409 })
     }
 
+    const inviteRedirectTo = buildInviteRedirectTo(req)
     const { data: inviteData, error: inviteError } = await adminSupabase.auth.admin.inviteUserByEmail(email, {
+        redirectTo: inviteRedirectTo,
         data: {
             role,
             full_name: fullName,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 function isMissingColumnError(error: { code?: string, message?: string } | null) {
     if (!error) return false
@@ -12,10 +13,34 @@ function isMissingColumnError(error: { code?: string, message?: string } | null)
     )
 }
 
+function sanitizeNextPath(next: string | null) {
+    if (!next || !next.startsWith('/')) return '/'
+    return next
+}
+
+function redirectWithHost(request: Request, pathname: string) {
+    const forwardedHost = request.headers.get('x-forwarded-host')
+    const isLocalEnv = process.env.NODE_ENV === 'development'
+
+    if (isLocalEnv) {
+        return NextResponse.redirect(new URL(pathname, request.url))
+    }
+    if (forwardedHost) {
+        return NextResponse.redirect(`https://${forwardedHost}${pathname}`)
+    }
+    return NextResponse.redirect(new URL(pathname, request.url))
+}
+
+type AdminRow = {
+    role: string
+    status?: string | null
+    active?: boolean | null
+}
+
 export async function GET(request: Request) {
     const requestUrl = new URL(request.url)
     const code = requestUrl.searchParams.get('code')
-    const next = requestUrl.searchParams.get('next') ?? '/'
+    const nextPath = sanitizeNextPath(requestUrl.searchParams.get('next'))
 
     if (code) {
         const supabase = await createClient()
@@ -30,9 +55,9 @@ export async function GET(request: Request) {
                 .eq('id', user.id)
                 .maybeSingle()
 
-            let adminRecord: { role: string, status?: string | null, active?: boolean | null } | null = null
+            let adminRecord: AdminRow | null = null
             if (!adminProbe.error) {
-                adminRecord = adminProbe.data as { role: string, status?: string | null, active?: boolean | null } | null
+                adminRecord = adminProbe.data as AdminRow | null
             } else if (isMissingColumnError(adminProbe.error)) {
                 const fallback = await supabase
                     .from('admin_users')
@@ -40,27 +65,69 @@ export async function GET(request: Request) {
                     .eq('id', user.id)
                     .maybeSingle()
                 if (!fallback.error) {
-                    adminRecord = fallback.data as { role: string, active?: boolean | null } | null
+                    adminRecord = fallback.data as AdminRow | null
                 }
             }
 
-            const isActiveAdmin = !!adminRecord && (
+            let isActiveAdmin = !!adminRecord && (
                 typeof adminRecord.status === 'string'
                     ? adminRecord.status === 'active'
                     : !!adminRecord.active
             )
 
-            if (isActiveAdmin) {
-                const adminRedirect = adminRecord?.role === 'staff' ? '/admin/redeem' : '/admin'
-                const forwardedHost = request.headers.get('x-forwarded-host')
-                const isLocalEnv = process.env.NODE_ENV === 'development'
-                if (isLocalEnv) {
-                    return NextResponse.redirect(new URL(adminRedirect, request.url))
-                } else if (forwardedHost) {
-                    return NextResponse.redirect(`https://${forwardedHost}${adminRedirect}`)
-                } else {
-                    return NextResponse.redirect(new URL(adminRedirect, request.url))
+            // Invited admins begin as "pending". Promote them to "active" once the invite token is verified.
+            if (
+                adminRecord &&
+                adminRecord.status === 'pending' &&
+                process.env.SUPABASE_SERVICE_ROLE_KEY
+            ) {
+                const adminSupabase = createAdminClient()
+                const nowIso = new Date().toISOString()
+
+                const { data: activatedRow } = await (adminSupabase.from('admin_users') as unknown as {
+                    update: (values: {
+                        status: 'active'
+                        active: boolean
+                        last_login_at: string
+                        updated_at: string
+                    }) => {
+                        eq: (column: string, value: string) => {
+                            eq: (column: string, value: string) => {
+                                select: (columns: string) => {
+                                    maybeSingle: () => Promise<{ data: AdminRow | null, error: { message?: string } | null }>
+                                }
+                            }
+                        }
+                    }
+                })
+                    .update({
+                        status: 'active',
+                        active: true,
+                        last_login_at: nowIso,
+                        updated_at: nowIso,
+                    })
+                    .eq('id', user.id)
+                    .eq('status', 'pending')
+                    .select('role,status,active')
+                    .maybeSingle()
+
+                if (activatedRow) {
+                    adminRecord = activatedRow
+                    isActiveAdmin = true
                 }
+            }
+
+            if (adminRecord) {
+                if (nextPath.startsWith('/update-password')) {
+                    return redirectWithHost(request, nextPath)
+                }
+
+                if (isActiveAdmin) {
+                    const adminRedirect = adminRecord.role === 'staff' ? '/admin/redeem' : '/admin'
+                    return redirectWithHost(request, adminRedirect)
+                }
+
+                return redirectWithHost(request, '/admin-login?error=disabled')
             }
 
             // Automatically provision the public profile if this is a new OAuth user
@@ -80,20 +147,12 @@ export async function GET(request: Request) {
             // Fetch the profile to check if birthday is missing
             const { data: profile } = await supabase.from('profiles').select('birthday').eq('id', user.id).maybeSingle()
 
-            let redirectUrl = next
+            let redirectUrl = nextPath
             if (!profile?.birthday) {
                 redirectUrl = '/onboarding'
             }
 
-            const forwardedHost = request.headers.get('x-forwarded-host')
-            const isLocalEnv = process.env.NODE_ENV === 'development'
-            if (isLocalEnv) {
-                return NextResponse.redirect(new URL(redirectUrl, request.url))
-            } else if (forwardedHost) {
-                return NextResponse.redirect(`https://${forwardedHost}${redirectUrl}`)
-            } else {
-                return NextResponse.redirect(new URL(redirectUrl, request.url))
-            }
+            return redirectWithHost(request, redirectUrl)
         }
     }
 
