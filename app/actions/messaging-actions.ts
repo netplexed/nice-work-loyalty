@@ -92,7 +92,7 @@ export async function broadcastMessage(params: BroadcastParams) {
     try {
         const { sendPushBatch } = await import('@/lib/push/send-push')
 
-        const pushTargets = insertedNotifications?.map(n => ({
+        const pushTargets = insertedNotifications?.map((n: any) => ({
             userId: n.user_id,
             notificationId: n.id
         })) || []
