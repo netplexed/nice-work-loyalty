@@ -4,24 +4,14 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { trackEvent } from '@/app/actions/marketing-event-actions'
+import { getCurrentAdminUser } from '@/lib/admin/admin-users'
 
 type MemberTier = 'bronze' | 'silver' | 'gold' | 'platinum'
 const VALID_MEMBER_TIERS: MemberTier[] = ['bronze', 'silver', 'gold', 'platinum']
 
 export async function verifyAdmin() {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) return false
-
-    const { data: admin } = await supabase
-        .from('admin_users')
-        .select('role')
-        .eq('id', user.id)
-        .eq('active', true)
-        .single()
-
-    return !!admin
+    const adminUser = await getCurrentAdminUser()
+    return !!adminUser && adminUser.status === 'active'
 }
 
 export async function getAdminStats() {
@@ -68,7 +58,7 @@ export async function getAllUsers(page = 1, limit = 20, query = '') {
     const isAdmin = await verifyAdmin()
     if (!isAdmin) throw new Error('Unauthorized')
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const from = (page - 1) * limit
     const to = from + limit - 1
 
