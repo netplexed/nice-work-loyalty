@@ -20,6 +20,21 @@ type CountQuery = {
     neq: (column: string, value: string) => CountQuery
 }
 
+function isMissingColumnError(error: QueryError) {
+    if (!error) return false
+
+    if (error.code === '42703' || error.code === 'PGRST204') {
+        return true
+    }
+
+    const message = error.message.toLowerCase()
+    return (
+        message.includes('column') && message.includes('does not exist')
+    ) || (
+        message.includes('could not find') && message.includes('in the schema cache')
+    )
+}
+
 export type AdminUserRecord = {
     id: string
     email: string
@@ -61,7 +76,7 @@ async function selectAdminUsersRaw(queryBuilder: {
         .order('created_at', { ascending: false })
 
     if (!primaryResult.error) return primaryResult
-    if (primaryResult.error.code !== '42703') return primaryResult
+    if (!isMissingColumnError(primaryResult.error)) return primaryResult
 
     // Fallback for environments that have not run the status/invite migration yet.
     return queryBuilder
@@ -97,7 +112,7 @@ export async function getAdminUserById(userId: string): Promise<AdminUserRecord 
 
     if (!primaryQuery.error && primaryQuery.data) return mapAdminRow(primaryQuery.data)
     if (!primaryQuery.error) return null
-    if (primaryQuery.error.code !== '42703') {
+    if (!isMissingColumnError(primaryQuery.error)) {
         throw new Error(primaryQuery.error.message)
     }
 
