@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAdminApiContext } from '@/lib/admin/api-auth'
 import type { AdminRole } from '@/lib/admin/permissions'
+import type { User } from '@supabase/supabase-js'
 
 type InviteBody = {
     email?: string
@@ -10,6 +11,7 @@ type InviteBody = {
 }
 
 type QueryError = { message: string } | null
+type AuthError = { message?: string } | null
 
 function isValidRole(role: unknown): role is AdminRole {
     return role === 'super_admin' || role === 'manager' || role === 'staff'
@@ -17,6 +19,11 @@ function isValidRole(role: unknown): role is AdminRole {
 
 function normalizeEmail(email: string) {
     return email.trim().toLowerCase()
+}
+
+function isAlreadyRegisteredError(message: string | undefined) {
+    const normalized = (message || '').toLowerCase()
+    return normalized.includes('already been registered') || normalized.includes('already registered')
 }
 
 function buildInviteRedirectTo(req: Request) {
@@ -33,6 +40,31 @@ function buildInviteRedirectTo(req: Request) {
 
     const fallback = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
     return new URL('/auth/callback?next=/update-password', fallback).toString()
+}
+
+async function findAuthUserByEmail(
+    adminSupabase: ReturnType<typeof createAdminClient>,
+    email: string
+) {
+    const normalizedEmail = normalizeEmail(email)
+    const perPage = 200
+
+    for (let page = 1; page <= 20; page += 1) {
+        const { data, error } = await adminSupabase.auth.admin.listUsers({ page, perPage })
+        if (error) {
+            return { data: null as User | null, error }
+        }
+
+        const users = data?.users || []
+        const matched = users.find((user) => normalizeEmail(user.email || '') === normalizedEmail)
+        if (matched) {
+            return { data: matched, error: null as AuthError }
+        }
+
+        if (users.length < perPage) break
+    }
+
+    return { data: null as User | null, error: null as AuthError }
 }
 
 export async function POST(req: Request) {
@@ -85,12 +117,31 @@ export async function POST(req: Request) {
         }
     })
 
-    if (inviteError || !inviteData?.user?.id) {
-        const message = inviteError?.message || 'Failed to send invitation'
-        return NextResponse.json({ error: message }, { status: 400 })
+    let userId = inviteData?.user?.id || null
+    let deliveryMethod: 'invite' | 'password_reset' = 'invite'
+
+    if (inviteError || !userId) {
+        if (!isAlreadyRegisteredError(inviteError?.message)) {
+            const message = inviteError?.message || 'Failed to send invitation'
+            return NextResponse.json({ error: message }, { status: 400 })
+        }
+
+        const { error: resetError } = await adminSupabase.auth.resetPasswordForEmail(email, {
+            redirectTo: inviteRedirectTo,
+        })
+        if (resetError) {
+            return NextResponse.json({ error: resetError.message || 'Failed to send password setup email' }, { status: 400 })
+        }
+
+        const { data: existingAuthUser, error: lookupError } = await findAuthUserByEmail(adminSupabase, email)
+        if (lookupError || !existingAuthUser?.id) {
+            return NextResponse.json({ error: lookupError?.message || 'Could not resolve existing auth user' }, { status: 400 })
+        }
+
+        userId = existingAuthUser.id
+        deliveryMethod = 'password_reset'
     }
 
-    const userId = inviteData.user.id
     const nowIso = new Date().toISOString()
 
     const { error: upsertError } = await (adminSupabase.from('admin_users') as unknown as {
@@ -128,14 +179,18 @@ export async function POST(req: Request) {
             admin_user_id: string
             actor_admin_id: string
             action: string
-            metadata: { email: string, role: AdminRole }
+            metadata: { email: string, role: AdminRole, delivery: 'invite' | 'password_reset' }
         }) => Promise<{ error: QueryError }>
     }).insert({
         admin_user_id: userId,
         actor_admin_id: guard.context.userId,
         action: 'invited',
-        metadata: { email, role },
+        metadata: { email, role, delivery: deliveryMethod },
     })
 
-    return NextResponse.json({ message: 'Invitation sent', user_id: userId }, { status: 201 })
+    const message = deliveryMethod === 'invite'
+        ? 'Invitation sent'
+        : 'Password setup email sent to existing account'
+
+    return NextResponse.json({ message, user_id: userId }, { status: 201 })
 }

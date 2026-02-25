@@ -5,6 +5,11 @@ import { getAdminUserById } from '@/lib/admin/admin-users'
 
 type QueryError = { message: string } | null
 
+function isAlreadyRegisteredError(message: string | undefined) {
+    const normalized = (message || '').toLowerCase()
+    return normalized.includes('already been registered') || normalized.includes('already registered')
+}
+
 function buildInviteRedirectTo(req: Request) {
     const origin = req.headers.get('origin')
     if (origin) {
@@ -53,8 +58,21 @@ export async function POST(
         }
     })
 
+    let deliveryMethod: 'invite' | 'password_reset' = 'invite'
+
     if (inviteError) {
-        return NextResponse.json({ error: inviteError.message }, { status: 400 })
+        if (!isAlreadyRegisteredError(inviteError.message)) {
+            return NextResponse.json({ error: inviteError.message }, { status: 400 })
+        }
+
+        const { error: resetError } = await adminSupabase.auth.resetPasswordForEmail(targetAdmin.email, {
+            redirectTo: inviteRedirectTo,
+        })
+        if (resetError) {
+            return NextResponse.json({ error: resetError.message || 'Failed to send password setup email' }, { status: 400 })
+        }
+
+        deliveryMethod = 'password_reset'
     }
 
     const nowIso = new Date().toISOString()
@@ -80,14 +98,18 @@ export async function POST(
             admin_user_id: string
             actor_admin_id: string
             action: string
-            metadata: { email: string, role: string }
+            metadata: { email: string, role: string, delivery: 'invite' | 'password_reset' }
         }) => Promise<{ error: QueryError }>
     }).insert({
         admin_user_id: id,
         actor_admin_id: guard.context.userId,
         action: 'invite_resent',
-        metadata: { email: targetAdmin.email, role: targetAdmin.role },
+        metadata: { email: targetAdmin.email, role: targetAdmin.role, delivery: deliveryMethod },
     })
 
-    return NextResponse.json({ message: 'Invitation resent' })
+    const message = deliveryMethod === 'invite'
+        ? 'Invitation resent'
+        : 'Password setup email sent to existing account'
+
+    return NextResponse.json({ message })
 }
