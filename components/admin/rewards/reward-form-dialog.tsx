@@ -100,11 +100,11 @@ export function RewardFormDialog({ reward, trigger }: RewardFormDialogProps) {
                 points_cost: parseInt(pointsCost),
                 category,
                 image_url: finalImageUrl,
-                inventory_remaining: inventory ? parseInt(inventory) : undefined,
+                inventory_remaining: inventory ? parseInt(inventory) : null,
                 display_order: displayOrder ? parseInt(displayOrder) : 0,
-                locations: selectedLocations.length > 0 ? selectedLocations : undefined,
+                locations: selectedLocations.length > 0 ? selectedLocations : null,
                 is_hidden: isHidden,
-                expires_at: expiresAt ? new Date(expiresAt).toISOString() : undefined
+                expires_at: expiresAt ? new Date(expiresAt).toISOString() : null
             }
 
             if (reward) {

@@ -335,15 +335,15 @@ export async function getAdminRewards() {
 
 export async function createReward(data: {
     name: string
-    description?: string
+    description?: string | null
     points_cost: number
     category?: string
     image_url?: string
     active?: boolean
     is_hidden?: boolean
-    inventory_remaining?: number
-    locations?: string[]
-    expires_at?: string
+    inventory_remaining?: number | null
+    locations?: string[] | null
+    expires_at?: string | null
     display_order?: number
 }) {
     const isAdmin = await verifyAdmin()
@@ -363,7 +363,7 @@ export async function createReward(data: {
         .from('rewards')
         .insert(insertPayload)
 
-    if (error?.code === '42703') {
+    if (error?.code === '42703' || error?.code === 'PGRST204') {
         const { display_order: _displayOrder, ...legacyPayload } = insertPayload
         const { error: fallbackError } = await supabase
             .from('rewards')
@@ -380,15 +380,15 @@ export async function createReward(data: {
 
 export async function updateReward(id: string, data: {
     name?: string
-    description?: string
+    description?: string | null
     points_cost?: number
     category?: string
     image_url?: string
     active?: boolean
     is_hidden?: boolean
-    inventory_remaining?: number
-    locations?: string[]
-    expires_at?: string
+    inventory_remaining?: number | null
+    locations?: string[] | null
+    expires_at?: string | null
     display_order?: number
 }) {
     const isAdmin = await verifyAdmin()
@@ -406,7 +406,7 @@ export async function updateReward(id: string, data: {
         .update(updatePayload)
         .eq('id', id)
 
-    if (error?.code === '42703') {
+    if (error?.code === '42703' || error?.code === 'PGRST204') {
         const { display_order: _displayOrder, ...legacyPayload } = updatePayload
         const { error: fallbackError } = await supabase
             .from('rewards')
