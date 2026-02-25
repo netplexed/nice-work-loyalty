@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'public',
   server: {
     // TODO: Replace with your production URL (e.g., https://nice-work-loyalty.vercel.app)
-    url: 'https://nice-work-loyalty.vercel.app',
+    url: 'https://makenice.nicework.sg',
     // Ensure cookies and headers are handled correctly
     androidScheme: 'https',
     iosScheme: 'https'
