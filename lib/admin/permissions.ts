@@ -22,7 +22,7 @@ export type AdminNavLink = {
 }
 
 export const ADMIN_NAV_RULES: AdminNavLink[] = [
-    { href: '/admin', label: 'Overview', minimumRole: 'staff' },
+    { href: '/admin', label: 'Overview', minimumRole: 'manager' },
     { href: '/admin/announcements', label: 'Announcements', minimumRole: 'manager' },
     { href: '/admin/users', label: 'Users', minimumRole: 'manager' },
     { href: '/admin/rewards', label: 'Rewards', minimumRole: 'manager' },

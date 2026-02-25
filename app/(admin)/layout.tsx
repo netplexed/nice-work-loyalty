@@ -12,7 +12,7 @@ export default async function AdminLayout({
     const currentAdmin = await getCurrentAdminUser()
 
     if (!currentAdmin || currentAdmin.status !== 'active') {
-        redirect('/')
+        redirect('/admin-login')
     }
 
     return (

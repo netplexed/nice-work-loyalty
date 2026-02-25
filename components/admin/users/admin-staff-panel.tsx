@@ -296,6 +296,30 @@ export function AdminStaffPanel({
         }
     }
 
+    const removeAdmin = async (user: AdminStaffRow) => {
+        if (user.id === currentAdminId) return
+
+        const confirmed = window.confirm(
+            `Remove ${user.full_name} from Admin & Staff?\n\nThey will immediately lose admin portal access.`
+        )
+        if (!confirmed) return
+
+        setLoadingRowId(user.id)
+        try {
+            const response = await fetch(`/api/admin/users/${user.id}`, {
+                method: 'DELETE',
+            })
+            const payload = await response.json()
+            if (!response.ok) throw new Error(payload.error || 'Failed to remove admin')
+            toast.success(`${user.full_name} was removed from Admin & Staff`)
+            refresh()
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Failed to remove admin'))
+        } finally {
+            setLoadingRowId(null)
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -366,37 +390,70 @@ export function AdminStaffPanel({
                                                             Current Account
                                                         </Button>
                                                     ) : user.status === 'pending' ? (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => resendInvite(user)}
-                                                            disabled={isRowLoading}
-                                                        >
-                                                            {isRowLoading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : null}
-                                                            Resend Invite
-                                                        </Button>
+                                                        <>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => resendInvite(user)}
+                                                                disabled={isRowLoading}
+                                                            >
+                                                                {isRowLoading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : null}
+                                                                Resend Invite
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="border-red-600 text-red-700 hover:bg-red-50"
+                                                                onClick={() => removeAdmin(user)}
+                                                                disabled={isRowLoading}
+                                                            >
+                                                                Remove
+                                                            </Button>
+                                                        </>
                                                     ) : user.status === 'disabled' ? (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="border-green-600 text-green-700 hover:bg-green-50"
-                                                            onClick={() => updateStatus(user, 'active')}
-                                                            disabled={isRowLoading}
-                                                        >
-                                                            {isRowLoading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : null}
-                                                            Enable
-                                                        </Button>
+                                                        <>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="border-green-600 text-green-700 hover:bg-green-50"
+                                                                onClick={() => updateStatus(user, 'active')}
+                                                                disabled={isRowLoading}
+                                                            >
+                                                                {isRowLoading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : null}
+                                                                Enable
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="border-red-600 text-red-700 hover:bg-red-50"
+                                                                onClick={() => removeAdmin(user)}
+                                                                disabled={isRowLoading}
+                                                            >
+                                                                Remove
+                                                            </Button>
+                                                        </>
                                                     ) : (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="border-red-600 text-red-700 hover:bg-red-50"
-                                                            onClick={() => updateStatus(user, 'disabled')}
-                                                            disabled={isRowLoading}
-                                                        >
-                                                            {isRowLoading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : null}
-                                                            Disable
-                                                        </Button>
+                                                        <>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="border-red-600 text-red-700 hover:bg-red-50"
+                                                                onClick={() => updateStatus(user, 'disabled')}
+                                                                disabled={isRowLoading}
+                                                            >
+                                                                {isRowLoading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : null}
+                                                                Disable
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="border-red-600 text-red-700 hover:bg-red-50"
+                                                                onClick={() => removeAdmin(user)}
+                                                                disabled={isRowLoading}
+                                                            >
+                                                                Remove
+                                                            </Button>
+                                                        </>
                                                     )}
                                                 </div>
                                             </TableCell>

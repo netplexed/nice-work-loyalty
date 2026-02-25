@@ -15,7 +15,7 @@ export function AdminSidebar({ adminRole }: { adminRole: AdminRole }) {
     const supabase = createClient()
 
     const links = [
-        { href: '/admin', icon: LayoutDashboard, label: 'Overview', minimumRole: 'staff' as AdminRole },
+        { href: '/admin', icon: LayoutDashboard, label: 'Overview', minimumRole: 'manager' as AdminRole },
         { href: '/admin/announcements', icon: Megaphone, label: 'Announcements', minimumRole: 'manager' as AdminRole },
         { href: '/admin/users', icon: Users, label: 'Users', minimumRole: 'manager' as AdminRole },
         { href: '/admin/rewards', icon: Gift, label: 'Rewards', minimumRole: 'manager' as AdminRole },
@@ -34,7 +34,7 @@ export function AdminSidebar({ adminRole }: { adminRole: AdminRole }) {
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
-        router.push('/login')
+        router.push('/admin-login')
     }
 
     return (

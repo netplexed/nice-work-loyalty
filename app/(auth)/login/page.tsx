@@ -260,6 +260,12 @@ function LoginPageContent() {
                         </a>
                         .
                     </p>
+                    <p className="text-center text-xs text-muted-foreground">
+                        Admin or staff?{' '}
+                        <Link href="/admin-login" className="underline underline-offset-4 hover:text-primary">
+                            Use admin login
+                        </Link>
+                    </p>
                 </div>
             )}
 
