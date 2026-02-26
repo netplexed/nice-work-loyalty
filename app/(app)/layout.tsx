@@ -14,7 +14,7 @@ export default function AppLayout({
 }) {
     return (
         <div className="min-h-screen bg-gray-50/50">
-            <main className="max-w-md mx-auto min-h-screen bg-white shadow-xl overflow-hidden relative">
+            <main className="max-w-md mx-auto min-h-screen bg-white shadow-xl overflow-hidden relative" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
                 {children}
 
                 {/* Bottom Navigation */}
