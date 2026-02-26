@@ -62,21 +62,14 @@ function LoginPageContent() {
     const [authState, setAuthState] = useState<AuthState>('landing')
     const [loading, setLoading] = useState(false)
     const [oauthLoading, setOauthLoading] = useState(false)
-    const [isNative, setIsNative] = useState(false)
     const supabase = createClient()
 
-    // Safely check for native environment after mount
-    useEffect(() => {
-        const checkNative = async () => {
-            try {
-                const { Capacitor } = await import('@capacitor/core')
-                setIsNative(Capacitor.isNativePlatform())
-            } catch {
-                setIsNative(false)
-            }
-        }
-        checkNative()
-    }, [])
+    // Synchronous native-platform check using the user-agent that Capacitor appends
+    // ('NiceWorkApp' — set via appendUserAgent in capacitor.config.ts).
+    // This avoids a race condition where an async isNative state check could still be
+    // false when the user taps the button, causing the wrong OAuth flow to be taken.
+    const isNativeApp = () =>
+        typeof navigator !== 'undefined' && navigator.userAgent.includes('NiceWorkApp')
 
     // Handle deep-link callback on Android after Google OAuth
     // NOTE: We do NOT gate this on isNative because:
@@ -221,7 +214,7 @@ function LoginPageContent() {
     async function onGoogleSignIn() {
         setOauthLoading(true)
         try {
-            if (isNative) {
+            if (isNativeApp()) {
                 const { data, error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
