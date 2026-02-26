@@ -112,19 +112,15 @@ function LoginPageContent() {
 
         const setupDeepLinkListener = async () => {
             try {
+                // IMPORTANT: Import App separately from Browser. If @capacitor/browser
+                // isn't synced to Xcode, importing it here would throw and destroy
+                // the entire listener before it could register — causing a stuck spinner.
                 const { App } = await import('@capacitor/app')
-                const { Browser } = await import('@capacitor/browser')
 
                 const handle = await App.addListener('appUrlOpen', async (event: any) => {
                     const url = new URL(event.url)
 
-                    // Supabase OAuth redirects back with either a ?code= or #access_token= depending on flow
-                    // With PKCE (the default), it's a code in the query params or the hash.
-
-                    // First check query params
                     let code = url.searchParams.get('code')
-
-                    // If not in query params but there's a hash (sometimes `#code=xxx`), parse it
                     if (!code && url.hash) {
                         const hashParams = new URLSearchParams(url.hash.substring(1))
                         code = hashParams.get('code')
@@ -133,20 +129,24 @@ function LoginPageContent() {
                     if (code) {
                         setOauthLoading(true)
                         try {
-                            await Browser.close()
+                            // Try to close the in-app browser if it was opened (non-critical)
+                            try {
+                                const { Browser } = await import('@capacitor/browser')
+                                await Browser.close()
+                            } catch { /* Browser plugin not synced — that's fine */ }
 
-                            // Send to server-side /auth/callback route to exchange the code,
-                            // create the user profile, and redirect to the home page.
-                            // MUST use window.location.href because /auth/callback is an API route (route.ts).
+                            // Hand off to server-side route to exchange code and create profile
                             window.location.href = `/auth/callback?code=${code}`
-
                         } catch (err) {
                             toast.error('Failed to complete sign in redirect')
                             setOauthLoading(false)
                         }
                     } else if (url.searchParams.get('error')) {
                         toast.error('Sign in error: ' + url.searchParams.get('error_description'))
-                        try { await Browser.close() } catch { }
+                        try {
+                            const { Browser } = await import('@capacitor/browser')
+                            await Browser.close()
+                        } catch { }
                     }
                 })
 
