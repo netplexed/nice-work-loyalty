@@ -347,6 +347,12 @@ export function EmailLogin() {
                         </div>
                     </form>
                 </Form>
+                <div className="mt-8 text-[10px] text-muted-foreground break-all p-2 rounded bg-muted/50 font-mono">
+                    <p>Debug Info:</p>
+                    <p>UA: {typeof navigator !== 'undefined' ? navigator.userAgent : 'server'}</p>
+                    <p>isNativeApp: {isNativeApp() ? 'true' : 'false'}</p>
+                    <p>Capacitor: {typeof window !== 'undefined' && (window as any).Capacitor ? 'yes' : 'no'}</p>
+                </div>
             </CardContent>
         </Card>
     )
