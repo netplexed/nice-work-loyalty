@@ -282,10 +282,10 @@ export async function deleteBroadcast(id: string) {
     const isAdmin = await verifyAdmin()
     if (!isAdmin) throw new Error('Unauthorized')
 
-    const supabase = await createClient()
+    const adminSupabase = createAdminClient()
 
     // 1. Delete associated notifications first (due to foreign key)
-    const { error: notifError } = await supabase
+    const { error: notifError } = await adminSupabase
         .from('notifications')
         .delete()
         .eq('broadcast_id', id)
@@ -293,7 +293,7 @@ export async function deleteBroadcast(id: string) {
     if (notifError) throw new Error('Failed to delete notifications: ' + notifError.message)
 
     // 2. Delete the broadcast record
-    const { error: broadcastError } = await supabase
+    const { error: broadcastError } = await adminSupabase
         .from('admin_broadcasts')
         .delete()
         .eq('id', id)
