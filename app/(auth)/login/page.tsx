@@ -64,12 +64,14 @@ function LoginPageContent() {
     const [oauthLoading, setOauthLoading] = useState(false)
     const supabase = createClient()
 
-    // Synchronous native-platform check using the user-agent that Capacitor appends
-    // ('NiceWorkApp' — set via appendUserAgent in capacitor.config.ts).
-    // This avoids a race condition where an async isNative state check could still be
-    // false when the user taps the button, causing the wrong OAuth flow to be taken.
-    const isNativeApp = () =>
-        typeof navigator !== 'undefined' && navigator.userAgent.includes('NiceWorkApp')
+    // Synchronous native-platform check using the Capacitor message bridges.
+    // This is more robust than User-Agent checks because it doesn't depend on
+    // configuration syncs and is injected immediately by the Capacitor WebView.
+    const isNativeApp = () => {
+        if (typeof window === 'undefined') return false;
+        const win = window as any;
+        return !!(win.androidBridge || (win.webkit?.messageHandlers?.bridge));
+    };
 
     // Handle deep-link callback on Android after Google OAuth
     // NOTE: We do NOT gate this on isNative because:
