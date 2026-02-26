@@ -255,6 +255,9 @@ function LoginPageContent() {
                     options: {
                         redirectTo: NATIVE_OAUTH_REDIRECT,
                         skipBrowserRedirect: true,
+                        queryParams: {
+                            prompt: 'select_account',
+                        },
                     },
                 })
 
