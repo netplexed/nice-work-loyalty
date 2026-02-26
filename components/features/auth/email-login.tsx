@@ -28,6 +28,18 @@ const passwordSchema = z.object({
 // Custom scheme registered in AndroidManifest.xml that brings the user back into the app
 const ANDROID_OAUTH_REDIRECT = 'com.niceworkloyalty.app://auth/callback'
 
+/**
+ * Detect if we're running inside an Android WebView (i.e. the Capacitor app shell).
+ * Android WebViews include "; wv)" in the user agent, which regular Chrome does not.
+ * We use this instead of Capacitor.isNativePlatform() because the Capacitor JS bridge
+ * is not reliably injected when using a remote server.url config.
+ */
+function isAndroidWebView(): boolean {
+    if (typeof navigator === 'undefined') return false
+    const ua = navigator.userAgent || ''
+    return /Android/i.test(ua) && /; wv\)/.test(ua)
+}
+
 export function EmailLogin() {
     const [loading, setLoading] = useState(false)
     const [oauthLoading, setOauthLoading] = useState(false)
@@ -41,36 +53,32 @@ export function EmailLogin() {
     })
 
     // Handle deep-link callback on Android after Google OAuth
-    // The App plugin fires 'appUrlOpen' when the custom scheme URL is intercepted by the OS.
+    // When the app intercepts the custom scheme URL, Capacitor fires 'appUrlOpen'.
+    // We also try to detect the native bridge, but fall back to user-agent detection.
     useEffect(() => {
         let cleanup: (() => void) | undefined
 
         const setupDeepLinkListener = async () => {
-            // Only set up the listener if we're running inside a Capacitor native app
-            try {
-                const { Capacitor } = await import('@capacitor/core')
-                if (!Capacitor.isNativePlatform()) return
+            if (!isAndroidWebView()) return
 
+            try {
+                // Try to use the Capacitor App plugin for deep link listening
                 const { App } = await import('@capacitor/app')
                 const { Browser } = await import('@capacitor/browser')
 
                 const handle = await App.addListener('appUrlOpen', async (event: any) => {
-                    // event.url e.g. "com.niceworkloyalty.app://auth/callback?code=xxx"
                     const url = new URL(event.url)
                     const code = url.searchParams.get('code')
 
                     if (code) {
                         setOauthLoading(true)
                         try {
-                            // Close the in-app browser first
                             await Browser.close()
-
                             const { error } = await supabase.auth.exchangeCodeForSession(code)
                             if (error) {
                                 toast.error('Sign in failed: ' + error.message)
                                 return
                             }
-
                             toast.success('Successfully signed in with Google!')
                             router.push('/')
                             router.refresh()
@@ -84,7 +92,8 @@ export function EmailLogin() {
 
                 cleanup = () => handle.remove()
             } catch {
-                // Not in a Capacitor environment — no-op
+                // Capacitor plugins not available — deep link will be handled
+                // by the server-side /auth/callback route instead
             }
         }
 
@@ -164,12 +173,8 @@ export function EmailLogin() {
     async function onGoogleSignIn() {
         setOauthLoading(true)
         try {
-            const { Capacitor } = await import('@capacitor/core')
-            const platform = Capacitor.getPlatform()
-            const isNative = platform === 'ios' || platform === 'android'
-
-            if (isNative) {
-                // --- Android / iOS native path ---
+            if (isAndroidWebView()) {
+                // --- Android WebView (Capacitor app) path ---
                 // Get the OAuth URL from Supabase without letting it auto-navigate.
                 // We pass skipBrowserRedirect: true so signInWithOAuth returns the URL
                 // instead of triggering window.location — we then open it ourselves
@@ -189,11 +194,16 @@ export function EmailLogin() {
                 }
 
                 if (data?.url) {
-                    const { Browser } = await import('@capacitor/browser')
-                    await Browser.open({
-                        url: data.url,
-                        presentationStyle: 'popover',
-                    })
+                    try {
+                        const { Browser } = await import('@capacitor/browser')
+                        await Browser.open({
+                            url: data.url,
+                            presentationStyle: 'popover',
+                        })
+                    } catch {
+                        // Capacitor Browser plugin not available — fall back to window.open
+                        window.open(data.url, '_blank')
+                    }
                     // The appUrlOpen listener (set up in useEffect) will handle
                     // the callback and exchange the code for a session.
                 }
