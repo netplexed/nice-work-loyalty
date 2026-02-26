@@ -277,3 +277,29 @@ export async function sendNotification(
 
     return { success: true }
 }
+
+export async function deleteBroadcast(id: string) {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+
+    // 1. Delete associated notifications first (due to foreign key)
+    const { error: notifError } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('broadcast_id', id)
+
+    if (notifError) throw new Error('Failed to delete notifications: ' + notifError.message)
+
+    // 2. Delete the broadcast record
+    const { error: broadcastError } = await supabase
+        .from('admin_broadcasts')
+        .delete()
+        .eq('id', id)
+
+    if (broadcastError) throw new Error('Failed to delete broadcast: ' + broadcastError.message)
+
+    revalidatePath('/admin/messaging')
+    return { success: true }
+}

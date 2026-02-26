@@ -108,10 +108,18 @@ export async function sendPushNotification(userId: string, title: string, body: 
                 } else {
                     const app = getFirebaseAdmin()
                     if (app) {
-                        const message = {
+                        const message: any = {
                             token: sub.endpoint,
                             notification: { title, body },
-                            data: { url: url || '/' }
+                            data: { url: url || '/' },
+                            apns: {
+                                payload: {
+                                    aps: {
+                                        sound: 'default',
+                                        badge: 1,
+                                    }
+                                }
+                            }
                         };
                         const msgId = await getMessaging(app).send(message)
                         return { success: true, platform: 'native', msgId }

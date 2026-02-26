@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Plus, MessageSquare } from "lucide-react"
 import { getBroadcasts } from '@/app/actions/messaging-actions'
+import { DeleteBroadcastButton } from '@/components/admin/messaging/delete-broadcast-button'
 import {
     Table,
     TableBody,
@@ -50,12 +51,13 @@ export default async function MessagingPage() {
                                 <TableHead>Title</TableHead>
                                 <TableHead>Target</TableHead>
                                 <TableHead className="text-right">Recipients</TableHead>
+                                <TableHead className="text-right w-[80px]">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {broadcasts.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
                                         No messages sent yet.
                                     </TableCell>
                                 </TableRow>
@@ -72,6 +74,9 @@ export default async function MessagingPage() {
                                             : 'All Users'}
                                     </TableCell>
                                     <TableCell className="text-right">{msg.sent_count}</TableCell>
+                                    <TableCell className="text-right">
+                                        <DeleteBroadcastButton id={msg.id} title={msg.title} />
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
