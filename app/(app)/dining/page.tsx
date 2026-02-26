@@ -1,4 +1,5 @@
 import Image from 'next/image'
+export const dynamic = 'force-dynamic'
 import { Globe, Calendar, Phone, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
