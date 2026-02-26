@@ -25,15 +25,6 @@ import Link from 'next/link'
 // Custom scheme registered in AndroidManifest.xml that brings the user back into the app
 const ANDROID_OAUTH_REDIRECT = 'com.niceworkloyalty.app://auth/callback'
 
-/**
- * Detect if we're running inside the Capacitor app shell (Android/iOS).
- * Uses a custom user agent tag 'NiceWorkApp' set via appendUserAgent in capacitor.config.ts.
- */
-function isNativeApp(): boolean {
-    if (typeof navigator === 'undefined') return false
-    return navigator.userAgent.includes('NiceWorkApp')
-}
-
 type AuthState = 'landing' | 'create-account' | 'sign-in'
 
 const signInSchema = z.object({
@@ -70,14 +61,28 @@ function LoginPageContent() {
     const [authState, setAuthState] = useState<AuthState>('landing')
     const [loading, setLoading] = useState(false)
     const [oauthLoading, setOauthLoading] = useState(false)
+    const [isNative, setIsNative] = useState(false)
     const supabase = createClient()
+
+    // Safely check for native environment after mount
+    useEffect(() => {
+        const checkNative = async () => {
+            try {
+                const { Capacitor } = await import('@capacitor/core')
+                setIsNative(Capacitor.isNativePlatform())
+            } catch {
+                setIsNative(false)
+            }
+        }
+        checkNative()
+    }, [])
 
     // Handle deep-link callback on Android after Google OAuth
     useEffect(() => {
         let cleanup: (() => void) | undefined
 
         const setupDeepLinkListener = async () => {
-            if (!isNativeApp()) return
+            if (!isNative) return
 
             try {
                 const { App } = await import('@capacitor/app')
@@ -203,7 +208,7 @@ function LoginPageContent() {
     async function onGoogleSignIn() {
         setOauthLoading(true)
         try {
-            if (isNativeApp()) {
+            if (isNative) {
                 const { data, error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
