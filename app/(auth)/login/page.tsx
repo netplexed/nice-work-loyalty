@@ -90,25 +90,36 @@ function LoginPageContent() {
 
                 const handle = await App.addListener('appUrlOpen', async (event: any) => {
                     const url = new URL(event.url)
-                    const code = url.searchParams.get('code')
+
+                    // Supabase OAuth redirects back with either a ?code= or #access_token= depending on flow
+                    // With PKCE (the default), it's a code in the query params or the hash.
+
+                    // First check query params
+                    let code = url.searchParams.get('code')
+
+                    // If not in query params but there's a hash (sometimes `#code=xxx`), parse it
+                    if (!code && url.hash) {
+                        const hashParams = new URLSearchParams(url.hash.substring(1))
+                        code = hashParams.get('code')
+                    }
 
                     if (code) {
                         setOauthLoading(true)
                         try {
                             await Browser.close()
-                            const { error } = await supabase.auth.exchangeCodeForSession(code)
-                            if (error) {
-                                toast.error('Sign in failed: ' + error.message)
-                                return
-                            }
-                            toast.success('Successfully signed in with Google!')
-                            router.push('/')
-                            router.refresh()
+
+                            // DO NOT exchange the code here client-side!
+                            // We must send the user to our Next.js /auth/callback route so the server
+                            // can exchange the code and automatically create the user profile in the DB.
+                            router.push(`/auth/callback?code=${code}`)
+
                         } catch (err) {
-                            toast.error('Failed to complete sign in')
-                        } finally {
+                            toast.error('Failed to complete sign in redirect')
                             setOauthLoading(false)
                         }
+                    } else if (url.searchParams.get('error')) {
+                        toast.error('Sign in error: ' + url.searchParams.get('error_description'))
+                        await Browser.close()
                     }
                 })
 
