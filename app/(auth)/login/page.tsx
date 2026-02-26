@@ -78,12 +78,13 @@ function LoginPageContent() {
     }, [])
 
     // Handle deep-link callback on Android after Google OAuth
+    // NOTE: We do NOT gate this on isNative because:
+    // 1. isNative starts as false and would cause us to miss the event
+    // 2. The try/catch on dynamic import already handles non-native environments
     useEffect(() => {
         let cleanup: (() => void) | undefined
 
         const setupDeepLinkListener = async () => {
-            if (!isNative) return
-
             try {
                 const { App } = await import('@capacitor/app')
                 const { Browser } = await import('@capacitor/browser')
@@ -108,11 +109,9 @@ function LoginPageContent() {
                         try {
                             await Browser.close()
 
-                            // DO NOT exchange the code here client-side!
-                            // We must send the user to our Next.js /auth/callback route so the server
-                            // can exchange the code and automatically create the user profile in the DB.
-                            // CRITICAL: We must use window.location.href because /auth/callback is an API route (route.ts),
-                            // and router.push() will fail/freeze trying to load it as a React page component.
+                            // Send to server-side /auth/callback route to exchange the code,
+                            // create the user profile, and redirect to the home page.
+                            // MUST use window.location.href because /auth/callback is an API route (route.ts).
                             window.location.href = `/auth/callback?code=${code}`
 
                         } catch (err) {
@@ -121,19 +120,19 @@ function LoginPageContent() {
                         }
                     } else if (url.searchParams.get('error')) {
                         toast.error('Sign in error: ' + url.searchParams.get('error_description'))
-                        await Browser.close()
+                        try { await Browser.close() } catch { }
                     }
                 })
 
                 cleanup = () => handle.remove()
             } catch {
-                // Capacitor plugins not available
+                // Not running in a Capacitor native environment — no-op
             }
         }
 
         setupDeepLinkListener()
         return () => cleanup?.()
-    }, [supabase, router])
+    }, [])
 
     useEffect(() => {
         if (searchParams.get('deleted') === 'true') {
