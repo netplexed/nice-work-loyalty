@@ -111,7 +111,9 @@ function LoginPageContent() {
                             // DO NOT exchange the code here client-side!
                             // We must send the user to our Next.js /auth/callback route so the server
                             // can exchange the code and automatically create the user profile in the DB.
-                            router.push(`/auth/callback?code=${code}`)
+                            // CRITICAL: We must use window.location.href because /auth/callback is an API route (route.ts),
+                            // and router.push() will fail/freeze trying to load it as a React page component.
+                            window.location.href = `/auth/callback?code=${code}`
 
                         } catch (err) {
                             toast.error('Failed to complete sign in redirect')
