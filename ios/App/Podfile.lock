@@ -89,10 +89,10 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capawesome/capacitor-badge"
 
 SPEC CHECKSUMS:
-  Capacitor: cfc1ce4a70dbc19fdc4e66e17808937088029752
+  Capacitor: 2b79172ad27f3be2d103cce88b8eb9803fdcc744
   CapacitorCordova: 921bdb690ebe82421b24fce45552fd3dea2ae43a
-  CapacitorFirebaseMessaging: 7743d1f495fd8ef60b722c8bf6b557f0048a53cc
-  CapawesomeCapacitorBadge: 1bd5bc5f35d8b54d0792344a2227bda14bd0a585
+  CapacitorFirebaseMessaging: 5cc096872062ffbc89cc7982b75bcf00124060ef
+  CapawesomeCapacitorBadge: 8875ba23dfad72cfee5bc3aca27c1a580d33eee7
   FirebaseCore: c7b57863ce0859281a66d16ca36d665c45d332b5
   FirebaseCoreInternal: 571a2dd8c975410966199623351db3a3265c874d
   FirebaseInstallations: 6d05424a046b68ca146b4de4376f05b4e9262fc3
@@ -104,4 +104,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: b10da0afbbdb85423b8133f5b9933e9d13896435
 
-COCOAPODS: 1.12.0
+COCOAPODS: 1.16.2
