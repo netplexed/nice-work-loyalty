@@ -1,5 +1,6 @@
-
 import { NextRequest, NextResponse } from 'next/server'
+
+export const dynamic = 'force-dynamic'
 import { processAutomations } from '@/lib/automations/process-automations'
 import { createClient } from '@/lib/supabase/server'
 

@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useState } from 'react'
 import { getSpinConfig, SpinPrize } from '@/app/actions/spin-actions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
