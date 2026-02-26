@@ -72,7 +72,7 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="flex flex-col gap-8 pb-24 p-6 bg-gray-50/50 min-h-screen">
+        <div className="flex flex-col gap-8 pb-24 p-6 pt-safe bg-gray-50/50 min-h-screen">
             <div className="space-y-6">
                 <PointsBalance refreshTrigger={refreshTrigger} />
 
