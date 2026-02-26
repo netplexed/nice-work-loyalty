@@ -2,6 +2,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 import { LotteryService } from '@/lib/lottery/service'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: Request) {
     // Verify Cron Secret
     const authHeader = req.headers.get('authorization')

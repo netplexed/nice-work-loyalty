@@ -2,6 +2,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 import { executeDrawing } from '@/lib/lottery/drawing-logic'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: Request) {
     const authHeader = req.headers.get('authorization')
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

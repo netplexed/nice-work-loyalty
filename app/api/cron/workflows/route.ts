@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send-email'
 
+export const dynamic = 'force-dynamic'
+
 // ... (comments)
 
 export async function GET(req: NextRequest) {
