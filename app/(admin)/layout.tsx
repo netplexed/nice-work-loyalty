@@ -4,6 +4,8 @@ import { AdminSidebar } from '@/components/admin/admin-sidebar'
 import { AdminMobileNav } from '@/components/admin/admin-mobile-nav'
 import { getCurrentAdminUser } from '@/lib/admin/admin-users'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminLayout({
     children,
 }: {
