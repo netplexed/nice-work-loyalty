@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -62,16 +62,46 @@ function LoginPageContent() {
     const [authState, setAuthState] = useState<AuthState>('landing')
     const [loading, setLoading] = useState(false)
     const [oauthLoading, setOauthLoading] = useState(false)
+    const [debugInfo, setDebugInfo] = useState<{ ua: string; hasCap: boolean; hasBridge: boolean; platform: string }>({
+        ua: '', hasCap: false, hasBridge: false, platform: 'unknown'
+    })
+    const [showDebug, setShowDebug] = useState(false)
+    const logoTapCount = useRef(0)
     const supabase = createClient()
 
-    // Synchronous native-platform check using the Capacitor message bridges.
-    // This is more robust than User-Agent checks because it doesn't depend on
-    // configuration syncs and is injected immediately by the Capacitor WebView.
+    // Robust synchronous native check
     const isNativeApp = () => {
         if (typeof window === 'undefined') return false;
         const win = window as any;
-        return !!(win.androidBridge || (win.webkit?.messageHandlers?.bridge));
+
+        // 1. Check for the Capacitor global bridge
+        const hasCap = !!win.Capacitor?.isNativePlatform?.();
+        // 2. Check for the underlying iOS/Android message bridges
+        const hasBridge = !!(win.androidBridge || win.webkit?.messageHandlers?.bridge);
+
+        return hasCap || hasBridge;
     };
+
+    // Capture debug info on mount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const win = window as any;
+            setDebugInfo({
+                ua: navigator.userAgent,
+                hasCap: !!win.Capacitor,
+                hasBridge: !!(win.androidBridge || win.webkit?.messageHandlers?.bridge),
+                platform: win.Capacitor?.getPlatform?.() || 'unknown'
+            })
+        }
+    }, [])
+
+    const handleLogoClick = () => {
+        logoTapCount.current += 1
+        if (logoTapCount.current >= 5) {
+            setShowDebug(true)
+            toast.info("Debug mode enabled")
+        }
+    }
 
     // Handle deep-link callback on Android after Google OAuth
     // NOTE: We do NOT gate this on isNative because:
@@ -274,7 +304,12 @@ function LoginPageContent() {
         <div className="flex flex-col items-center justify-center max-w-sm mx-auto space-y-8 w-full">
             {authState === 'landing' && (
                 <div className="text-center space-y-6 w-full">
-                    <h1 className="text-5xl font-bold tracking-tighter text-foreground font-brand">nice work</h1>
+                    <h1
+                        className="text-5xl font-bold tracking-tighter text-foreground font-brand cursor-default"
+                        onClick={handleLogoClick}
+                    >
+                        nice work
+                    </h1>
                     <div className="flex items-center justify-center gap-8">
                         <img
                             src="/images/logos/tanuki-raw-logo.png"
@@ -481,6 +516,24 @@ function LoginPageContent() {
                             </div>
                         </form>
                     </Form>
+                </div>
+            )}
+
+            {showDebug && (
+                <div className="fixed bottom-4 left-4 right-4 p-4 bg-black/90 text-white text-[10px] font-mono rounded-lg z-[100] border border-white/20 shadow-2xl overflow-hidden">
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="font-bold text-primary">DEBUG INFO</span>
+                        <button onClick={() => setShowDebug(false)} className="text-primary hover:text-white">Close</button>
+                    </div>
+                    <p className="mb-1 uppercase text-gray-500">Native Detection</p>
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                        <div className="bg-white/5 p-1 rounded">Is Native: <span className={isNativeApp() ? 'text-green-400' : 'text-red-400'}>{isNativeApp() ? 'YES' : 'NO'}</span></div>
+                        <div className="bg-white/5 p-1 rounded">Capacitor: <span className={debugInfo.hasCap ? 'text-green-400' : 'text-red-400'}>{debugInfo.hasCap ? 'YES' : 'NO'}</span></div>
+                        <div className="bg-white/5 p-1 rounded">JS Bridge: <span className={debugInfo.hasBridge ? 'text-green-400' : 'text-red-400'}>{debugInfo.hasBridge ? 'YES' : 'NO'}</span></div>
+                        <div className="bg-white/5 p-1 rounded">Platform: <span className="text-blue-400">{debugInfo.platform}</span></div>
+                    </div>
+                    <p className="mb-1 uppercase text-gray-500">User Agent</p>
+                    <p className="bg-white/5 p-1 rounded break-all whitespace-pre-wrap leading-tight">{debugInfo.ua}</p>
                 </div>
             )}
         </div>
