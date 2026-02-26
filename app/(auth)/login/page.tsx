@@ -246,7 +246,10 @@ function LoginPageContent() {
     async function onGoogleSignIn() {
         setOauthLoading(true)
         try {
-            if (isNativeApp()) {
+            // Use window.Capacitor as the most reliable runtime check on a rebuilt native app
+            const native = isNativeApp()
+
+            if (native) {
                 const { data, error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
@@ -256,21 +259,27 @@ function LoginPageContent() {
                 })
 
                 if (error) {
-                    toast.error(error.message)
+                    toast.error('Google sign-in failed: ' + error.message)
                     setOauthLoading(false)
                     return
                 }
 
-                if (data?.url) {
-                    try {
-                        const { Browser } = await import('@capacitor/browser')
-                        await Browser.open({
-                            url: data.url,
-                            presentationStyle: 'popover',
-                        })
-                    } catch {
-                        window.open(data.url, '_blank')
-                    }
+                if (!data?.url) {
+                    toast.error('No sign-in URL returned. Please try again.')
+                    setOauthLoading(false)
+                    return
+                }
+
+                // Open the Google OAuth URL in Capacitor's in-app browser
+                try {
+                    const { Browser } = await import('@capacitor/browser')
+                    // Note: do NOT pass presentationStyle:'popover' — it's iPad-only and throws silently on iPhone
+                    await Browser.open({ url: data.url })
+                    // oauthLoading stays true - the deep link listener will handle the rest
+                } catch (browserErr: any) {
+                    // Browser plugin unavailable - this indicates an environment problem.
+                    toast.error('Could not open sign-in browser: ' + (browserErr?.message || 'unknown error'))
+                    setOauthLoading(false)
                 }
             } else {
                 const { error } = await supabase.auth.signInWithOAuth({
@@ -536,6 +545,13 @@ function LoginPageContent() {
                     <p className="bg-white/5 p-1 rounded break-all whitespace-pre-wrap leading-tight">{debugInfo.ua}</p>
                 </div>
             )}
+
+            {/* Hidden debug trigger — tap the logo 5x to reveal */}
+            <div
+                className="fixed top-0 left-0 w-20 h-20 opacity-0"
+                onClick={handleLogoClick}
+                aria-hidden="true"
+            />
         </div>
     )
 }
