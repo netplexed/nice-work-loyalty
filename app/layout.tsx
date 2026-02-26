@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+export const dynamic = 'force-dynamic'
 import { Geist, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner'
