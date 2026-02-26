@@ -21,6 +21,19 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
+
+// Custom scheme registered in AndroidManifest.xml that brings the user back into the app
+const ANDROID_OAUTH_REDIRECT = 'com.niceworkloyalty.app://auth/callback'
+
+/**
+ * Detect if we're running inside the Capacitor app shell (Android/iOS).
+ * Uses a custom user agent tag 'NiceWorkApp' set via appendUserAgent in capacitor.config.ts.
+ */
+function isNativeApp(): boolean {
+    if (typeof navigator === 'undefined') return false
+    return navigator.userAgent.includes('NiceWorkApp')
+}
+
 type AuthState = 'landing' | 'create-account' | 'sign-in'
 
 const signInSchema = z.object({
@@ -58,6 +71,51 @@ function LoginPageContent() {
     const [loading, setLoading] = useState(false)
     const [oauthLoading, setOauthLoading] = useState(false)
     const supabase = createClient()
+
+    // Handle deep-link callback on Android after Google OAuth
+    useEffect(() => {
+        let cleanup: (() => void) | undefined
+
+        const setupDeepLinkListener = async () => {
+            if (!isNativeApp()) return
+
+            try {
+                const { App } = await import('@capacitor/app')
+                const { Browser } = await import('@capacitor/browser')
+
+                const handle = await App.addListener('appUrlOpen', async (event: any) => {
+                    const url = new URL(event.url)
+                    const code = url.searchParams.get('code')
+
+                    if (code) {
+                        setOauthLoading(true)
+                        try {
+                            await Browser.close()
+                            const { error } = await supabase.auth.exchangeCodeForSession(code)
+                            if (error) {
+                                toast.error('Sign in failed: ' + error.message)
+                                return
+                            }
+                            toast.success('Successfully signed in with Google!')
+                            router.push('/')
+                            router.refresh()
+                        } catch (err) {
+                            toast.error('Failed to complete sign in')
+                        } finally {
+                            setOauthLoading(false)
+                        }
+                    }
+                })
+
+                cleanup = () => handle.remove()
+            } catch {
+                // Capacitor plugins not available
+            }
+        }
+
+        setupDeepLinkListener()
+        return () => cleanup?.()
+    }, [supabase, router])
 
     useEffect(() => {
         if (searchParams.get('deleted') === 'true') {
@@ -145,16 +203,44 @@ function LoginPageContent() {
     async function onGoogleSignIn() {
         setOauthLoading(true)
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                },
-            })
+            if (isNativeApp()) {
+                const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: ANDROID_OAUTH_REDIRECT,
+                        skipBrowserRedirect: true,
+                    },
+                })
 
-            if (error) {
-                toast.error(error.message)
-                setOauthLoading(false)
+                if (error) {
+                    toast.error(error.message)
+                    setOauthLoading(false)
+                    return
+                }
+
+                if (data?.url) {
+                    try {
+                        const { Browser } = await import('@capacitor/browser')
+                        await Browser.open({
+                            url: data.url,
+                            presentationStyle: 'popover',
+                        })
+                    } catch {
+                        window.open(data.url, '_blank')
+                    }
+                }
+            } else {
+                const { error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: 'https://makenice.nicework.sg/auth/callback',
+                    },
+                })
+
+                if (error) {
+                    toast.error(error.message)
+                    setOauthLoading(false)
+                }
             }
         } catch (error) {
             toast.error('Failed to sign in with Google')
