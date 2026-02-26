@@ -270,16 +270,19 @@ function LoginPageContent() {
                     return
                 }
 
-                // Open the Google OAuth URL in Capacitor's in-app browser
+                // Try the Capacitor Browser plugin first (requires `npx cap sync ios` to work).
+                // If it's not synced yet, fall back to navigating the WKWebView directly.
+                // The Info.plist URL scheme registration means iOS will intercept the
+                // com.niceworkloyalty.app:// callback URL and bring the user back to the app.
                 try {
                     const { Browser } = await import('@capacitor/browser')
-                    // Note: do NOT pass presentationStyle:'popover' — it's iPad-only and throws silently on iPhone
                     await Browser.open({ url: data.url })
-                    // oauthLoading stays true - the deep link listener will handle the rest
-                } catch (browserErr: any) {
-                    // Browser plugin unavailable - this indicates an environment problem.
-                    toast.error('Could not open sign-in browser: ' + (browserErr?.message || 'unknown error'))
-                    setOauthLoading(false)
+                    // oauthLoading stays true — the appUrlOpen deep-link listener handles the rest
+                } catch {
+                    // Browser plugin not synced — navigate directly in the WKWebView.
+                    // iOS will handle the com.niceworkloyalty.app:// callback via Info.plist.
+                    window.location.href = data.url
+                    // oauthLoading stays true — page will navigate away to Google
                 }
             } else {
                 const { error } = await supabase.auth.signInWithOAuth({
