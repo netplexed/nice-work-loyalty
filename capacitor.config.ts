@@ -5,13 +5,11 @@ const config: CapacitorConfig = {
   appName: 'nice work',
   webDir: 'public',
   server: {
-    // TODO: Replace with your production URL (e.g., https://nice-work-loyalty.vercel.app)
     url: 'https://makenice.nicework.sg',
     allowNavigation: [
       'makenice.nicework.sg',
       '*.nicework.sg'
     ],
-    // Ensure cookies and headers are handled correctly
     androidScheme: 'https',
     iosScheme: 'https'
   },
@@ -24,5 +22,10 @@ const config: CapacitorConfig = {
     }
   }
 };
+
+// Tag the WebView user agent so the frontend JS can reliably detect
+// that it's running inside the native Capacitor app shell.
+// This is set via property assignment because the TS types don't include it yet.
+(config.server as any).appendUserAgent = 'NiceWorkApp';
 
 export default config;

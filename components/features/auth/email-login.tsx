@@ -29,15 +29,16 @@ const passwordSchema = z.object({
 const ANDROID_OAUTH_REDIRECT = 'com.niceworkloyalty.app://auth/callback'
 
 /**
- * Detect if we're running inside an Android WebView (i.e. the Capacitor app shell).
- * Android WebViews include "; wv)" in the user agent, which regular Chrome does not.
- * We use this instead of Capacitor.isNativePlatform() because the Capacitor JS bridge
- * is not reliably injected when using a remote server.url config.
+ * Detect if we're running inside the Capacitor app shell (Android/iOS).
+ * We use a custom user agent tag 'NiceWorkApp' set via appendUserAgent in
+ * capacitor.config.ts. This is bulletproof because:
+ * - We control the string (no browser/WebView version ambiguity)
+ * - The Capacitor JS bridge isn't reliably injected for remote server.url configs
+ * - Generic WebView detection ('; wv)') can be unreliable across Android versions
  */
-function isAndroidWebView(): boolean {
+function isNativeApp(): boolean {
     if (typeof navigator === 'undefined') return false
-    const ua = navigator.userAgent || ''
-    return /Android/i.test(ua) && /; wv\)/.test(ua)
+    return navigator.userAgent.includes('NiceWorkApp')
 }
 
 export function EmailLogin() {
@@ -59,7 +60,7 @@ export function EmailLogin() {
         let cleanup: (() => void) | undefined
 
         const setupDeepLinkListener = async () => {
-            if (!isAndroidWebView()) return
+            if (!isNativeApp()) return
 
             try {
                 // Try to use the Capacitor App plugin for deep link listening
@@ -173,7 +174,7 @@ export function EmailLogin() {
     async function onGoogleSignIn() {
         setOauthLoading(true)
         try {
-            if (isAndroidWebView()) {
+            if (isNativeApp()) {
                 // --- Android WebView (Capacitor app) path ---
                 // Get the OAuth URL from Supabase without letting it auto-navigate.
                 // We pass skipBrowserRedirect: true so signInWithOAuth returns the URL
