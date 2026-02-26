@@ -14,11 +14,24 @@ export default function DebugPage() {
     const [loading, setLoading] = useState(false)
     const [logs, setLogs] = useState<string[]>([])
     const [cookies, setCookies] = useState<string>('')
+    const [platformInfo, setPlatformInfo] = useState<{ platform: string, isNative: boolean }>({ platform: 'unknown', isNative: false })
 
     const addLog = (msg: string) => setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`])
 
     useEffect(() => {
         setCookies(document.cookie)
+        const checkPlatform = async () => {
+            try {
+                const { Capacitor } = await import('@capacitor/core')
+                setPlatformInfo({
+                    platform: Capacitor.getPlatform(),
+                    isNative: Capacitor.isNativePlatform()
+                })
+            } catch (e) {
+                setPlatformInfo({ platform: 'web', isNative: false })
+            }
+        }
+        checkPlatform()
     }, [])
 
     const handleRefreshCookies = () => {
@@ -58,11 +71,16 @@ export default function DebugPage() {
 
             const result = await sendPushNotification(user.id, 'Test Notification', 'This is a test from the debug page!', '/debug')
 
-            if (result.success) {
+            if (result?.success) {
                 addLog(`✅ Server sent: ${result.sent} success, ${result.failed} failed`)
+                if (result.detail) {
+                    result.detail.forEach((d: any) => {
+                        addLog(`  ${d.success ? '✅' : '❌'} [${d.platform}] ${d.success ? 'Success' : d.error || 'Failed'}`)
+                    })
+                }
                 toast.success('Test sent!')
             } else {
-                addLog(`❌ Server error: ${result.error}`)
+                addLog(`❌ Server error: ${result?.error || 'Unknown error'}`)
             }
 
         } catch (e: any) {
@@ -125,17 +143,22 @@ export default function DebugPage() {
                 '/debug'
             )
 
-            if (result.success) {
+            if (result?.success) {
                 addLog(`✅ Server sent: ${result.sent} success, ${result.failed} failed`)
+                if (result.detail) {
+                    result.detail.forEach((d: any) => {
+                        addLog(`  ${d.success ? '✅' : '❌'} [${d.platform}] ${d.success ? 'Success' : d.error || 'Failed'}${d.code ? ` (${d.code})` : ''}`)
+                    })
+                }
                 if (result.sent && result.sent > 0) {
                     toast.success('Push sent! Check your notification center.')
                 } else {
-                    addLog('⚠️ Server responded OK but sent=0. Check server logs for FCM errors.')
-                    toast.warning('Sent 0 pushes — check logs')
+                    addLog('⚠️ Server responded OK but sent=0. Check device registration.')
+                    toast.warning('Sent 0 pushes')
                 }
             } else {
-                addLog(`❌ Server error: ${result.error}`)
-                toast.error(`Push failed: ${result.error}`)
+                addLog(`❌ Server error: ${result?.error || 'Unknown error'}`)
+                toast.error(`Push failed: ${result?.error}`)
             }
 
         } catch (e: any) {
@@ -182,10 +205,20 @@ export default function DebugPage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Cookie className="w-4 h-4" />
-                        Session Diagnostics
+                        System Diagnostics
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-slate-100 dark:bg-slate-900 p-2 rounded text-xs">
+                            <span className="font-semibold block text-muted-foreground uppercase text-[10px]">Platform</span>
+                            {platformInfo.platform}
+                        </div>
+                        <div className="bg-slate-100 dark:bg-slate-900 p-2 rounded text-xs">
+                            <span className="font-semibold block text-muted-foreground uppercase text-[10px]">Is Native</span>
+                            {platformInfo.isNative ? 'YES' : 'NO'}
+                        </div>
+                    </div>
                     <div>
                         <div className="flex justify-between items-center mb-2">
                             <label className="text-xs font-semibold uppercase text-muted-foreground">Current Cookies</label>

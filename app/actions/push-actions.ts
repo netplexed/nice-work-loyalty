@@ -95,52 +95,45 @@ export async function sendPushNotification(userId: string, title: string, body: 
 
     if (!subs?.length) return { success: false, error: 'No subscriptions found' }
 
-    const results = await Promise.allSettled(
+    const results = await Promise.all(
         subs.map(async sub => {
             try {
                 if (sub.keys) {
-                    // WEB PUSH
                     const payload = JSON.stringify({ title, body, url })
                     await webpush.sendNotification({
                         endpoint: sub.endpoint,
                         keys: sub.keys
                     }, payload)
+                    return { success: true, platform: 'web' }
                 } else {
-                    // NATIVE PUSH (FCM)
                     const app = getFirebaseAdmin()
                     if (app) {
-                        try {
-                            const message = {
-                                token: sub.endpoint,
-                                notification: { title, body },
-                                data: { url: url || '/' }
-                            };
-                            console.log('FCM Sending to:', sub.endpoint.substring(0, 20) + '...', message)
-                            const msgId = await getMessaging(app).send(message)
-                            console.log('FCM Sent Success:', msgId)
-                        } catch (fcmError: any) {
-                            console.error('FCM Send Error:', fcmError)
-                            throw fcmError
-                        }
+                        const message = {
+                            token: sub.endpoint,
+                            notification: { title, body },
+                            data: { url: url || '/' }
+                        };
+                        const msgId = await getMessaging(app).send(message)
+                        return { success: true, platform: 'native', msgId }
                     } else {
-                        console.warn('Firebase Admin not configured, skipping native push')
+                        return { success: false, error: 'Firebase Admin not configured', platform: 'native' }
                     }
                 }
             } catch (err: any) {
-                console.error('Push Send Error (General):', err.message, err.statusCode, err.code)
+                const errorCode = err.code || 'unknown'
                 if (err.statusCode === 410 || err.statusCode === 404 || err.code === 'messaging/registration-token-not-registered') {
-                    // Cleanup invalid subscription
-                    console.log(`Cleaning up invalid subscription ${sub.id}`)
                     await supabase.from('push_subscriptions').delete().eq('id', sub.id)
+                    return { success: false, error: 'Token Expired', code: errorCode, platform: sub.keys ? 'web' : 'native' }
                 }
-                throw err
+                return { success: false, error: err.message || String(err), code: errorCode, platform: sub.keys ? 'web' : 'native' }
             }
         })
     )
 
     return {
         success: true,
-        sent: results.filter(r => r.status === 'fulfilled').length,
-        failed: results.filter(r => r.status === 'rejected').length
+        sent: results.filter(r => r.success).length,
+        failed: results.filter(r => !r.success).length,
+        detail: results
     }
 }
