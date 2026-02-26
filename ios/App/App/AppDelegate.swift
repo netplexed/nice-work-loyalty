@@ -18,7 +18,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // Without this, FCM tokens are issued but never linked to APNs, so pushes are silently dropped.
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         Messaging.messaging().apnsToken = deviceToken
-        ApplicationDelegateProxy.shared.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
