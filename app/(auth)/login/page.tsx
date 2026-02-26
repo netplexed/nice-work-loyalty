@@ -22,8 +22,9 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 
 
-// Custom scheme registered in AndroidManifest.xml that brings the user back into the app
-const ANDROID_OAUTH_REDIRECT = 'com.niceworkloyalty.app://auth/callback'
+// Custom scheme registered in AndroidManifest.xml (Android) and Info.plist CFBundleURLTypes (iOS)
+// that brings the user back into the app after Google OAuth completes.
+const NATIVE_OAUTH_REDIRECT = 'com.niceworkloyalty.app://auth/callback'
 
 type AuthState = 'landing' | 'create-account' | 'sign-in'
 
@@ -224,7 +225,7 @@ function LoginPageContent() {
                 const { data, error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: ANDROID_OAUTH_REDIRECT,
+                        redirectTo: NATIVE_OAUTH_REDIRECT,
                         skipBrowserRedirect: true,
                     },
                 })
