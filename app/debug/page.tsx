@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Send, Cookie, RefreshCw } from 'lucide-react'
+import { Loader2, Send, Cookie, RefreshCw, Bell } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { sendPushNotification } from '@/app/actions/push-actions'
@@ -26,7 +26,7 @@ export default function DebugPage() {
 
     const handleTestPush = async () => {
         setLoading(true)
-        addLog('Starting test...')
+        addLog('Starting web push test...')
         try {
             const supabase = createClient()
             const { data: { user } } = await supabase.auth.getUser()
@@ -65,6 +65,79 @@ export default function DebugPage() {
 
         } catch (e: any) {
             addLog(`❌ Client Error: ${e.message}`)
+            console.error(e)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleTestNativePush = async () => {
+        setLoading(true)
+        addLog('Starting native FCM push test...')
+        try {
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (!user) {
+                addLog('❌ Error: Not logged in')
+                return
+            }
+            addLog(`User ID: ${user.id}`)
+
+            // Check if there's a native FCM subscription in Supabase
+            addLog('Checking FCM subscription in database...')
+            const { data: subs, error: subError } = await supabase
+                .from('push_subscriptions')
+                .select('id, endpoint, keys, updated_at')
+                .eq('user_id', user.id)
+
+            if (subError) {
+                addLog(`❌ DB error: ${subError.message}`)
+                return
+            }
+
+            if (!subs || subs.length === 0) {
+                addLog('❌ No push subscriptions found in DB for this user!')
+                addLog('   → Make sure you have opened the app and granted notification permission.')
+                toast.error('No FCM subscription found in database')
+                return
+            }
+
+            const nativeSubs = subs.filter((s: any) => !s.keys)
+            const webSubs = subs.filter((s: any) => s.keys)
+            addLog(`Found ${subs.length} subscription(s): ${nativeSubs.length} native FCM, ${webSubs.length} web`)
+
+            if (nativeSubs.length === 0) {
+                addLog('⚠️ Only web subscriptions found — no native FCM token registered.')
+                addLog('   → Make sure you are using the native app (not browser) and have granted permission.')
+            } else {
+                addLog(`✅ FCM token present (last updated: ${new Date(nativeSubs[0].updated_at).toLocaleString()})`)
+            }
+
+            // Send the push via server action (same path as broadcasts)
+            addLog('Sending push via server...')
+            const result = await sendPushNotification(
+                user.id,
+                '🔔 Native Push Test',
+                'If you see this, push notifications are working!',
+                '/debug'
+            )
+
+            if (result.success) {
+                addLog(`✅ Server sent: ${result.sent} success, ${result.failed} failed`)
+                if (result.sent && result.sent > 0) {
+                    toast.success('Push sent! Check your notification center.')
+                } else {
+                    addLog('⚠️ Server responded OK but sent=0. Check server logs for FCM errors.')
+                    toast.warning('Sent 0 pushes — check logs')
+                }
+            } else {
+                addLog(`❌ Server error: ${result.error}`)
+                toast.error(`Push failed: ${result.error}`)
+            }
+
+        } catch (e: any) {
+            addLog(`❌ Error: ${e.message}`)
             console.error(e)
         } finally {
             setLoading(false)
@@ -128,17 +201,35 @@ export default function DebugPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <Send className="w-4 h-4" />
-                        Test Push Notification
+                        <Bell className="w-4 h-4" />
+                        Test Native Push (iOS/Android)
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        Force a push notification to this device immediately.
+                        Tests the full FCM push path used by broadcasts. Checks your FCM token registration in the database, then sends a real push notification via the server.
                     </p>
-                    <Button onClick={handleTestPush} disabled={loading} className="w-full">
+                    <Button onClick={handleTestNativePush} disabled={loading} className="w-full">
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Send Test Push
+                        Send Native Push Test
+                    </Button>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Send className="w-4 h-4" />
+                        Test Web Push
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                        Tests browser-based web push (not applicable on native iOS).
+                    </p>
+                    <Button onClick={handleTestPush} disabled={loading} variant="outline" className="w-full">
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Send Web Push Test
                     </Button>
                 </CardContent>
             </Card>
@@ -167,7 +258,7 @@ export default function DebugPage() {
                     <CardTitle>Logs</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="bg-slate-950 text-slate-50 p-4 rounded-md font-mono text-xs overflow-x-auto h-48">
+                    <div className="bg-slate-950 text-slate-50 p-4 rounded-md font-mono text-xs overflow-x-auto h-48 overflow-y-auto">
                         {logs.length === 0 ? (
                             <span className="opacity-50">Waiting for action...</span>
                         ) : (

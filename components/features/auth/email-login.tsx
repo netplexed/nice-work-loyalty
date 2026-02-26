@@ -37,8 +37,9 @@ const ANDROID_OAUTH_REDIRECT = 'com.niceworkloyalty.app://auth/callback'
  * - Generic WebView detection ('; wv)') can be unreliable across Android versions
  */
 function isNativeApp(): boolean {
-    if (typeof navigator === 'undefined') return false
-    return navigator.userAgent.includes('NiceWorkApp')
+    if (typeof window === 'undefined') return false;
+    const win = window as any;
+    return !!(win.androidBridge || (win.webkit?.messageHandlers?.bridge));
 }
 
 export function EmailLogin() {

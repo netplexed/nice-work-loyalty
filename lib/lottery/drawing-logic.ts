@@ -4,7 +4,15 @@ import { sendEmail } from '@/lib/email/send-email'
 import { sendPushNotification } from '@/lib/push/send-push'
 
 // Setup crypto for random values
-const crypto = globalThis.crypto
+// Use crypto helper for random values
+const getCrypto = () => {
+    if (typeof globalThis !== 'undefined' && globalThis.crypto) return globalThis.crypto
+    try {
+        return require('crypto').webcrypto
+    } catch {
+        return null
+    }
+}
 
 export async function executeDrawing(drawingId: string) {
     const supabase = createAdminClient()
@@ -65,6 +73,8 @@ export async function executeDrawing(drawingId: string) {
     }
 
     // 4. Generate cryptographically secure random number
+    const crypto = getCrypto()
+    if (!crypto) throw new Error('Crypto service not available')
     const randomBytes = new Uint32Array(1)
     crypto.getRandomValues(randomBytes)
     const randomSeed = randomBytes[0].toString()

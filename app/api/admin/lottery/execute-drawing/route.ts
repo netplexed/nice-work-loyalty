@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { executeDrawing } from '@/lib/lottery/drawing-logic'
 import { requireAdminApiContext } from '@/lib/admin/api-auth'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: Request) {
     const guard = await requireAdminApiContext({ minimumRole: 'manager' })
     if (!guard.ok) return guard.response
