@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { trackEvent } from '@/app/actions/marketing-event-actions'
+import { processAutomations } from '@/lib/automations/process-automations'
 
 function isMissingColumnError(error: { code?: string, message?: string } | null) {
     if (!error) return false
@@ -131,18 +133,33 @@ export async function GET(request: Request) {
             }
 
             // Automatically provision the public profile if this is a new OAuth user
-            // Upsert will gracefully ignore if the profile already exists.
-            await supabase.from('profiles').upsert({
-                id: user.id,
-                email: user.email,
-                full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-                updated_at: new Date().toISOString(),
-                // these defaults match the onboarding process
-                points_balance: 50,
-                tier: 'bronze',
-                total_visits: 0,
-                total_spent: 0
-            }, { onConflict: 'id', ignoreDuplicates: true })
+            const { data: existingProfile } = await supabase.from('profiles').select('id').eq('id', user.id).maybeSingle()
+
+            if (!existingProfile) {
+                const adminSupabase = createAdminClient()
+
+                await adminSupabase.from('profiles').insert({
+                    id: user.id,
+                    email: user.email,
+                    full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+                    phone: null,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    // these defaults match the onboarding process
+                    points_balance: 50,
+                    tier: 'bronze',
+                    total_visits: 0,
+                    total_spent: 0
+                } as any)
+
+                // Trigger Marketing Workflow (Signup) & Immediate Welcome Email
+                try {
+                    await trackEvent(user.id, 'user.signup', { email: user.email })
+                    await processAutomations(user.id)
+                } catch (err) {
+                    console.error('[OAuth Immediate Automation] Failed:', err)
+                }
+            }
 
             // Fetch the profile to check if birthday is missing
             const { data: profile } = await supabase.from('profiles').select('birthday').eq('id', user.id).maybeSingle()
