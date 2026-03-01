@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useRouter } from 'next/navigation'
-import { ExternalLink, LogOut, Mail, Phone, Cake } from 'lucide-react'
+import { ExternalLink, LifeBuoy, LogOut, Mail, Phone, Cake } from 'lucide-react'
 import { NotificationsToggle } from '@/components/pwa/notifications-toggle'
 import { MarketingConsentToggle } from '@/components/features/profile/marketing-consent-toggle'
 import { VoucherQR } from '@/components/features/rewards/voucher-qr'
@@ -139,6 +139,20 @@ export default function ProfilePage() {
                         </a>
                     </Button>
                     <Separator />
+                    <Button
+                        variant="ghost"
+                        asChild
+                        className="w-full justify-start text-muted-foreground"
+                    >
+                        <a
+                            href="/legal/support.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <LifeBuoy className="w-4 h-4 mr-2" />
+                            Support
+                        </a>
+                    </Button>
                     <Separator />
                     <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50" onClick={handleSignOut}>
                         <LogOut className="w-4 h-4 mr-2" />

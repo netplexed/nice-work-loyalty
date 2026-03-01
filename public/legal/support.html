@@ -1,0 +1,736 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nice work â€” support</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #FDF8F0;
+      --warm-white: #FEFCF8;
+      --ink: #1A1510;
+      --ink-soft: #4A3F35;
+      --ink-lighter: #8A7E74;
+      --tanuki-orange: #E8651A;
+      --tanuki-orange-light: #F5924D;
+      --tanuki-orange-pale: #FDF0E8;
+      --gold: #C9973A;
+      --gold-pale: #FBF5E8;
+      --border: #E8E0D5;
+      --shadow: rgba(26,21,16,0.08);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-color: var(--cream);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+
+    /* â”€â”€ HEADER â”€â”€ */
+    header {
+      background: var(--ink);
+      padding: 0 24px;
+    }
+
+    .header-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 0 48px;
+    }
+
+    .wordmark {
+      font-family: 'DM Serif Display', serif;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      color: var(--tanuki-orange);
+      text-transform: lowercase;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .wordmark::before {
+      content: '';
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      background: var(--tanuki-orange);
+      border-radius: 8px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='7' fill='%231A1510' opacity='0.4'/%3E%3Ccircle cx='10' cy='12' r='2' fill='%23FDF8F0'/%3E%3Ccircle cx='18' cy='12' r='2' fill='%23FDF8F0'/%3E%3Cpath d='M10 17 Q14 20 18 17' stroke='%23FDF8F0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-size: cover;
+    }
+
+    header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(36px, 6vw, 56px);
+      color: var(--warm-white);
+      font-weight: 400;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    header h1 em {
+      color: var(--tanuki-orange);
+      font-style: italic;
+    }
+
+    header p {
+      font-size: 16px;
+      color: #A09488;
+      max-width: 480px;
+      font-weight: 300;
+      letter-spacing: 0.01em;
+    }
+
+    /* â”€â”€ NAV PILLS â”€â”€ */
+    .nav-strip {
+      background: var(--warm-white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .nav-inner::-webkit-scrollbar { display: none; }
+
+    .nav-inner a {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-lighter);
+      text-decoration: none;
+      padding: 16px 20px;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .nav-inner a:hover {
+      color: var(--tanuki-orange);
+      border-bottom-color: var(--tanuki-orange);
+    }
+
+    /* â”€â”€ MAIN LAYOUT â”€â”€ */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* â”€â”€ CONTACT CARD â”€â”€ */
+    .contact-card {
+      background: var(--tanuki-orange);
+      border-radius: 20px;
+      padding: 36px 40px;
+      margin: 48px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .contact-card h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      color: #fff;
+      font-weight: 400;
+      margin-bottom: 6px;
+    }
+
+    .contact-card p {
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+    }
+
+    .contact-email {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      color: var(--tanuki-orange);
+      font-weight: 600;
+      font-size: 15px;
+      padding: 14px 24px;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      white-space: nowrap;
+    }
+
+    .contact-email:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(232,101,26,0.35);
+    }
+
+    /* â”€â”€ SECTIONS â”€â”€ */
+    section {
+      margin-bottom: 64px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--tanuki-orange);
+      margin-bottom: 10px;
+    }
+
+    section > h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 30px;
+      font-weight: 400;
+      color: var(--ink);
+      margin-bottom: 28px;
+      line-height: 1.2;
+    }
+
+    /* â”€â”€ FAQ â”€â”€ */
+    .faq-item {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 10px;
+      background: var(--warm-white);
+      transition: box-shadow 0.2s;
+    }
+
+    .faq-item:hover {
+      box-shadow: 0 4px 20px var(--shadow);
+    }
+
+    .faq-question {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 20px 24px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--ink);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .faq-question .icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--tanuki-orange-pale);
+      color: var(--tanuki-orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      transition: transform 0.25s, background 0.2s;
+    }
+
+    .faq-item.open .faq-question .icon {
+      transform: rotate(45deg);
+      background: var(--tanuki-orange);
+      color: #fff;
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .faq-item.open .faq-answer {
+      max-height: 600px;
+    }
+
+    .faq-answer-inner {
+      padding: 0 24px 20px;
+      font-size: 14px;
+      color: var(--ink-soft);
+      line-height: 1.7;
+      border-top: 1px solid var(--border);
+    }
+
+    .faq-answer-inner p + p { margin-top: 10px; }
+
+    /* â”€â”€ INFO CARDS â”€â”€ */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .info-card {
+      background: var(--warm-white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .info-card .card-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .info-card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .info-card p {
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.65;
+    }
+
+    /* â”€â”€ DELETION SECTION â”€â”€ */
+    .deletion-box {
+      background: var(--gold-pale);
+      border: 1px solid #E8D5A8;
+      border-radius: 16px;
+      padding: 32px;
+    }
+
+    .deletion-box h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      font-weight: 400;
+      margin-bottom: 12px;
+    }
+
+    .deletion-box p {
+      font-size: 14px;
+      color: var(--ink-soft);
+      margin-bottom: 16px;
+      line-height: 1.7;
+    }
+
+    .deletion-box ol {
+      margin: 0 0 20px 18px;
+      font-size: 14px;
+      color: var(--ink-soft);
+      line-height: 1.9;
+    }
+
+    .btn-delete {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid #E8D5A8;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 12px 22px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .btn-delete:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+    /* â”€â”€ TROUBLESHOOTING â”€â”€ */
+    .trouble-list {
+      list-style: none;
+    }
+
+    .trouble-list li {
+      display: flex;
+      gap: 16px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .trouble-list li:last-child { border-bottom: none; }
+
+    .trouble-list .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: var(--cream);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .trouble-list .step-content strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .trouble-list .step-content p {
+      color: var(--ink-soft);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    /* â”€â”€ FOOTER â”€â”€ */
+    footer {
+      background: var(--ink);
+      padding: 40px 24px;
+      text-align: center;
+    }
+
+    footer p {
+      font-size: 13px;
+      color: #605850;
+      line-height: 1.8;
+    }
+
+    footer a {
+      color: #908880;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    footer a:hover { color: var(--tanuki-orange); }
+
+    .footer-brand {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 18px;
+      color: var(--warm-white);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .footer-brand em { color: var(--tanuki-orange); font-style: normal; }
+
+    /* â”€â”€ RESPONSIVE â”€â”€ */
+    @media (max-width: 600px) {
+      .contact-card { flex-direction: column; text-align: center; }
+      .contact-email { width: 100%; justify-content: center; }
+      header h1 { font-size: 36px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- â•â• HEADER â•â• -->
+<header>
+  <div class="header-inner">
+    <div class="wordmark">nice work</div>
+    <h1>we're here<br>to <em>help.</em></h1>
+    <p>Support for the nice work loyalty app â€” powering Tanuki Raw and Standing Sushi Bar.</p>
+  </div>
+</header>
+
+<!-- â•â• STICKY NAV â•â• -->
+<nav class="nav-strip">
+  <div class="nav-inner">
+    <a href="#contact">Contact Us</a>
+    <a href="#how-it-works">How It Works</a>
+    <a href="#faq">FAQ</a>
+    <a href="#troubleshooting">Troubleshooting</a>
+    <a href="#account">Your Account</a>
+    <a href="#legal">Legal</a>
+  </div>
+</nav>
+
+<!-- â•â• MAIN â•â• -->
+<main>
+
+  <!-- CONTACT -->
+  <div id="contact" class="contact-card">
+    <div>
+      <h2>get in touch</h2>
+      <p>We reply within 1 business day, Monâ€“Fri.</p>
+    </div>
+    <a href="mailto:hello@nicework.sg" class="contact-email">
+      âœ‰ hello@nicework.sg
+    </a>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works">
+    <div class="section-label">the basics</div>
+    <h2>how nice work works</h2>
+    <div class="card-grid">
+      <div class="info-card">
+        <div class="card-icon">â­</div>
+        <h3>points</h3>
+        <p>Earn 5 points for every $1 spent at Tanuki Raw or Standing Sushi Bar. Every 50 points equals $1 in rewards you can redeem on your next visit.</p>
+      </div>
+      <div class="info-card">
+        <div class="card-icon">âœ¨</div>
+        <h3>nice currency</h3>
+        <p>nice is our passive currency â€” it accumulates automatically over time just for being a member. Use nice for the daily spin, weekly lottery entries, and special surprises.</p>
+      </div>
+      <div class="info-card">
+        <div class="card-icon">ðŸŽ°</div>
+        <h3>daily spin</h3>
+        <p>Spin the wheel once a day using nice currency for a chance to win bonus points, extra nice, and exclusive rewards. Check in daily to keep your streak going.</p>
+      </div>
+      <div class="info-card">
+        <div class="card-icon">ðŸŽŸ</div>
+        <h3>weekly lottery</h3>
+        <p>Use nice currency to enter the weekly lottery draw for a chance to win big rewards. Winners are drawn weekly and notified via push notification and email.</p>
+      </div>
+      <div class="info-card">
+        <div class="card-icon">ðŸ¦</div>
+        <h3>membership tiers</h3>
+        <p>Your tier unlocks over time with visits and spending. Start as <strong>Hi My Name Is</strong>, level up to <strong>Good to See You</strong>, then reach <strong>Local Legend</strong> status for the best perks.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="section-label">questions</div>
+    <h2>frequently asked</h2>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        How do I earn and redeem points?
+        <span class="icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-inner">
+          <p>You earn 5 points for every $1 you spend at Tanuki Raw or Standing Sushi Bar. Points are added to your account after each purchase is recorded.</p>
+          <p>To redeem, 50 points = $1 off your bill. You can choose how many points to apply at checkout â€” just let your server know or use the redemption option in the app before paying.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        What is "nice" currency and how do I use it?
+        <span class="icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-inner">
+          <p>nice is a passive currency that generates automatically the longer you're a member, at a base rate of 2.0 nice per hour. Your tier and recent visit history can multiply this rate.</p>
+          <p>You spend nice on the daily spin wheel and weekly lottery entries. nice cannot be directly redeemed for cash value â€” it's the fun, engagement layer of the program.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        Do my points work at both Tanuki Raw and Standing Sushi Bar?
+        <span class="icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-inner">
+          <p>Yes! Your points and nice currency balance is shared across both restaurants. Earn anywhere, redeem anywhere.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        When are weekly lottery winners drawn?
+        <span class="icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-inner">
+          <p>The weekly lottery closes and is drawn every Sunday. Winners are notified by push notification and email, so make sure notifications are enabled to hear if you've won.</p>
+          <p>Entries are nice-only â€” you can't buy your way in with points, which keeps it fair for everyone.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        Can I have more than one account?
+        <span class="icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-inner">
+          <p>No â€” nice work is a one-account-per-person program. Each membership is tied to a unique phone number and identity. Duplicate or shared accounts aren't permitted and may be removed from the program.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        Do my points expire?
+        <span class="icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-inner">
+          <p>Points do not expire as long as your account remains active. If you'd like to know the specifics around account inactivity, reach out to us at hello@nicework.sg.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        How do I move up membership tiers?
+        <span class="icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-inner">
+          <p>Your tier is based on a combination of visits and total spending over time. The app shows your progress toward the next tier in the profile section. Keep dining and you'll get there â€” Local Legends are our regulars who know us best.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        I didn't get my points after a visit. Help?
+        <span class="icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-inner">
+          <p>Points are usually added within a few minutes of your transaction being processed. If they haven't appeared after 24 hours, email us at hello@nicework.sg with your receipt or order details and we'll sort it out right away.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        Can I transfer points to another person?
+        <span class="icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-inner">
+          <p>Points and nice currency are non-transferable and tied to your individual account. They can't be gifted or moved to another membership.</p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- TROUBLESHOOTING -->
+  <section id="troubleshooting">
+    <div class="section-label">self-service</div>
+    <h2>troubleshooting tips</h2>
+    <ul class="trouble-list">
+      <li>
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <strong>Try logging out and back in</strong>
+          <p>Go to Profile â†’ Settings â†’ Log Out, then sign back in. This refreshes your session and fixes most syncing issues.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <strong>Enable push notifications</strong>
+          <p>Lottery results and exclusive flash offers are sent via push notification. Go to Settings â†’ nice work â†’ Notifications and make sure these are on so you never miss out.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <strong>Update the app</strong>
+          <p>If something looks broken or behaves unexpectedly, check the App Store for an update. We release fixes regularly and the latest version almost always resolves odd behaviour.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <strong>Reinstall the app</strong>
+          <p>If all else fails, delete and reinstall the app. Your account data is stored securely â€” you won't lose your points or nice balance. Just sign back in after reinstalling.</p>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- ACCOUNT DELETION -->
+  <section id="account">
+    <div class="section-label">your account</div>
+    <h2>managing your account</h2>
+    <div class="deletion-box">
+      <h3>request account deletion</h3>
+      <p>You can request the deletion of your nice work account and all associated personal data at any time. Please note:</p>
+      <ol>
+        <li>Your remaining points and nice currency balance will be forfeited and cannot be recovered.</li>
+        <li>Your transaction history will be deleted in accordance with our Privacy Policy.</li>
+        <li>Account deletion is permanent and cannot be undone.</li>
+      </ol>
+      <p>To request deletion, email us from the address associated with your account:</p>
+      <a href="mailto:hello@nicework.sg?subject=Account%20Deletion%20Request&body=Hi%2C%20I%20would%20like%20to%20request%20the%20deletion%20of%20my%20nice%20work%20account%20and%20all%20associated%20personal%20data.%0A%0ARegistered%20phone%20number%3A%20%5Byour%20number%5D%0AName%3A%20%5Byour%20name%5D" class="btn-delete">
+        ðŸ—‘ Request Account Deletion
+      </a>
+      <p style="margin-top:16px; font-size:13px; color: var(--ink-lighter);">We will process your request within 30 days and confirm via email once complete.</p>
+    </div>
+  </section>
+
+  <!-- LEGAL -->
+  <section id="legal">
+    <div class="section-label">the fine print</div>
+    <h2>legal & policies</h2>
+    <div class="card-grid">
+      <div class="info-card">
+        <div class="card-icon">ðŸ”’</div>
+        <h3>Privacy Policy</h3>
+        <p>Learn how we collect, use, and protect your personal data in accordance with Singapore's Personal Data Protection Act (PDPA).</p>
+        <p style="margin-top:12px;"><a href="/privacy" style="color: var(--tanuki-orange); font-weight:500; text-decoration:none;">View Privacy Policy â†’</a></p>
+      </div>
+      <div class="info-card">
+        <div class="card-icon">ðŸ“‹</div>
+        <h3>Terms of Service</h3>
+        <p>The full terms governing use of the nice work loyalty programme, including lottery rules and membership conditions.</p>
+        <p style="margin-top:12px;"><a href="/terms" style="color: var(--tanuki-orange); font-weight:500; text-decoration:none;">View Terms â†’</a></p>
+      </div>
+      <div class="info-card">
+        <div class="card-icon">ðŸŽŸ</div>
+        <h3>Lottery Rules</h3>
+        <p>The weekly lottery operates under Singapore's class licence framework. All draws are random and winners are notified directly.</p>
+        <p style="margin-top:12px;"><a href="/lottery-rules" style="color: var(--tanuki-orange); font-weight:500; text-decoration:none;">View Lottery Rules â†’</a></p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- â•â• FOOTER â•â• -->
+<footer>
+  <p class="footer-brand"><em>nice work.</em></p>
+  <p>
+    Tanuki Raw Â· Standing Sushi Bar Â· Singapore<br>
+    <a href="mailto:hello@nicework.sg">hello@nicework.sg</a> Â· 
+    <a href="/privacy">Privacy Policy</a> Â· 
+    <a href="/terms">Terms of Service</a>
+  </p>
+  <p style="margin-top:16px;">Â© 2025 Nice Work Loyalty. All rights reserved.</p>
+</footer>
+
+<script>
+  function toggleFaq(btn) {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+    // Open this one if it wasn't open
+    if (!isOpen) item.classList.add('open');
+  }
+</script>
+
+</body>
+</html>
+
